@@ -41,7 +41,6 @@
     .modal-container { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; background-color: rgba(0,0,0,0.4); }
     .modal-content { transform: scale(0.95); opacity: 0; }
     #model-dropdown, #chat-actions-dropdown { display: none; position: absolute; z-index: 50; }
-    #edit-indicator { display: none; }
     .loader-dot { animation: pendulum 1.2s infinite ease-in-out; }
     .loader-dot:nth-child(2) { animation-delay: 0.15s; }
     .loader-dot:nth-child(3) { animation-delay: 0.3s; }
@@ -67,8 +66,8 @@
   </aside>
 
   <div id="main-container" class="flex-1 flex flex-col min-w-0">
-    <header class="bg-light-chat-surface dark:bg-dark-chat-surface px-4 py-3 flex items-center gap-4 border-b border-light-border dark:border-dark-border relative">
-      <button id="toggle-sidebar" class="p-2 text-light-text-subtle dark:text-dark-text-subtle hover:text-light-text dark:hover:text-dark-text rounded-full md:hidden"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" /></svg></button>
+    <header class="bg-light-chat-surface dark:bg-dark-chat-surface px-4 py-3 flex items-center gap-4 relative">
+      <button id="toggle-sidebar" class="p-2 text-light-text-subtle dark:text-dark-text-subtle hover:text-light-text dark:hover:text-dark-text rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" /></svg></button>
       <div id="model-selector" class="flex items-center gap-1 cursor-pointer">
         <h1 id="chat-title" class="text-lg font-semibold truncate">Fronix</h1>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-light-text-subtle dark:text-dark-text-subtle"><path d="m6 9 6 6 6-6"></path></svg>
@@ -77,16 +76,24 @@
     </header>
     <main class="flex-1 overflow-hidden flex flex-col bg-light-chat-surface dark:bg-dark-chat-surface">
       <div id="chat-box-wrapper" class="flex-1 overflow-y-auto px-4 sm:px-8 md:px-12 lg:px-24">
-        <div id="chat-box" class="max-w-4xl mx-auto pt-8 pb-20 space-y-6">
+        <div id="chat-box" class="max-w-4xl mx-auto pb-20 space-y-6">
           <div class="text-center text-light-text-subtle dark:text-dark-text-subtle py-8">
             <h2 class="text-3xl font-bold mb-2">Fronix</h2>
             <p>Start a new message to begin.</p>
           </div>
         </div>
       </div>
-      <div class="p-4 border-t border-light-border dark:border-dark-border">
-        <div id="edit-indicator" class="max-w-3xl mx-auto mb-1 h-1 bg-accent rounded-t-lg"></div>
-        <div class="max-w-3xl mx-auto flex items-end space-x-3">
+      <div class="border-light-border dark:border-dark-border">
+        <div id="edit-indicator" style="display: none;" class="max-w-3xl mx-auto p-2 h-12 flex items-center justify-between bg-yellow-100 dark:bg-yellow-900/50 rounded-t-lg text-yellow-800 dark:text-yellow-200">
+            <div class="flex items-center gap-2 text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 10 20 15 15 20"></polyline><path d="M4 4v7a4 4 0 0 0 4 4h12"></path></svg>
+                <span>Editing message</span>
+            </div>
+            <button id="cancel-edit-btn" class="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="max-w-3xl mx-auto flex items-end space-x-3 p-4">
           <textarea id="user-input" rows="1" class="flex-1 bg-light-user-bubble dark:bg-dark-user-bubble rounded-xl md:rounded-2xl py-3 px-4 resize-none focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Type your message..." style="max-height: 200px"></textarea>
           <button id="send-btn" class="p-3 rounded-full bg-accent hover:bg-accent-hover text-white disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"><svg id="send-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg><svg id="save-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg></button>
         </div>
@@ -116,6 +123,7 @@
       modelSelector: document.getElementById('model-selector'), modelDropdown: document.getElementById('model-dropdown'),
       chatActionsDropdown: document.getElementById('chat-actions-dropdown'),
       editIndicator: document.getElementById('edit-indicator'),
+      cancelEditBtn: document.getElementById('cancel-edit-btn'),
       settingsModal: { container: document.getElementById('settings-modal'), fontOptions: document.getElementById('font-options'), fontWeightOptions: document.getElementById('font-weight-options'), closeBtn: document.getElementById('close-settings-btn'), resetBtn: document.getElementById('reset-settings-btn'), apiTokenInput: document.getElementById('api-token-input') },
       renameModal: { container: document.getElementById('rename-modal'), input: document.getElementById('rename-input'), saveBtn: document.getElementById('rename-save'), cancelBtn: document.getElementById('rename-cancel') },
       deleteModal: { container: document.getElementById('delete-modal'), message: document.getElementById('delete-message'), confirmBtn: document.getElementById('delete-confirm'), cancelBtn: document.getElementById('delete-cancel') },
@@ -149,22 +157,53 @@
             }
 
             li.innerHTML = `<span class="truncate text-sm font-medium">${chat.title}</span>${actionsHtml}`;
-            li.onclick = () => { setActive(chat.id); if (window.innerWidth < 768) { toggleSidebar(); } };
+            
+            li.addEventListener('click', () => {
+                setActive(chat.id);
+                if (window.innerWidth < 768) {
+                    toggleSidebar();
+                }
+            });
 
-            if (isTouchDevice) {
-                li.querySelector('.chat-actions-btn').onclick = (e) => {
+            const renameBtn = li.querySelector('.rename-btn');
+            if (renameBtn) {
+                renameBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openRenameModal(chat.id);
+                });
+            }
+
+            const deleteBtn = li.querySelector('.delete-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openDeleteModal(chat.id);
+                });
+            }
+
+            const actionsBtn = li.querySelector('.chat-actions-btn');
+            if (actionsBtn) {
+                actionsBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     openChatActionsDropdown(chat.id, e.currentTarget);
-                };
-            } else {
-                li.querySelector('.rename-btn').onclick = (e) => { e.stopPropagation(); openRenameModal(chat.id); };
-                li.querySelector('.delete-btn').onclick = (e) => { e.stopPropagation(); openDeleteModal(chat.id); };
+                });
             }
             elements.chatList.appendChild(li);
         });
     }
 
-    function setActive(id) { if (state.editingMessage) exitEditMode(); state.activeId = id; const chat = state.chats.find(c => c.id === id); if (chat) { state.settings.model = chat.model || 'openai'; renderModelDropdown(); renderSidebar(); renderChat(); saveState(); } }
+    function setActive(id) {
+        if (state.editingMessage) exitEditMode();
+        state.activeId = id;
+        const chat = state.chats.find(c => c.id === id);
+        if (chat) {
+            state.settings.model = chat.model || 'openai';
+        }
+        renderModelDropdown();
+        renderSidebar();
+        renderChat();
+        saveState();
+    }
     
     function renderChat() { /* ... unchanged ... */ } // This function is unchanged from the previous version.
     
@@ -197,11 +236,17 @@
         const rect = target.getBoundingClientRect();
         const dropdown = elements.chatActionsDropdown;
         dropdown.innerHTML = `
-            <button class="rename-btn w-full text-left px-3 py-2 text-sm hover:bg-light-border-hover dark:hover:bg-dark-border-hover">Rename</button>
-            <button class="delete-btn w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-light-border-hover dark:hover:bg-dark-border-hover">Delete</button>
+            <button class="rename-action w-full text-left px-3 py-2 text-sm hover:bg-light-border-hover dark:hover:bg-dark-border-hover flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                Rename
+            </button>
+            <button class="delete-action w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-light-border-hover dark:hover:bg-dark-border-hover flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                Delete
+            </button>
         `;
-        dropdown.querySelector('.rename-btn').onclick = () => { openRenameModal(chatId); closeAllModals(); };
-        dropdown.querySelector('.delete-btn').onclick = () => { openDeleteModal(chatId); closeAllModals(); };
+        dropdown.querySelector('.rename-action').onclick = () => { openRenameModal(chatId); closeAllModals(); };
+        dropdown.querySelector('.delete-action').onclick = () => { openDeleteModal(chatId); closeAllModals(); };
         
         dropdown.style.top = `${rect.bottom + 4}px`;
         dropdown.style.left = `${rect.left - dropdown.offsetWidth + rect.width}px`;
@@ -231,7 +276,28 @@
     [elements.settingsModal.container, elements.renameModal.container, elements.deleteModal.container].forEach(el => el.onclick = (e) => { if (e.target === el) closeAllModals(); });
     [elements.renameModal.cancelBtn, elements.deleteModal.cancelBtn].forEach(el => el.onclick = closeAllModals);
     elements.renameModal.saveBtn.onclick = () => { const { chatId } = state.modalContext; const newName = elements.renameModal.input.value.trim(); const chat = state.chats.find(c => c.id === chatId); if (chat && newName) { chat.title = newName; if (chat.id === state.activeId) elements.chatTitle.textContent = chat.title; renderSidebar(); saveState(); } closeAllModals(); };
-    elements.deleteModal.confirmBtn.onclick = () => { const { chatId } = state.modalContext; const idx = state.chats.findIndex(c => c.id === chatId); if (idx === -1) return; state.chats.splice(idx, 1); if (state.chats.length === 0) state.chats.push(createChat()); if (chatId === state.activeId) { setActive(state.chats[Math.max(0, idx - 1)]?.id || null); } else { renderSidebar(); saveState(); } closeAllModals(); };
+    elements.deleteModal.confirmBtn.onclick = () => {
+        const { chatId } = state.modalContext;
+        const idx = state.chats.findIndex(c => c.id === chatId);
+        if (idx === -1) return;
+        
+        state.chats.splice(idx, 1);
+        
+        if (chatId === state.activeId) {
+            const newActiveId = state.chats[Math.max(0, idx - 1)]?.id || null;
+            setActive(newActiveId);
+        } else {
+            renderSidebar();
+            saveState();
+        }
+        
+        if (state.chats.length === 0) {
+            setActive(null);
+        }
+        
+        closeAllModals();
+    };
+    elements.cancelEditBtn.onclick = exitEditMode;
     
     // --- Font Settings ---
     function applyFont(font) { Object.keys(FONTS).forEach(f => elements.body.classList.remove(`font-${f}`)); elements.body.classList.add(`font-${font}`); state.settings.font = font; saveState(); renderFontOptions(); }
