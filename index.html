@@ -14,6 +14,8 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
+    onload="renderMathInElement(document.body);"></script>
 
   <script>
     tailwind.config = {
@@ -44,6 +46,11 @@
     .loader-dot { animation: pendulum 1.2s infinite ease-in-out; }
     .loader-dot:nth-child(2) { animation-delay: 0.15s; }
     .loader-dot:nth-child(3) { animation-delay: 0.3s; }
+    .blinking-cursor { display: inline-block; width: 8px; height: 8px; background-color: currentColor; border-radius: 50%; animation: blink 1s infinite; }
+    .prose { line-height: 1.7; }
+    .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 { margin-top: 1.5em; margin-bottom: 0.5em; }
+    .prose p, .prose ul, .prose ol, .prose blockquote { margin-top: 1em; margin-bottom: 1em; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
     @keyframes pendulum { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
     @keyframes reveal-in { from { clip-path: circle(0% at var(--clip-x) var(--clip-y)); } to { clip-path: circle(125% at var(--clip-x) var(--clip-y)); } }
     ::view-transition-new(root) { animation: reveal-in 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -114,6 +121,7 @@
       'openai-large': 'OpenAI (Large)', 
       'openai-fast': 'OpenAI (Fast)', 
       'deepseek-reasoning': 'DeepSeek Reasoning', 
+      'openai-reasoning': 'OpenAI (Reasoning)',
       'grok': 'Grok', 
       'elixposearch': 'Elixpo Search' 
     };
@@ -135,8 +143,18 @@
 
     const createChat = (title = 'New Chat') => ({ id: Date.now().toString(), title, messages: [], model: state.settings.model });
     const saveState = () => localStorage.setItem('fronixState', JSON.stringify(state));
-    const loadState = () => { const d = localStorage.getItem('fronixState'); if (d) { const p = JSON.parse(d); state.chats = p.chats || []; state.activeId = p.activeId || null; state.settings = { ...state.settings, ...p.settings }; if (p.settings.apiToken) elements.settingsModal.apiTokenInput.value = p.settings.apiToken; } };
-    function renderContent(text) { if (!text) return ''; let html = marked.parse(text, { breaks: true, gfm: true }); html = html.replace(/\$\$([\s\S]*?)\$\$/g, (m, l) => { try { return katex.renderToString(l.trim(), { displayMode: true, throwOnError: false }); } catch (e) { return m; } }); html = html.replace(/\$([^$\n\s][^$\n]*?)\$/g, (m, l) => { try { return katex.renderToString(l.trim(), { displayMode: false, throwOnError: false }); } catch (e) { return m; } }); return html; }
+    const loadState = () => {
+        const d = localStorage.getItem('fronixState');
+        if (d) {
+            const p = JSON.parse(d);
+            state.chats = p.chats || [];
+            state.activeId = p.activeId || null;
+            state.settings = { ...state.settings, ...p.settings };
+            if (p.settings.apiToken) elements.settingsModal.apiTokenInput.value = p.settings.apiToken;
+        }
+    };
+    function renderContent(text) { if (!text) return ''; let html = marked.parse(text, { breaks: true, gfm: true }); return html; }
+    function renderStreamingContent(text) { if (!text) return ''; let html = marked.parseInline(text, { breaks: true, gfm: true }); return html; }
 
     function renderSidebar() {
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -197,7 +215,10 @@
         state.activeId = id;
         const chat = state.chats.find(c => c.id === id);
         if (chat) {
+            elements.chatTitle.textContent = chat.title;
             state.settings.model = chat.model || 'openai';
+        } else {
+            elements.chatTitle.textContent = 'Fronix';
         }
         renderModelDropdown();
         renderSidebar();
@@ -205,11 +226,197 @@
         saveState();
     }
     
-    function renderChat() { /* ... unchanged ... */ } // This function is unchanged from the previous version.
+// Place this function where your current addMessage is.
+function addMessage(role, content, customId = null) {
+    const chat = state.chats.find(c => c.id === state.activeId);
+    if (!chat) return;
+    const message = { role, content };
+    if (customId) {
+        message.id = customId; // Add the custom ID if provided
+    }
+    chat.messages.push(message);
+    renderChat(); // RenderChat will now correctly use the ID
+    saveState();
+};
+
+// Place this function where your current renderChat is.
+function renderChat() {
+    const chat = state.chats.find(c => c.id === state.activeId);
+    elements.chatBox.innerHTML = '';
+    if (!chat || !chat.messages.length) {
+        elements.chatBox.innerHTML = `<div class="text-center text-light-text-subtle dark:text-dark-text-subtle py-8"><h2 class="text-3xl font-bold mb-2">Fronix</h2><p>Start a new message to begin.</p></div>`;
+        return;
+    }
+    chat.messages.forEach((msg, index) => {
+        const wrapper = document.createElement('div');
+        const msgDiv = document.createElement('div');
+        
+        // This is the critical part: applying the unique ID to the message div
+        // so we can target it for streaming.
+        if (msg.id) {
+            msgDiv.id = msg.id;
+        }
+
+        const isUser = msg.role === 'user';
+
+        if (isUser) {
+            msgDiv.className = 'ml-auto w-fit max-w-[90%] p-4 rounded-2xl bg-light-user-bubble dark:bg-dark-user-bubble';
+            const p = document.createElement('p');
+p.className = 'whitespace-pre-wrap';
+            p.textContent = msg.content;
+            msgDiv.appendChild(p);
+        } else {
+            msgDiv.className = 'prose prose-sm md:prose-base max-w-none text-light-text dark:text-dark-text';
+            if (msg.content === '...') {
+                msgDiv.innerHTML = `<div class="flex items-center space-x-1.5">${Array(3).fill().map(() => `<div class="loader-dot w-2 h-2 bg-gray-400 rounded-full"></div>`).join('')}</div>`;
+            } else {
+                // Use the full markdown parser for existing, completed messages
+                msgDiv.innerHTML = renderContent(msg.content);
+            }
+            renderMathInElement(msgDiv, {
+                delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+            });
+        }
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = `flex gap-2 mt-2 items-center text-light-text-subtle dark:text-dark-text-subtle ${isUser ? 'justify-end' : 'justify-start'}`;
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors';
+        copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+        copyBtn.onclick = () => copyMessage(msg.content, copyBtn);
+        actionsDiv.appendChild(copyBtn);
+
+        if (isUser) {
+            const editBtn = document.createElement('button');
+            editBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors';
+            editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`;
+            editBtn.onclick = () => enterEditMode(chat.id, index);
+            actionsDiv.appendChild(editBtn);
+        }
+
+        wrapper.appendChild(msgDiv);
+        wrapper.appendChild(actionsDiv);
+        elements.chatBox.appendChild(wrapper);
+    });
+    elements.chatBox.parentElement.scrollTop = elements.chatBox.parentElement.scrollHeight;
+};
+
+// And finally, replace your sendMessage function with this fully corrected version.
+async function sendMessage() {
+    const input = elements.userInput.value.trim();
+    if (!input || !state.activeId) return;
+
+    const chat = state.chats.find(c => c.id === state.activeId);
+
+    if (state.editingMessage) {
+        chat.messages[state.editingMessage.messageIndex].content = input;
+        chat.messages.length = state.editingMessage.messageIndex + 1;
+        exitEditMode();
+    } else {
+        addMessage('user', input);
+        if (chat.messages.length === 1) {
+            chat.title = input.length > 30 ? input.substring(0, 27) + '...' : input;
+            renderSidebar();
+        }
+    }
+
+    saveState();
+    elements.userInput.value = '';
+    elements.userInput.style.height = 'auto';
+    elements.sendBtn.disabled = true;
+
+    const assistantMessageId = 'assistant-msg-' + Date.now();
+    addMessage('assistant', '...', assistantMessageId);
+
+    const assistantMsgDiv = document.getElementById(assistantMessageId);
+    if (!assistantMsgDiv) {
+        console.error("Critical error: Could not find assistant message div in the DOM.");
+        elements.sendBtn.disabled = false;
+        return;
+    }
     
-    async function sendMessage() { /* ... unchanged ... */ } // This function is unchanged from the previous version.
-    
-    function addMessage(role, content) { /* ... unchanged ... */ } // This function is unchanged from the previous version.
+    // Clear the loading dots and show the blinking cursor immediately
+    assistantMsgDiv.innerHTML = '<span class="blinking-cursor"></span>';
+
+    let accumulatedContent = '';
+    let buffer = '';
+
+    try {
+        const messagesToSend = [SYSTEM_PROMPT, ...chat.messages.slice(0, -1)];
+        const headers = { 'Content-Type': 'application/json' };
+        if (state.settings.apiToken) {
+            headers['Authorization'] = `Bearer ${state.settings.apiToken}`;
+        }
+
+        const res = await fetch(config.API_ENDPOINT, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                model: chat.model || state.settings.model,
+                messages: messagesToSend,
+                stream: true,
+                referrer: 'fronix'
+            })
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`API Error: ${res.status} ${res.statusText}\n${errorText}`);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const data = line.slice(6).trim();
+
+                if (data === '[DONE]') {
+                    // Finalize the stream. Use the full markdown parser.
+                    assistantMsgDiv.innerHTML = renderContent(accumulatedContent);
+                    renderMathInElement(assistantMsgDiv); // Re-render Katex for the final content
+                    chat.messages[chat.messages.length - 1].content = accumulatedContent;
+                    saveState();
+                    elements.sendBtn.disabled = false;
+                    return; // Stream successfully finished
+                }
+
+                try {
+                    const parsed = JSON.parse(data);
+                    const delta = parsed.choices?.[0]?.delta?.content;
+
+                    if (delta) {
+                        accumulatedContent += delta;
+                        // Use the faster inline parser for live streaming
+                        assistantMsgDiv.innerHTML = renderStreamingContent(accumulatedContent) + '<span class="blinking-cursor"></span>';
+                        elements.chatBox.parentElement.scrollTop = elements.chatBox.parentElement.scrollHeight;
+                    }
+                } catch (e) {
+                    console.warn('JSON Parse Error:', e, "on data:", data);
+                }
+            }
+        }
+    } catch (error) {
+        console.error("sendMessage Error:", error);
+        accumulatedContent = `⚠️ An error occurred: ${error.message}`;
+        assistantMsgDiv.innerHTML = `<p class="text-red-500">${accumulatedContent}</p>`;
+    } finally {
+        // This block runs if the stream finishes without a [DONE] marker, or after an error.
+        assistantMsgDiv.innerHTML = renderContent(accumulatedContent);
+        renderMathInElement(assistantMsgDiv);
+        chat.messages[chat.messages.length - 1].content = accumulatedContent;
+        elements.sendBtn.disabled = false;
+        saveState();
+    }
+};
     elements.newChatBtn.onclick = () => { /* ... unchanged ... */ };
     function copyMessage(text, btn) { /* ... unchanged ... */ }
     function enterEditMode(chatId, messageIndex) { /* ... unchanged ... */ }
@@ -269,7 +476,7 @@
       // Re-initialize with default state
       state.settings = { model: 'openai', font: 'inter', fontWeight: '400', apiToken: '' };
       elements.settingsModal.apiTokenInput.value = '';
-      init();
+      document.addEventListener('DOMContentLoaded', init);
       animateModalClose(elements.settingsModal.container);
     };
 
@@ -278,21 +485,30 @@
     elements.renameModal.saveBtn.onclick = () => { const { chatId } = state.modalContext; const newName = elements.renameModal.input.value.trim(); const chat = state.chats.find(c => c.id === chatId); if (chat && newName) { chat.title = newName; if (chat.id === state.activeId) elements.chatTitle.textContent = chat.title; renderSidebar(); saveState(); } closeAllModals(); };
     elements.deleteModal.confirmBtn.onclick = () => {
         const { chatId } = state.modalContext;
-        const idx = state.chats.findIndex(c => c.id === chatId);
-        if (idx === -1) return;
         
-        state.chats.splice(idx, 1);
-        
-        if (chatId === state.activeId) {
-            const newActiveId = state.chats[Math.max(0, idx - 1)]?.id || null;
-            setActive(newActiveId);
+        if (state.chats.length === 1 && state.chats[0].id === chatId) {
+            // This is the last chat, so reset it.
+            const chat = state.chats[0];
+            chat.title = 'New Chat';
+            chat.messages = [];
+            chat.model = 'openai'; // Reset model to default
+            setActive(chat.id);
         } else {
-            renderSidebar();
-            saveState();
-        }
-        
-        if (state.chats.length === 0) {
-            setActive(null);
+            // There is more than one chat, so delete the selected one.
+            const idx = state.chats.findIndex(c => c.id === chatId);
+            if (idx > -1) {
+                state.chats.splice(idx, 1);
+            }
+            
+            if (chatId === state.activeId) {
+                // The active chat was deleted, so set a new active chat.
+                const newActiveId = state.chats[Math.max(0, idx - 1)]?.id || state.chats[0]?.id || null;
+                setActive(newActiveId);
+            } else {
+                // The deleted chat was not active, so just re-render the sidebar.
+                renderSidebar();
+                saveState();
+            }
         }
         
         closeAllModals();
@@ -355,32 +571,33 @@
     function init() {
         const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+        
         loadState();
+
+        if (state.chats.length === 0) {
+            const newChat = createChat();
+            state.chats.push(newChat);
+            state.activeId = newChat.id;
+        } else if (!state.chats.some(c => c.id === state.activeId)) {
+            state.activeId = state.chats[0]?.id || null;
+        }
+        
         applyFont(state.settings.font);
         applyFontWeight(state.settings.fontWeight);
-        if (state.chats.length === 0) state.chats.push(createChat());
-        setActive(state.chats.find(c => c.id === state.activeId)?.id || state.chats[0]?.id || null);
-        renderModelDropdown();
+        
+        renderFontOptions();
+        renderFontWeightOptions();
+        
         elements.settingsModal.apiTokenInput.addEventListener('change', (e) => {
             state.settings.apiToken = e.target.value;
             saveState();
         });
+
+        setActive(state.activeId);
     }
     
-    init();
+    document.addEventListener('DOMContentLoaded', init);
 
-    // Re-assigning unchanged functions to save space
-    renderChat = function() { const chat = state.chats.find(c => c.id === state.activeId); elements.chatBox.innerHTML = ''; if (!chat || !chat.messages.length) { elements.chatBox.innerHTML = `<div class="text-center text-light-text-subtle dark:text-dark-text-subtle py-8"><h2 class="text-3xl font-bold mb-2">Fronix</h2><p>Start a new message to begin.</p></div>`; return; } chat.messages.forEach((msg, index) => { const wrapper = document.createElement('div'); const msgDiv = document.createElement('div'); const isUser = msg.role === 'user'; if (isUser) { msgDiv.className = 'ml-auto w-fit max-w-[90%] p-4 rounded-2xl bg-light-user-bubble dark:bg-dark-user-bubble'; const p = document.createElement('p'); p.className = 'whitespace-pre-wrap'; p.textContent = msg.content; msgDiv.appendChild(p); } else { msgDiv.className = 'prose prose-sm md:prose-base max-w-none text-light-text dark:text-dark-text'; if (msg.content === '...') { msgDiv.innerHTML = `<div class="flex items-center space-x-1.5">${Array(3).fill().map(() => `<div class="loader-dot w-2 h-2 bg-gray-400 rounded-full"></div>`).join('')}</div>`; } else { msgDiv.innerHTML = renderContent(msg.content); } } const actionsDiv = document.createElement('div'); actionsDiv.className = `flex gap-2 mt-2 items-center text-light-text-subtle dark:text-dark-text-subtle ${isUser ? 'justify-end' : 'justify-start'}`; const copyBtn = document.createElement('button'); copyBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors'; copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`; copyBtn.onclick = () => copyMessage(msg.content, copyBtn); actionsDiv.appendChild(copyBtn); if (isUser) { const editBtn = document.createElement('button'); editBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors'; editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`; editBtn.onclick = () => enterEditMode(chat.id, index); actionsDiv.appendChild(editBtn); } wrapper.appendChild(msgDiv); wrapper.appendChild(actionsDiv); elements.chatBox.appendChild(wrapper); }); elements.chatBox.parentElement.scrollTop = elements.chatBox.parentElement.scrollHeight; };
-    sendMessage = async function() { const input = elements.userInput.value.trim(); if (!input || !state.activeId) return; const chat = state.chats.find(c => c.id === state.activeId); if (state.editingMessage) { chat.messages[state.editingMessage.messageIndex].content = input; chat.messages.length = state.editingMessage.messageIndex + 1; exitEditMode(); } else { addMessage('user', input); if (chat.messages.length === 1) { chat.title = input.length > 30 ? input.substring(0, 27) + '...' : input; renderSidebar(); } } elements.userInput.value = ''; elements.userInput.style.height = 'auto'; elements.sendBtn.disabled = true; addMessage('assistant', '...'); let content = ''; let buffer = ''; try { const messagesToSend = [SYSTEM_PROMPT, ...chat.messages.slice(0, -1)]; const headers = { 'Content-Type': 'application/json' }; if (state.settings.apiToken) { headers['Authorization'] = `Bearer ${state.settings.apiToken}`; } const res = await fetch(config.API_ENDPOINT, { method: 'POST', headers, body: JSON.stringify({ model: chat.model || state.settings.model, messages: messagesToSend, stream: true, referrer: 'fronix' }) }); if (!res.ok) { const errorText = await res.text(); throw new Error(`API Error: ${res.status} ${res.statusText}\n${errorText}`); } const reader = res.body.getReader(); const decoder = new TextDecoder(); while (true) { const { value, done } = await reader.read(); if (done) break; buffer += decoder.decode(value, { stream: true }); const lines = buffer.split('\n'); buffer = lines.pop() || ''; for (const line of lines) { if (!line.startsWith('data: ')) continue; const data = line.slice(6).trim(); if (data === '[DONE]') { elements.sendBtn.disabled = false; saveState(); return; } try { const parsed = JSON.parse(data); const delta = parsed.choices?.[0]?.delta?.content; if (delta) { content += delta; chat.messages[chat.messages.length - 1].content = content; renderChat(); } } catch (e) { console.warn('JSON Parse Error:', e); } } } } catch (error) { console.error("sendMessage Error:", error); chat.messages[chat.messages.length - 1].content = `⚠️ An error occurred: ${error.message}`; renderChat(); } finally { elements.sendBtn.disabled = false; saveState(); } };
-    addMessage = function(role, content) { const chat = state.chats.find(c => c.id === state.activeId); if (!chat) return; chat.messages.push({ role, content }); renderChat(); saveState(); };
-    elements.newChatBtn.onclick = () => { const chat = createChat(); state.chats.unshift(chat); setActive(chat.id); if (window.innerWidth < 768) { toggleSidebar(); } };
-    copyMessage = function(text, btn) { navigator.clipboard.writeText(text).then(() => { const originalIcon = btn.innerHTML; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`; setTimeout(() => btn.innerHTML = originalIcon, 1500); }); };
-    enterEditMode = function(chatId, messageIndex) { const chat = state.chats.find(c => c.id === chatId); if (!chat) return; state.editingMessage = { chatId, messageIndex }; elements.userInput.value = chat.messages[messageIndex].content; elements.userInput.focus(); elements.sendIcon.classList.add('hidden'); elements.saveIcon.classList.remove('hidden'); elements.editIndicator.style.display = 'block'; };
-    exitEditMode = function() { state.editingMessage = null; elements.userInput.value = ''; elements.sendIcon.classList.remove('hidden'); elements.saveIcon.classList.add('hidden'); elements.editIndicator.style.display = 'none'; renderChat(); };
-    toggleSidebar = function() { const isMobile = window.innerWidth < 768; elements.sidebar.classList.toggle(isMobile ? 'open' : 'closed'); if (isMobile) elements.sidebarOverlay.classList.toggle('open'); };
-    elements.toggleSidebarBtn.onclick = toggleSidebar; elements.sidebarOverlay.onclick = toggleSidebar;
-    elements.userInput.addEventListener('input', () => { elements.userInput.style.height = 'auto'; elements.userInput.style.height = (elements.userInput.scrollHeight) + 'px'; });
-    elements.sendBtn.onclick = sendMessage; elements.userInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
   </script>
 </body>
