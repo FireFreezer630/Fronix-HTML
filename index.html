@@ -17,6 +17,10 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
     onload="renderMathInElement(document.body);"></script>
 
+  <!-- ADDED: highlight.js for Syntax Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -47,9 +51,88 @@
     .loader-dot:nth-child(2) { animation-delay: 0.15s; }
     .loader-dot:nth-child(3) { animation-delay: 0.3s; }
     .blinking-cursor { display: inline-block; width: 8px; height: 8px; background-color: currentColor; border-radius: 50%; animation: blink 1s infinite; }
-    .prose { line-height: 1.7; }
-    .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 { margin-top: 1.5em; margin-bottom: 0.5em; }
-    .prose p, .prose ul, .prose ol, .prose blockquote { margin-top: 1em; margin-bottom: 1em; }
+    
+    /* --- ADDED: CUSTOM PROSE STYLING --- */
+    .prose {
+      line-height: 1.7;
+      color: var(--tw-prose-body); /* Fallback for browsers not supporting @apply */
+    }
+    .dark .prose {
+        color: var(--tw-prose-invert-body);
+    }
+    
+    .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 { 
+      margin-top: 1.5em; 
+      margin-bottom: 0.5em; 
+      font-weight: 600;
+      color: var(--tw-prose-headings);
+    }
+    .dark .prose h1, .dark .prose h2, .dark .prose h3, .dark .prose h4, .dark .prose h5, .dark .prose h6 { 
+        color: var(--tw-prose-invert-headings);
+    }
+    .prose h1 { font-size: 1.875rem; } /* text-3xl */
+    .prose h2 { font-size: 1.5rem; }    /* text-2xl */
+    .prose h3 { font-size: 1.25rem; }  /* text-xl */
+    .prose h4 { font-size: 1.125rem; } /* text-lg */
+
+    .prose a { color: #4F46E5; text-decoration: none; }
+    .prose a:hover { text-decoration: underline; }
+    .dark .prose a { color: #6D6AEC; }
+
+    .prose blockquote {
+        border-left: 4px solid #E5E5E6;
+        padding-left: 1rem;
+        font-style: italic;
+        color: #6B7280;
+    }
+    .dark .prose blockquote {
+        border-left-color: #3A3A3A;
+        color: #A1A1AA;
+    }
+
+    .prose code:not(pre > code) {
+        background-color: #F0F0F0;
+        color: #18181B;
+        border-radius: 0.375rem; /* rounded-md */
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875em;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    .dark .prose code:not(pre > code) {
+        background-color: #2C2C2C;
+        color: #EAEAEA;
+    }
+    
+    .prose pre {
+        background-color: #282c34; /* atom-one-dark background */
+        border-radius: 0.5rem; /* rounded-lg */
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        overflow: hidden;
+    }
+    .prose pre code {
+      background-color: transparent;
+      padding: 1rem;
+      display: block;
+      overflow-x: auto;
+      font-size: 0.875em;
+      color: #abb2bf; /* Default text color for atom-one-dark */
+    }
+
+    .prose ul { list-style-type: disc; padding-left: 1.75rem; }
+    .prose ol { list-style-type: decimal; padding-left: 1.75rem; }
+    .prose li { margin-top: 0.25rem; margin-bottom: 0.25rem; }
+
+    .prose table { width: 100%; border-collapse: collapse; }
+    .prose th, .prose td { border: 1px solid #E5E5E6; padding: 0.5rem 1rem; }
+    .dark .prose th, .dark .prose td { border-color: #3A3A3A; }
+    .prose th { background-color: #F7F7F8; font-weight: 600; }
+    .dark .prose th { background-color: #1C1C1C; }
+    .prose tr:nth-child(even) { background-color: #F7F7F8; }
+    .dark .prose tr:nth-child(even) { background-color: #1C1C1C; }
+
+    .prose hr { border-color: #E5E5E6; margin-top: 2rem; margin-bottom: 2rem; }
+    .dark .prose hr { border-color: #3A3A3A; }
+
     @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
     @keyframes pendulum { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
     @keyframes reveal-in { from { clip-path: circle(0% at var(--clip-x) var(--clip-y)); } to { clip-path: circle(125% at var(--clip-x) var(--clip-y)); } }
@@ -153,6 +236,15 @@
             if (p.settings.apiToken) elements.settingsModal.apiTokenInput.value = p.settings.apiToken;
         }
     };
+
+    marked.setOptions({
+        highlight: function(code, lang) {
+            const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+            return hljs.highlight(code, { language }).value;
+        },
+        langPrefix: 'hljs language-'
+    });
+
     function renderContent(text) { if (!text) return ''; let html = marked.parse(text, { breaks: true, gfm: true }); return html; }
     function renderStreamingContent(text) { if (!text) return ''; let html = marked.parseInline(text, { breaks: true, gfm: true }); return html; }
 
@@ -395,8 +487,8 @@ async function sendMessage() {
 
                     if (delta) {
                         accumulatedContent += delta;
-                        // Use the faster inline parser for live streaming
-                        assistantMsgDiv.innerHTML = renderStreamingContent(accumulatedContent) + '<span class="blinking-cursor"></span>';
+                        // Use the full markdown parser for real-time block rendering
+                        assistantMsgDiv.innerHTML = renderContent(accumulatedContent) + '<span class="blinking-cursor"></span>';
                         elements.chatBox.parentElement.scrollTop = elements.chatBox.parentElement.scrollHeight;
                     }
                 } catch (e) {
@@ -417,10 +509,11 @@ async function sendMessage() {
         saveState();
     }
 };
-    elements.newChatBtn.onclick = () => { /* ... unchanged ... */ };
-    function copyMessage(text, btn) { /* ... unchanged ... */ }
-    function enterEditMode(chatId, messageIndex) { /* ... unchanged ... */ }
-    function exitEditMode() { /* ... unchanged ... */ }
+
+    function copyMessage(text, btn) { navigator.clipboard.writeText(text).then(() => { const originalIcon = btn.innerHTML; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`; setTimeout(() => btn.innerHTML = originalIcon, 1500); }); };
+    function enterEditMode(chatId, messageIndex) { const chat = state.chats.find(c => c.id === chatId); if (!chat) return; state.editingMessage = { chatId, messageIndex }; elements.userInput.value = chat.messages[messageIndex].content; elements.userInput.focus(); elements.sendIcon.classList.add('hidden'); elements.saveIcon.classList.remove('hidden'); elements.editIndicator.style.display = 'block'; };
+    function exitEditMode() { state.editingMessage = null; elements.userInput.value = ''; elements.sendIcon.classList.remove('hidden'); elements.saveIcon.classList.add('hidden'); elements.editIndicator.style.display = 'none'; renderChat(); };
+    function toggleSidebar() { const isMobile = window.innerWidth < 768; elements.sidebar.classList.toggle(isMobile ? 'open' : 'closed'); if (isMobile) elements.sidebarOverlay.classList.toggle('open'); };
     
     // --- Modal Control with Anime.js ---
     function animateModalOpen(modalContainer) {
@@ -469,52 +562,6 @@ async function sendMessage() {
         }, 0);
     }
     
-    elements.settingsBtn.onclick = () => animateModalOpen(elements.settingsModal.container);
-    elements.settingsModal.closeBtn.onclick = () => animateModalClose(elements.settingsModal.container);
-    elements.settingsModal.resetBtn.onclick = () => {
-      localStorage.removeItem('fronixState');
-      // Re-initialize with default state
-      state.settings = { model: 'openai', font: 'inter', fontWeight: '400', apiToken: '' };
-      elements.settingsModal.apiTokenInput.value = '';
-      document.addEventListener('DOMContentLoaded', init);
-      animateModalClose(elements.settingsModal.container);
-    };
-
-    [elements.settingsModal.container, elements.renameModal.container, elements.deleteModal.container].forEach(el => el.onclick = (e) => { if (e.target === el) closeAllModals(); });
-    [elements.renameModal.cancelBtn, elements.deleteModal.cancelBtn].forEach(el => el.onclick = closeAllModals);
-    elements.renameModal.saveBtn.onclick = () => { const { chatId } = state.modalContext; const newName = elements.renameModal.input.value.trim(); const chat = state.chats.find(c => c.id === chatId); if (chat && newName) { chat.title = newName; if (chat.id === state.activeId) elements.chatTitle.textContent = chat.title; renderSidebar(); saveState(); } closeAllModals(); };
-    elements.deleteModal.confirmBtn.onclick = () => {
-        const { chatId } = state.modalContext;
-        
-        if (state.chats.length === 1 && state.chats[0].id === chatId) {
-            // This is the last chat, so reset it.
-            const chat = state.chats[0];
-            chat.title = 'New Chat';
-            chat.messages = [];
-            chat.model = 'openai'; // Reset model to default
-            setActive(chat.id);
-        } else {
-            // There is more than one chat, so delete the selected one.
-            const idx = state.chats.findIndex(c => c.id === chatId);
-            if (idx > -1) {
-                state.chats.splice(idx, 1);
-            }
-            
-            if (chatId === state.activeId) {
-                // The active chat was deleted, so set a new active chat.
-                const newActiveId = state.chats[Math.max(0, idx - 1)]?.id || state.chats[0]?.id || null;
-                setActive(newActiveId);
-            } else {
-                // The deleted chat was not active, so just re-render the sidebar.
-                renderSidebar();
-                saveState();
-            }
-        }
-        
-        closeAllModals();
-    };
-    elements.cancelEditBtn.onclick = exitEditMode;
-    
     // --- Font Settings ---
     function applyFont(font) { Object.keys(FONTS).forEach(f => elements.body.classList.remove(`font-${f}`)); elements.body.classList.add(`font-${font}`); state.settings.font = font; saveState(); renderFontOptions(); }
     function applyFontWeight(weight) { elements.body.style.fontWeight = weight; state.settings.fontWeight = weight; saveState(); renderFontWeightOptions(); }
@@ -540,37 +587,53 @@ async function sendMessage() {
         elements.modelDropdown.appendChild(btn);
       });
     }
-    elements.modelSelector.onclick = () => {
-      const isHidden = elements.modelDropdown.style.display === 'none' || elements.modelDropdown.style.display === '';
-      elements.modelDropdown.style.display = isHidden ? 'block' : 'none';
-    };
-    document.addEventListener('click', (e) => {
-      if (!elements.modelSelector.contains(e.target) && !elements.modelDropdown.contains(e.target)) {
-        elements.modelDropdown.style.display = 'none';
-      }
-    });
 
     // --- Theme & Initialization ---
-    elements.themeToggleBtn.onclick = (e) => {
-        const isDark = document.documentElement.classList.contains('dark');
-        const newTheme = isDark ? 'light' : 'dark';
-        if (!document.startViewTransition) { 
-            document.documentElement.classList.toggle('dark', !isDark); 
-            localStorage.setItem('theme', newTheme); 
-            return; 
+    function applyTheme(theme) {
+        const isDark = theme === 'dark';
+        document.documentElement.classList.toggle('dark', isDark);
+        document.getElementById('theme-icon-light').classList.toggle('hidden', isDark);
+        document.getElementById('theme-icon-dark').classList.toggle('hidden', !isDark);
+        localStorage.setItem('theme', theme);
+    }
+
+    function toggleTheme() {
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        if (!document.startViewTransition) {
+            applyTheme(newTheme);
+            return;
         }
-        document.documentElement.style.setProperty('--clip-x', e.clientX + 'px'); 
-        document.documentElement.style.setProperty('--clip-y', e.clientY + 'px');
-        document.startViewTransition(() => { 
-            document.documentElement.classList.toggle('dark', !isDark); 
-        }).ready.then(() => {
-            localStorage.setItem('theme', newTheme);
+
+        const transition = document.startViewTransition(() => applyTheme(newTheme));
+        
+        transition.ready.then(() => {
+            const x = event.clientX;
+            const y = event.clientY;
+            const endRadius = Math.hypot(
+                Math.max(x, innerWidth - x),
+                Math.max(y, innerHeight - y)
+            );
+            document.documentElement.animate(
+                {
+                    clipPath: [
+                        `circle(0% at ${x}px ${y}px)`,
+                        `circle(${endRadius}px at ${x}px ${y}px)`
+                    ]
+                },
+                {
+                    duration: 400,
+                    easing: 'ease-in-out',
+                    pseudoElement: '::view-transition-new(root)'
+                }
+            );
         });
-    };
-    
+    }
+
     function init() {
         const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+        applyTheme(savedTheme);
         
         loadState();
 
@@ -596,8 +659,55 @@ async function sendMessage() {
         setActive(state.activeId);
     }
     
+    // --- Event Listeners ---
     document.addEventListener('DOMContentLoaded', init);
+    elements.themeToggleBtn.onclick = toggleTheme;
+    elements.newChatBtn.onclick = () => { const chat = createChat(); state.chats.unshift(chat); setActive(chat.id); saveState(); if (window.innerWidth < 768) { toggleSidebar(); } };
+    elements.toggleSidebarBtn.onclick = toggleSidebar; 
+    elements.sidebarOverlay.onclick = toggleSidebar;
+    elements.userInput.addEventListener('input', () => { elements.userInput.style.height = 'auto'; elements.userInput.style.height = (elements.userInput.scrollHeight) + 'px'; });
+    elements.sendBtn.onclick = sendMessage; 
+    elements.userInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+    elements.settingsBtn.onclick = () => animateModalOpen(elements.settingsModal.container);
+    elements.settingsModal.closeBtn.onclick = () => animateModalClose(elements.settingsModal.container);
+    elements.settingsModal.resetBtn.onclick = () => {
+      localStorage.clear();
+      window.location.reload();
+    };
+    elements.renameModal.saveBtn.onclick = () => { const { chatId } = state.modalContext; const newName = elements.renameModal.input.value.trim(); const chat = state.chats.find(c => c.id === chatId); if (chat && newName) { chat.title = newName; if (chat.id === state.activeId) elements.chatTitle.textContent = chat.title; renderSidebar(); saveState(); } closeAllModals(); };
+    elements.deleteModal.confirmBtn.onclick = () => {
+        const { chatId } = state.modalContext;
+        if (state.chats.length === 1 && state.chats[0].id === chatId) {
+            const chat = state.chats[0]; chat.title = 'New Chat'; chat.messages = []; chat.model = 'openai';
+            setActive(chat.id);
+        } else {
+            const idx = state.chats.findIndex(c => c.id === chatId);
+            if (idx > -1) state.chats.splice(idx, 1);
+            if (chatId === state.activeId) {
+                const newActiveId = state.chats[Math.max(0, idx - 1)]?.id || state.chats[0]?.id || null;
+                setActive(newActiveId);
+            } else { renderSidebar(); saveState(); }
+        }
+        closeAllModals();
+    };
+    [elements.settingsModal.container, elements.renameModal.container, elements.deleteModal.container].forEach(el => el.onclick = (e) => { if (e.target === el) closeAllModals(); });
+    [elements.renameModal.cancelBtn, elements.deleteModal.cancelBtn].forEach(el => el.onclick = closeAllModals);
+    elements.cancelEditBtn.onclick = exitEditMode;
+    elements.modelSelector.onclick = () => {
+      const isHidden = elements.modelDropdown.style.display === 'none' || elements.modelDropdown.style.display === '';
+      elements.modelDropdown.style.display = isHidden ? 'block' : 'none';
+    };
+    document.addEventListener('click', (e) => {
+      if (!elements.modelSelector.contains(e.target) && !elements.modelDropdown.contains(e.target)) {
+        elements.modelDropdown.style.display = 'none';
+      }
+    });
 
+    // Helper functions that were at the bottom
+    function copyMessage(text, btn) { navigator.clipboard.writeText(text).then(() => { const originalIcon = btn.innerHTML; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`; setTimeout(() => btn.innerHTML = originalIcon, 1500); }); };
+    function enterEditMode(chatId, messageIndex) { const chat = state.chats.find(c => c.id === chatId); if (!chat) return; state.editingMessage = { chatId, messageIndex }; elements.userInput.value = chat.messages[messageIndex].content; elements.userInput.focus(); elements.sendIcon.classList.add('hidden'); elements.saveIcon.classList.remove('hidden'); elements.editIndicator.style.display = 'block'; };
+    function exitEditMode() { state.editingMessage = null; elements.userInput.value = ''; elements.sendIcon.classList.remove('hidden'); elements.saveIcon.classList.add('hidden'); elements.editIndicator.style.display = 'none'; renderChat(); };
+    function toggleSidebar() { const isMobile = window.innerWidth < 768; elements.sidebar.classList.toggle(isMobile ? 'open' : 'closed'); if (isMobile) elements.sidebarOverlay.classList.toggle('open'); };
 
   </script>
 </body>
