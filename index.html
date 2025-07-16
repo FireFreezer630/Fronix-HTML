@@ -209,8 +209,20 @@
     </button>
 </div>
 
+<!-- ADDED: Image Preview Container -->
+<div id="image-preview-container" class="max-w-3xl mx-auto p-4 hidden">
+    <!-- Image preview will be dynamically inserted here by JavaScript -->
+</div>
+
         <!-- Input Bar -->
         <div class="max-w-3xl mx-auto flex items-end space-x-3 p-4">
+            <!-- ADDED: Attach button and hidden file input -->
+            <input type="file" id="image-upload" class="hidden" accept="image/png, image/jpeg, image/webp, image/gif">
+            <button id="attach-btn" class="p-3 rounded-full hover:bg-light-user-bubble dark:hover:bg-dark-user-bubble transition-colors text-light-text-subtle dark:text-dark-text-subtle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.59a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                </svg>
+            </button>
           <textarea id="user-input" rows="1" class="flex-1 bg-light-user-bubble dark:bg-dark-user-bubble rounded-xl md:rounded-2xl py-3 px-4 resize-none focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Type your message..." style="max-height: 200px"></textarea>
           <button id="send-btn" class="p-3 rounded-full bg-accent hover:bg-accent-hover text-white disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"><svg id="send-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg><svg id="save-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg></button>
           <button id="stop-btn" class="p-3 rounded-full bg-red-600 hover:bg-red-700 text-white hidden"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"></rect></svg></button>
@@ -261,6 +273,7 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
     let currentController = null; // For aborting fetch requests
     let isStreaming = false; // Flag to indicate if streaming is active
     let isScrolledUp = false; // Flag to indicate if the user has scrolled up
+    let attachedImageData = null; // To store { file, dataUrl }
     const FONTS = { 'inter': 'Inter', 'sans-serif': 'Sans Serif', 'work-sans': 'Work Sans', 'yu-gothic': 'Yu Gothic' };
     const FONT_WEIGHTS = { '300': 'Thin', '400': 'Regular', '500': 'Medium', '600': 'Semibold', '700': 'Bold' };
 
@@ -392,11 +405,34 @@ function renderChat() {
         const isUser = msg.role === 'user';
 
         if (isUser) {
-            msgDiv.className = 'ml-auto w-fit max-w-[90%] p-4 rounded-2xl bg-light-user-bubble dark:bg-dark-user-bubble';
-            const p = document.createElement('p');
-p.className = 'whitespace-pre-wrap';
-            p.textContent = msg.content;
-            msgDiv.appendChild(p);
+            msgDiv.className = 'ml-auto w-fit max-w-[90%]'; // Container for user messages
+            
+            // Check if content is multimodal (an array)
+            if (Array.isArray(msg.content)) {
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'p-4 rounded-2xl bg-light-user-bubble dark:bg-dark-user-bubble flex flex-col gap-3';
+                msg.content.forEach(part => {
+                    if (part.type === 'text' && part.text) {
+                        const p = document.createElement('p');
+                        p.className = 'whitespace-pre-wrap';
+                        p.textContent = part.text;
+                        contentWrapper.appendChild(p);
+                    } else if (part.type === 'image_url') {
+                        const img = document.createElement('img');
+                        img.src = part.image_url.url;
+                        img.className = 'w-48 h-auto rounded-lg';
+                        contentWrapper.appendChild(img);
+                    }
+                });
+                msgDiv.appendChild(contentWrapper);
+            } else {
+                // Standard text-only message
+                msgDiv.classList.add('p-4', 'rounded-2xl', 'bg-light-user-bubble', 'dark:bg-dark-user-bubble');
+                const p = document.createElement('p');
+                p.className = 'whitespace-pre-wrap';
+                p.textContent = msg.content;
+                msgDiv.appendChild(p);
+            }
         } else {
             msgDiv.className = 'prose prose-sm md:prose-base max-w-none text-light-text dark:text-dark-text';
             if (msg.content === '...') {
@@ -444,16 +480,37 @@ function scrollToBottom() {
 // And finally, replace your sendMessage function with this fully corrected version.
 async function sendMessage() {
     const input = elements.userInput.value.trim();
-    if (!input || !state.activeId || isStreaming) return; // Prevent sending if already streaming
+    if ((!input && !attachedImageData) || !state.activeId || isStreaming) return; // Prevent sending if no input and no image, or already streaming
 
     const chat = state.chats.find(c => c.id === state.activeId);
 
     if (state.editingMessage) {
-        chat.messages[state.editingMessage.messageIndex].content = input;
+        chat.messages[state.editingMessage.messageIndex].content = input; // Keep this simple for now
         chat.messages.length = state.editingMessage.messageIndex + 1;
         exitEditMode();
     } else {
-        addMessage('user', input);
+        let userMessageContent;
+        if (attachedImageData) {
+            // Construct the multimodal content array
+            userMessageContent = [
+                { type: 'text', text: input },
+                { type: 'image_url', image_url: { url: attachedImageData.dataUrl } }
+            ];
+        } else {
+            // Standard text message
+            userMessageContent = input;
+        }
+        addMessage('user', userMessageContent);
+
+        // After adding the message, clear the image preview
+        if (attachedImageData) {
+            attachedImageData = null;
+            document.getElementById('image-upload').value = null;
+            const imagePreviewContainer = document.getElementById('image-preview-container');
+            imagePreviewContainer.innerHTML = '';
+            imagePreviewContainer.classList.add('hidden');
+        }
+
         if (chat.messages.length === 1) {
             chat.title = input.length > 30 ? input.substring(0, 27) + '...' : input;
             renderSidebar();
@@ -743,6 +800,40 @@ async function sendMessage() {
 
 
         setActive(state.activeId);
+
+        const attachBtn = document.getElementById('attach-btn');
+        const imageUpload = document.getElementById('image-upload');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+
+        attachBtn.onclick = () => imageUpload.click();
+
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                attachedImageData = { file: file, dataUrl: e.target.result };
+                
+                imagePreviewContainer.innerHTML = `
+                    <div class="relative inline-block">
+                        <img src="${e.target.result}" class="h-20 w-20 object-cover rounded-lg">
+                        <button id="remove-image-btn" class="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 leading-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+                `;
+                imagePreviewContainer.classList.remove('hidden');
+
+                document.getElementById('remove-image-btn').onclick = () => {
+                    attachedImageData = null;
+                    imageUpload.value = null; // Important: reset the input
+                    imagePreviewContainer.innerHTML = '';
+                    imagePreviewContainer.classList.add('hidden');
+                };
+            };
+            reader.readAsDataURL(file);
+        });
     }
     
     // --- Event Listeners ---
