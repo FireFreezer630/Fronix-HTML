@@ -485,10 +485,27 @@ async function sendMessage() {
     const chat = state.chats.find(c => c.id === state.activeId);
 
     if (state.editingMessage) {
-        chat.messages[state.editingMessage.messageIndex].content = input; // Keep this simple for now
-        chat.messages.length = state.editingMessage.messageIndex + 1;
-        exitEditMode();
+    // --- Start of Replacement ---
+    let newContent;
+    if (attachedImageData) {
+        // If an image is attached during the edit, save as multimodal
+        newContent = [
+            { type: 'text', text: input },
+            { type: 'image_url', image_url: { url: attachedImageData.dataUrl } }
+        ];
     } else {
+        // Otherwise, save as plain text
+        newContent = input;
+    }
+
+    // Update the message content
+    chat.messages[state.editingMessage.messageIndex].content = newContent;
+    // Truncate history after this message
+    chat.messages.length = state.editingMessage.messageIndex + 1;
+    
+    exitEditMode(); // This will clear the preview and reset the UI
+    // --- End of Replacement ---
+} else {
         let userMessageContent;
         if (attachedImageData) {
             // Construct the multimodal content array
@@ -643,7 +660,62 @@ async function sendMessage() {
 } // Added missing closing brace for sendMessage function
 
     function copyMessage(text, btn) { navigator.clipboard.writeText(text).then(() => { const originalIcon = btn.innerHTML; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`; setTimeout(() => btn.innerHTML = originalIcon, 1500); }); };
-    function enterEditMode(chatId, messageIndex) { const chat = state.chats.find(c => c.id === chatId); if (!chat) return; state.editingMessage = { chatId, messageIndex }; elements.userInput.value = chat.messages[messageIndex].content; elements.userInput.focus(); elements.sendIcon.classList.add('hidden'); elements.saveIcon.classList.remove('hidden'); elements.editIndicator.classList.remove('hidden'); elements.editIndicator.classList.add('flex'); };
+    function enterEditMode(chatId, messageIndex) {
+    const chat = state.chats.find(c => c.id === chatId);
+    if (!chat) return;
+
+    const message = chat.messages[messageIndex];
+    if (!message) return;
+    
+    // Clear any previous image preview first
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    imagePreviewContainer.innerHTML = '';
+    imagePreviewContainer.classList.add('hidden');
+    attachedImageData = null;
+    document.getElementById('image-upload').value = null;
+
+    // Check if the message content is an array (multimodal) or a string
+    if (Array.isArray(message.content)) {
+        const textPart = message.content.find(p => p.type === 'text');
+        const imagePart = message.content.find(p => p.type === 'image_url');
+
+        // Set the text input
+        elements.userInput.value = textPart ? textPart.text : '';
+
+        // If an image part exists, display it and set the state
+        if (imagePart && imagePart.image_url.url) {
+            attachedImageData = { dataUrl: imagePart.image_url.url }; // Set the state for resending
+            
+            // Re-use the preview logic to display the image
+            imagePreviewContainer.innerHTML = `
+                <div class="relative inline-block">
+                    <img src="${imagePart.image_url.url}" class="h-20 w-20 object-cover rounded-lg">
+                    <button id="remove-image-btn" class="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 leading-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            `;
+            imagePreviewContainer.classList.remove('hidden');
+
+            document.getElementById('remove-image-btn').onclick = () => {
+                attachedImageData = null;
+                document.getElementById('image-upload').value = null;
+                imagePreviewContainer.innerHTML = '';
+                imagePreviewContainer.classList.add('hidden');
+            };
+        }
+    } else {
+        // Handle legacy/text-only messages
+        elements.userInput.value = message.content;
+    }
+
+    // --- The rest of the function remains the same ---
+    state.editingMessage = { chatId, messageIndex };
+    elements.userInput.focus();
+    elements.sendIcon.classList.add('hidden');
+    elements.saveIcon.classList.remove('hidden');
+    elements.editIndicator.classList.remove('hidden');
+}
     function exitEditMode() { state.editingMessage = null; elements.userInput.value = ''; elements.sendIcon.classList.remove('hidden'); elements.saveIcon.classList.add('hidden'); elements.editIndicator.classList.add('hidden'); elements.editIndicator.classList.remove('flex'); renderChat(); };
     function toggleSidebar() { const isMobile = window.innerWidth < 768; elements.sidebar.classList.toggle(isMobile ? 'open' : 'closed'); if (isMobile) elements.sidebarOverlay.classList.toggle('open'); };
     
@@ -897,11 +969,6 @@ elements.themeToggleBtn.onclick = toggleTheme;
       }
     });
 
-    // Helper functions that were at the bottom
-    function copyMessage(text, btn) { navigator.clipboard.writeText(text).then(() => { const originalIcon = btn.innerHTML; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`; setTimeout(() => btn.innerHTML = originalIcon, 1500); }); };
-    function enterEditMode(chatId, messageIndex) { const chat = state.chats.find(c => c.id === chatId); if (!chat) return; state.editingMessage = { chatId, messageIndex }; elements.userInput.value = chat.messages[messageIndex].content; elements.userInput.focus(); elements.sendIcon.classList.add('hidden'); elements.saveIcon.classList.remove('hidden'); elements.editIndicator.classList.remove('hidden'); elements.editIndicator.classList.add('flex'); };
-    function exitEditMode() { state.editingMessage = null; elements.userInput.value = ''; elements.sendIcon.classList.remove('hidden'); elements.saveIcon.classList.add('hidden'); elements.editIndicator.classList.add('hidden'); elements.editIndicator.classList.remove('flex'); renderChat(); };
-    function toggleSidebar() { const isMobile = window.innerWidth < 768; elements.sidebar.classList.toggle(isMobile ? 'open' : 'closed'); if (isMobile) elements.sidebarOverlay.classList.toggle('open'); };
 
   </script>
 </body>
