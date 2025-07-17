@@ -716,7 +716,23 @@ async function sendMessage() {
     elements.saveIcon.classList.remove('hidden');
     elements.editIndicator.classList.remove('hidden');
 }
-    function exitEditMode() { state.editingMessage = null; elements.userInput.value = ''; elements.sendIcon.classList.remove('hidden'); elements.saveIcon.classList.add('hidden'); elements.editIndicator.classList.add('hidden'); elements.editIndicator.classList.remove('flex'); renderChat(); };
+    function exitEditMode() {
+        state.editingMessage = null;
+        elements.userInput.value = '';
+        elements.sendIcon.classList.remove('hidden');
+        elements.saveIcon.classList.add('hidden');
+        elements.editIndicator.classList.add('hidden');
+        elements.editIndicator.classList.remove('flex');
+
+        // Clear image preview
+        attachedImageData = null;
+        document.getElementById('image-upload').value = null;
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        imagePreviewContainer.innerHTML = '';
+        imagePreviewContainer.classList.add('hidden');
+
+        renderChat();
+    };
     function toggleSidebar() { const isMobile = window.innerWidth < 768; elements.sidebar.classList.toggle(isMobile ? 'open' : 'closed'); if (isMobile) elements.sidebarOverlay.classList.toggle('open'); };
     
     // --- Modal Control with Anime.js ---
