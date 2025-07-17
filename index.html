@@ -677,9 +677,15 @@ async function sendMessage() {
                 Delete
             </button>
         `;
-        dropdown.querySelector('.rename-action').onclick = () => { openRenameModal(chatId); closeAllModals(); };
-        dropdown.querySelector('.delete-action').onclick = () => { openDeleteModal(chatId); closeAllModals(); };
-        
+        dropdown.querySelector('.rename-action').onclick = () => {
+    openRenameModal(chatId);
+    dropdown.style.display = 'none'; // Correct: Only hide the dropdown
+};
+
+        dropdown.querySelector('.delete-action').onclick = () => {
+    openDeleteModal(chatId);
+    dropdown.style.display = 'none'; // Correct: Only hide the dropdown
+};        
         dropdown.style.top = `${rect.bottom + 4}px`;
         dropdown.style.left = `${rect.left - dropdown.offsetWidth + rect.width}px`;
         dropdown.style.display = 'block';
