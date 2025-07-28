@@ -8,6 +8,7 @@
   <!-- Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Yu+Gothic&display=swap" rel="stylesheet">
@@ -315,42 +316,33 @@
   <script>
     const API_BASE_URL = 'http://localhost:3001'; // Your Node.js backend URL
     const config = { API_ENDPOINT: 'https://text.pollinations.ai/openai' };
+    const SUPABASE_URL = 'https://dfrlmrplshijbosawpms.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmcmxtcnBsc2hpamJvc2F3cG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzEzMDYsImV4cCI6MjA2ODg0NzMwNn0.BzsC5u2LGbq3QydQCAKnIiJvrRHTdjx3HzNGdCzf_ac';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     // --- CORRECTED Sign In Function ---
 async function handleSignIn(email, password) {
-    // 1. Basic input validation on the frontend
     if (!email || !password) {
         alert("Please enter both your email and password.");
         return;
     }
-
     try {
-        // 2. Send the sign-in request to your Node.js backend
+        // This function CORRECTLY calls your backend, not the client library.
         const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
-
         const data = await response.json();
-
-        // 3. Handle the response from the backend
-        if (response.ok) {
-            // SUCCESS CASE
-            console.log("Sign-in successful. Session data:", data.session);
-            // 3a. **FIXED:** Get the token from the correct path
-            localStorage.setItem('authToken', data.session.access_token);
-            alert('Sign in successful!');
-            closeAllModals();
-            // 3b. **ADDED:** Immediately load the user's chats and messages
-            loadDataFromServer();
-        } else {
-            // FAILURE CASE (e.g., wrong password, user not found)
-            // The backend provides the specific error message
+        if (!response.ok) {
             throw new Error(data.error || 'Unknown sign-in error');
         }
-
+        // The onAuthStateChange listener will detect the login and handle the rest.
+        // We manually set the token to speed up the process.
+        localStorage.setItem('authToken', data.session.access_token);
+        loadDataFromServer();
+        closeAllModals();
+        alert('Sign in successful!');
     } catch (error) {
-        // CATCH-ALL FOR NETWORK ERRORS (e.g., backend is down) OR FAILED REQUESTS
         console.error("Sign-in failed:", error);
         alert('Error signing in: ' + error.message);
     }
@@ -358,44 +350,28 @@ async function handleSignIn(email, password) {
 
     // --- CORRECTED Sign Up Function ---
 async function handleSignUp(email, password) {
-    // 1. Basic input validation on the frontend
     if (!email || !password) {
-        alert("Please provide both an email and a password to sign up.");
+        alert("Please provide both an email and a password.");
         return;
     }
     if (password.length < 6) {
-        alert("For security, your password must be at least 6 characters long.");
+        alert("Password must be at least 6 characters long.");
         return;
     }
-
     try {
-        // 2. Send the sign-up request to your Node.js backend
+        // This function CORRECTLY calls your backend.
         const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
-
         const data = await response.json();
-
-        // 3. Handle the response from the backend
-        if (response.ok) {
-            // SUCCESS CASE
-            console.log("Sign-up successful. Session data:", data.session);
-            // 3a. **FIXED:** Get the token from the correct path
-            localStorage.setItem('authToken', data.session.access_token);
-            alert('Sign-up successful! Please check your email for verification.');
-            closeAllModals();
-            // 3b. **ADDED:** Immediately load the (empty) chat state for the new user
-            loadDataFromServer();
-        } else {
-            // FAILURE CASE (e.g., user already exists)
-            // The backend provides the specific error message
+        if (!response.ok) {
             throw new Error(data.error || 'Unknown sign-up error');
         }
-
+        alert('Sign-up successful! Please check your email for verification.');
+        closeAllModals();
     } catch (error) {
-        // CATCH-ALL FOR NETWORK ERRORS OR FAILED REQUESTS
         console.error("Sign-up failed:", error);
         alert('Error signing up: ' + error.message);
     }
@@ -403,50 +379,37 @@ async function handleSignUp(email, password) {
 
     async function handleGoogleLogin() {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
-                method: 'GET',
-                credentials: 'include'
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
             });
-            if (!response.ok) throw new Error('Failed to log in with Google');
-            const data = await response.json();
-            localStorage.setItem('authToken', data.token);
-            alert('Google login successful!');
-            closeAllModals();
-            loadDataFromServer();
+            if (error) {
+                throw new Error('Supabase Google login failed: ' + error.message);
+            }
+            // Supabase will handle the redirect. No further code is needed here.
+            // After login, the user will be redirected back, and the session
+            // will be handled by the onAuthStateChange listener (which we'll add).
         } catch (error) {
-            alert('Error with Google login: ' + error.message);
+            console.error("Error during Google login:", error);
+            alert(error.message);
         }
     }
+// --- REPLACE your handleLogout function with this final version ---
 async function handleLogout() {
-    const token = localStorage.getItem('authToken');
-    if (!token) return;
-
     try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Server error during logout');
+        // Use the Supabase client to sign out.
+        // This will automatically trigger the 'SIGNED_OUT' event
+        // in your onAuthStateChange listener, which handles all the UI cleanup.
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            throw new Error("Logout failed: " + error.message);
         }
-        
     } catch (error) {
-        console.error("Logout failed:", error);
-        alert("Logout failed. Please try again. You will be logged out on this device.");
-    } finally {
-        localStorage.removeItem('authToken');
-        state.currentUser = null;
-        state.chats = [];
-        state.activeId = null;
-        updateLoginStateUI();
-        renderSidebar();
-        renderChat();
+        console.error(error);
+        // Alert the user even if the sign-out fails, as the local state
+        // will be cleared by the listener regardless.
+        alert(error.message);
     }
 }
-
 async function updateLoginStateUI() {
     if (state.currentUser) {
         elements.signinBtn.classList.add('hidden');
@@ -1035,90 +998,125 @@ async function sendMessage() {
         });
     }
 
-    function init() {
-        const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        applyTheme(savedTheme);
-        
-        loadState();
-
-        if (state.chats.length === 0) {
-            const newChat = createChat();
-            state.chats.push(newChat);
-            state.activeId = newChat.id;
-        } else if (!state.chats.some(c => c.id === state.activeId)) {
-            state.activeId = state.chats[0]?.id || null;
+    // --- REPLACE your entire old init() function with this ---
+function init() {
+    // 1. Apply the user's preferred theme on startup.
+    const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(savedTheme);
+    
+    // 2. Set up the master Supabase Authentication listener.
+    // This function is the single source of truth for the user's login state.
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+            // This block runs after any successful login, including the redirect from Google.
+            console.log('User signed in. Session:', session);
+            localStorage.setItem('authToken', session.access_token);
+            loadDataFromServer(); // Fetch user's chats and info.
+            closeAllModals();
+        } else if (event === 'SIGNED_OUT') {
+            // This block runs after supabase.auth.signOut() is called successfully.
+            // It resets the entire application to the logged-out state.
+            localStorage.removeItem('authToken');
+            state.currentUser = null;
+            state.chats = [];
+            state.activeId = null;
+            updateLoginStateUI();
+            renderSidebar();
+            renderChat();
+            console.log('User signed out.');
         }
-        
-        applyFont(state.settings.font);
-        applyFontWeight(state.settings.fontWeight);
-        
-        renderFontOptions();
-        renderFontWeightOptions();
-        
-        elements.settingsModal.apiTokenInput.addEventListener('change', (e) => {
-            state.settings.apiToken = e.target.value;
-            saveState();
-        });
+    });
+
+    // 3. Load user settings (like fonts, API token) from previous sessions.
+    // Note: We no longer load chats from here; they come from the server.
+    const d = localStorage.getItem('fronixState');
+    if (d) {
+        const p = JSON.parse(d);
+        state.settings = { ...state.settings, ...p.settings };
+        if (p.settings.apiToken) elements.settingsModal.apiTokenInput.value = p.settings.apiToken;
+    }
+    
+    // 4. Check if a token already exists when the page first loads (for returning users).
+    // This is important because onAuthStateChange might not fire immediately for an existing session.
+    const existingToken = localStorage.getItem('authToken');
+    if (existingToken) {
+        console.log('An existing auth token was found on page load. Loading user data.');
+        loadDataFromServer();
+    } else {
+        // If no token exists, ensure the UI is in the logged-out state.
+        updateLoginStateUI();
+    }
+    
+    // 5. Apply UI settings and attach all event listeners.
+    applyFont(state.settings.font);
+    applyFontWeight(state.settings.fontWeight);
+    renderFontOptions();
+    renderFontWeightOptions();
+    
+    elements.settingsModal.apiTokenInput.addEventListener('change', (e) => {
+        state.settings.apiToken = e.target.value;
+        saveState();
+    });
 
     elements.stopBtn.onclick = () => {
-        if (currentController) {
-            currentController.abort();
-        }
+        if (currentController) currentController.abort();
     };
 
-        elements.scrollToBottomBtn.onclick = scrollToBottom;
+    elements.scrollToBottomBtn.onclick = scrollToBottom;
 
-        elements.chatBox.parentElement.addEventListener('scroll', () => {
-            const { scrollTop, scrollHeight, clientHeight } = elements.chatBox.parentElement;
-            const atBottom = scrollHeight - scrollTop - clientHeight < 50;
-            isScrolledUp = !atBottom;
+    elements.chatBox.parentElement.addEventListener('scroll', () => {
+        const { scrollTop, scrollHeight, clientHeight } = elements.chatBox.parentElement;
+        const atBottom = scrollHeight - scrollTop - clientHeight < 50;
+        isScrolledUp = !atBottom;
 
-            if (isScrolledUp && isStreaming) {
-                elements.scrollToBottomBtn.classList.add('opacity-100');
-                elements.scrollToBottomBtn.classList.remove('opacity-0', 'pointer-events-none');
-            } else {
-                elements.scrollToBottomBtn.classList.remove('opacity-100');
-                elements.scrollToBottomBtn.classList.add('opacity-0', 'pointer-events-none');
-            }
-        });
+        if (isScrolledUp && isStreaming) {
+            elements.scrollToBottomBtn.classList.add('opacity-100');
+            elements.scrollToBottomBtn.classList.remove('opacity-0', 'pointer-events-none');
+        } else {
+            elements.scrollToBottomBtn.classList.remove('opacity-100');
+            elements.scrollToBottomBtn.classList.add('opacity-0', 'pointer-events-none');
+        }
+    });
 
+    // We no longer need to create a default chat here. If a user has no chats,
+    // loadDataFromServer will handle creating one.
+    setActive(state.activeId);
 
-        setActive(state.activeId);
+    // Image attachment logic
+    const attachBtn = document.getElementById('attach-btn');
+    const imageUpload = document.getElementById('image-upload');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
 
-        const attachBtn = document.getElementById('attach-btn');
-        const imageUpload = document.getElementById('image-upload');
-        const imagePreviewContainer = document.getElementById('image-preview-container');
+    attachBtn.onclick = () => imageUpload.click();
 
-        attachBtn.onclick = () => imageUpload.click();
+    imageUpload.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
 
-        imageUpload.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            attachedImageData = { file: file, dataUrl: e.target.result };
+            
+            imagePreviewContainer.innerHTML = `
+                <div class="relative inline-block">
+                    <img src="${e.target.result}" class="h-20 w-20 object-cover rounded-lg">
+                    <button id="remove-image-btn" class="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 leading-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            `;
+            imagePreviewContainer.classList.remove('hidden');
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                attachedImageData = { file: file, dataUrl: e.target.result };
-                
-                imagePreviewContainer.innerHTML = `
-                    <div class="relative inline-block">
-                        <img src="${e.target.result}" class="h-20 w-20 object-cover rounded-lg">
-                        <button id="remove-image-btn" class="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 leading-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
-                    </div>
-                `;
-                imagePreviewContainer.classList.remove('hidden');
-
-                document.getElementById('remove-image-btn').onclick = () => {
-                    attachedImageData = null;
-                    imageUpload.value = null; // Important: reset the input
-                    imagePreviewContainer.innerHTML = '';
-                    imagePreviewContainer.classList.add('hidden');
-                };
+            document.getElementById('remove-image-btn').onclick = () => {
+                attachedImageData = null;
+                imageUpload.value = null;
+                imagePreviewContainer.innerHTML = '';
+                imagePreviewContainer.classList.add('hidden');
             };
-            reader.readAsDataURL(file);
-        });
-    }
+        };
+        reader.readAsDataURL(file);
+    });
+}
     
     // --- Event Listeners ---
     document.addEventListener('DOMContentLoaded', init);

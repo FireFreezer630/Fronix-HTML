@@ -43,25 +43,7 @@ router.post('/signin', async (req, res) => {
     }
 });
 
-// Google OAuth
-router.get('/google', async (req, res) => {
-    try {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                // This is the URL Google will redirect back to after the user signs in.
-                // It MUST be the URL of your frontend application.
-                redirectTo: 'http://localhost:3000' 
-            },
-        });
-        if (error) throw error;
-        // Send the URL to the frontend so it can perform the redirect.
-        res.status(200).json({ url: data.url });
-    } catch (error) {
-        console.error('Error creating Google sign-in URL:', error);
-        res.status(500).json({ error: 'Internal server error during Google sign-in' });
-    }
-});
+
 
 // Sign out
 
