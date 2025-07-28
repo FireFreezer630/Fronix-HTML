@@ -64,25 +64,25 @@ router.get('/google', async (req, res) => {
 });
 
 // Sign out
+
 router.post('/logout', authMiddleware, async (req, res) => {
     try {
-        // The authMiddleware ensures we have a valid user session.
-        // We get the token from the header to invalidate the specific session.
-        const token = req.headers.authorization?.split(' ')[1];
-
-        const { error } = await supabase.auth.signOut(token);
+        // The authMiddleware gives us the user object, so we have the user's ID.
+        // This is a more reliable way to perform a server-side sign-out.
+        const { error } = await supabase.auth.admin.signOut(req.user.id);
 
         if (error) {
-            // Log the error for debugging but still return a success response,
-            // as the client will proceed with logging out regardless.
-            console.error('Supabase sign out error:', error.message);
+            // Log the error for debugging but don't crash the server.
+            console.error('Supabase admin sign out error:', error.message);
+            // Even if this fails, we tell the client it succeeded so it can log out.
         }
 
         res.status(200).json({ message: 'Logged out successfully' });
     } catch (error) {
+        // This will catch any unexpected errors in the process.
+        console.error('Internal server error during logout:', error);
         res.status(500).json({ error: 'Internal server error during logout' });
     }
 });
-
 
 module.exports = router;

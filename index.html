@@ -693,19 +693,31 @@ function addMessage(role, content, customId = null) {
 };
 
 // Place this function where your current renderChat is.
+// ... inside your <script> tag ...
+
+// Place this function where your current renderChat is.
 function renderChat() {
     const chat = state.chats.find(c => c.id === state.activeId);
     elements.chatBox.innerHTML = '';
-    if (!chat || !chat.messages.length) {
+
+    // CORRECTED CHECK: First, verify a chat exists. If not, show the welcome screen and exit.
+    // This prevents any further code from running with an undefined 'chat' object.
+    if (!chat) {
         elements.chatBox.innerHTML = `<div class="text-center text-light-text-subtle dark:text-dark-text-subtle py-8"><h2 class="text-3xl font-bold mb-2">Fronix</h2><p>Start a new message to begin.</p></div>`;
         return;
     }
+    
+    // SECOND CHECK: If the chat exists but messages haven't been loaded yet, show welcome screen.
+    if (!chat.messages || chat.messages.length === 0) {
+        elements.chatBox.innerHTML = `<div class="text-center text-light-text-subtle dark:text-dark-text-subtle py-8"><h2 class="text-3xl font-bold mb-2">Fronix</h2><p>Start a new message to begin.</p></div>`;
+        return;
+    }
+
+    // The rest of the function remains the same, but is now safe to run.
     chat.messages.forEach((msg, index) => {
         const wrapper = document.createElement('div');
         const msgDiv = document.createElement('div');
         
-        // This is the critical part: applying the unique ID to the message div
-        // so we can target it for streaming.
         if (msg.id) {
             msgDiv.id = msg.id;
         }
@@ -713,9 +725,8 @@ function renderChat() {
         const isUser = msg.role === 'user';
 
         if (isUser) {
-            msgDiv.className = 'ml-auto w-fit max-w-[90%]'; // Container for user messages
+            msgDiv.className = 'ml-auto w-fit max-w-[90%]';
             
-            // Check if content is multimodal (an array)
             if (Array.isArray(msg.content)) {
                 const contentWrapper = document.createElement('div');
                 contentWrapper.className = 'p-4 rounded-2xl bg-light-user-bubble dark:bg-dark-user-bubble flex flex-col gap-3';
@@ -734,7 +745,6 @@ function renderChat() {
                 });
                 msgDiv.appendChild(contentWrapper);
             } else {
-                // Standard text-only message
                 msgDiv.classList.add('p-4', 'rounded-2xl', 'bg-light-user-bubble', 'dark:bg-dark-user-bubble');
                 const p = document.createElement('p');
                 p.className = 'whitespace-pre-wrap';
@@ -746,7 +756,6 @@ function renderChat() {
             if (msg.content === '...') {
                 msgDiv.innerHTML = `<div class="flex items-center space-x-1.5">${Array(3).fill().map(() => `<div class="loader-dot w-2 h-2 bg-gray-400 rounded-full"></div>`).join('')}</div>`;
             } else {
-                // Use the full markdown parser for existing, completed messages
                 msgDiv.innerHTML = renderContent(msg.content);
             }
             renderMathInElement(msgDiv, {
@@ -776,7 +785,6 @@ function renderChat() {
     });
     elements.chatBox.parentElement.scrollTop = elements.chatBox.parentElement.scrollHeight;
 };
-
 // Function to scroll to the bottom of the chat
 function scrollToBottom() {
     elements.chatBox.parentElement.scrollTo({
