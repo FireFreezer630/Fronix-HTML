@@ -166,7 +166,30 @@
     <div class="p-2"><button id="new-chat" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg shadow-sm transition-all duration-200 ease-in-out transform hover:scale-105"><svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.6687 11.333V8.66699C2.6687 7.74455 2.66841 7.01205 2.71655 6.42285C2.76533 5.82612 2.86699 5.31731 3.10425 4.85156L3.25854 4.57617C3.64272 3.94975 4.19392 3.43995 4.85229 3.10449L5.02905 3.02149C5.44666 2.84233 5.90133 2.75849 6.42358 2.71582C7.01272 2.66769 7.74445 2.66797 8.66675 2.66797H9.16675C9.53393 2.66797 9.83165 2.96586 9.83179 3.33301C9.83179 3.70028 9.53402 3.99805 9.16675 3.99805H8.66675C7.7226 3.99805 7.05438 3.99834 6.53198 4.04102C6.14611 4.07254 5.87277 4.12568 5.65601 4.20313L5.45581 4.28906C5.01645 4.51293 4.64872 4.85345 4.39233 5.27149L4.28979 5.45508C4.16388 5.7022 4.08381 6.01663 4.04175 6.53125C3.99906 7.05373 3.99878 7.7226 3.99878 8.66699V11.333C3.99878 12.2774 3.99906 12.9463 4.04175 13.4688C4.08381 13.9833 4.16389 14.2978 4.28979 14.5449L4.39233 14.7285C4.64871 15.1465 5.01648 15.4871 5.45581 15.7109L5.65601 15.7969C5.87276 15.8743 6.14614 15.9265 6.53198 15.958C7.05439 16.0007 7.72256 16.002 8.66675 16.002H11.3337C12.2779 16.002 12.9461 16.0007 13.4685 15.958C13.9829 15.916 14.2976 15.8367 14.5447 15.7109L14.7292 15.6074C15.147 15.3511 15.4879 14.9841 15.7117 14.5449L15.7976 14.3447C15.8751 14.128 15.9272 13.8546 15.9587 13.4688C16.0014 12.9463 16.0017 12.2774 16.0017 11.333V10.833C16.0018 10.466 16.2997 10.1681 16.6667 10.168C17.0339 10.168 17.3316 10.4659 17.3318 10.833V11.333C17.3318 12.2555 17.3331 12.9879 17.2849 13.5771C17.2422 14.0993 17.1584 14.5541 16.9792 14.9717L16.8962 15.1484C16.5609 15.8066 16.0507 16.3571 15.4246 16.7412L15.1492 16.8955C14.6833 17.1329 14.1739 17.2354 13.5769 17.2842C12.9878 17.3323 12.256 17.332 11.3337 17.332H8.66675C7.74446 17.332 7.01271 17.3323 6.42358 17.2842C5.90135 17.2415 5.44665 17.1577 5.02905 16.9785L4.85229 16.8955C4.19396 16.5601 3.64271 16.0502 3.25854 15.4238L3.10425 15.1484C2.86697 14.6827 2.76534 14.1739 2.71655 13.5771C2.66841 12.9879 2.6687 12.2555 2.6687 11.333ZM13.4646 3.11328C14.4201 2.334 15.8288 2.38969 16.7195 3.28027L16.8865 3.46485C17.6141 4.35685 17.6143 5.64423 16.8865 6.53613L16.7195 6.7207L11.6726 11.7686C11.1373 12.3039 10.4624 12.6746 9.72827 12.8408L9.41089 12.8994L7.59351 13.1582C7.38637 13.1877 7.17701 13.1187 7.02905 12.9707C6.88112 12.8227 6.81199 12.6134 6.84155 12.4063L7.10132 10.5898L7.15991 10.2715C7.3262 9.53749 7.69692 8.86241 8.23218 8.32715L13.2791 3.28027L13.4646 3.11328ZM15.7791 4.2207C15.3753 3.81702 14.7366 3.79124 14.3035 4.14453L14.2195 4.2207L9.17261 9.26856C8.81541 9.62578 8.56774 10.0756 8.45679 10.5654L8.41772 10.7773L8.28296 11.7158L9.22241 11.582L9.43433 11.543C9.92426 11.432 10.3749 11.1844 10.7322 10.8271L15.7791 5.78027L15.8552 5.69629C16.185 5.29194 16.1852 4.708 15.8552 4.30371L15.7791 4.2207Z"></path></svg>New Chat</button></div>
     <div class="mt-6 px-4 text-xs font-semibold text-light-text-subtle dark:text-dark-text-subtle tracking-wider">Chats</div>
     <ul id="chat-list" class="flex-1 overflow-y-auto px-2 mt-2 space-y-1"></ul>
-    <div class="p-4 border-t border-light-border dark:border-dark-border"><div class="flex items-center justify-between"><div class="flex items-center gap-3 text-sm"></div><div class="flex items-center"><button id="settings-btn" class="p-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button><button id="theme-toggle" class="p-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors"><svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg><svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button></div></div></div>
+    <div class="p-4 border-t border-light-border dark:border-dark-border">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 text-sm">
+                <button id="signin-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                    Sign In
+                </button>
+                <!-- ADDED LOGOUT BUTTON -->
+                <button id="logout-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    Sign Out
+                </button>
+            </div>
+            <div class="flex items-center">
+                <button id="settings-btn" class="p-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+                <button id="theme-toggle" class="p-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
+                    <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
   </aside>
 
   <div id="main-container" class="flex-1 flex flex-col min-w-0">
@@ -235,10 +258,289 @@
   <div id="settings-modal" class="modal-container"><div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 rounded-2xl shadow-xl w-full max-w-md border border-light-border dark:border-dark-border"><div class="flex justify-between items-center mb-6"><h3 class="text-xl font-semibold">Settings</h3><button id="close-settings-btn" class="p-1 rounded-full hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div><div class="space-y-6"><div class="space-y-2"><div><label class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">API Token</label><p class="text-xs text-light-text-subtle dark:text-dark-text-subtle">Your token is stored only in your browser's local storage.</p></div><input id="api-token-input" type="password" class="w-full p-2 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Enter your API token..."></div><div id="font-options"></div><div id="font-weight-options"></div><div><button id="reset-settings-btn" class="w-full px-4 py-2 rounded-md text-sm font-medium border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">Reset to Default</button></div></div></div></div>
 <div id="rename-modal" class="modal-container"><div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 sm:pb-8 rounded-2xl shadow-xl w-full max-w-sm border border-light-border dark:border-dark-border"><h3 class="text-lg font-semibold mb-4">Rename Chat</h3><input id="rename-input" type="text" class="w-full p-2 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent mb-4"><div class="flex justify-end gap-2"><button id="rename-cancel" class="px-4 py-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover">Cancel</button><button id="rename-save" class="px-4 py-2 rounded-md bg-accent text-white">Save</button></div></div></div>
   <div id="delete-modal" class="modal-container"><div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 rounded-2xl shadow-xl w-full max-w-sm border border-light-border dark:border-dark-border"><h3 class="text-lg font-semibold mb-4">Delete Chat</h3><p id="delete-message" class="mb-4 text-light-text-subtle dark:text-dark-text-subtle"></p><div class="flex justify-end gap-2"><button id="delete-cancel" class="px-4 py-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover">Cancel</button><button id="delete-confirm" class="px-4 py-2 rounded-md bg-red-600 text-white">Delete</button></div></div></div>
+  <div id="signin-modal" class="modal-container">
+    <div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-10 rounded-2xl shadow-xl w-full max-w-md border border-light-border dark:border-dark-border">
+        <div class="flex justify-between items-start mb-6">
+            <div class="flex border-b border-light-border dark:border-dark-border">
+                <button id="signin-tab-btn" class="px-4 py-2 text-lg font-semibold text-accent border-b-2 border-accent">Sign In</button>
+                <button id="signup-tab-btn" class="px-4 py-2 text-lg font-semibold text-light-text-subtle dark:text-dark-text-subtle border-b-2 border-transparent">Sign Up</button>
+            </div>
+            <button id="close-signin-btn" class="p-1 rounded-full hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <!-- Sign In View -->
+        <div id="signin-view" class="space-y-5">
+            <input id="signin-email" type="email" placeholder="Enter your email" class="w-full p-3 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent">
+            <div class="relative">
+                <input id="password-input" type="password" placeholder="Enter your password" class="w-full p-3 pr-10 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent">
+                <button id="password-toggle-btn" class="absolute inset-y-0 right-0 flex items-center px-3 text-light-text-subtle dark:text-dark-text-subtle">
+                    <svg id="eye-open-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    <svg id="eye-closed-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M9.9 4.24A9 9 0 0 1 12 3c7 0 10 7 10 7a13.2 13.2 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line><path d="M14 14.25a3 3 0 0 1-4.3-4.3"></path></svg>
+                </button>
+            </div>
+             <a href="#" class="text-xs text-accent hover:underline text-right block -mt-2">Forgot password?</a>
+            <button id="signin-email-btn" class="w-full px-4 py-3 rounded-md bg-accent text-white font-semibold hover:bg-accent-hover transition-colors">Sign In</button>
+            <div class="flex items-center text-xs text-light-text-subtle dark:text-dark-text-subtle">
+                <div class="flex-grow border-t border-light-border dark:border-dark-border"></div>
+                <span class="flex-shrink mx-4">OR</span>
+                <div class="flex-grow border-t border-light-border dark:border-dark-border"></div>
+            </div>
+            <button id="signin-google-btn" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-md bg-white dark:bg-dark-user-bubble border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1h22v22H1z"/></svg>
+                Continue with Google
+            </button>
+        </div>
+
+        <!-- Sign Up View -->
+        <div id="signup-view" class="hidden space-y-5">
+            <input id="signup-email" type="email" placeholder="Enter your email" class="w-full p-3 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent">
+            <input id="signup-password" type="password" placeholder="Create a password" class="w-full p-3 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent">
+            <button id="signup-email-btn" class="w-full px-4 py-3 rounded-md bg-accent text-white font-semibold hover:bg-accent-hover transition-colors">Continue with Email</button>
+            <div class="flex items-center text-xs text-light-text-subtle dark:text-dark-text-subtle">
+                <div class="flex-grow border-t border-light-border dark:border-dark-border"></div>
+                <span class="flex-shrink mx-4">OR</span>
+                <div class="flex-grow border-t border-light-border dark:border-dark-border"></div>
+            </div>
+            <button id="signup-google-btn" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-md bg-white dark:bg-dark-user-bubble border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1h22v22H1z"/></svg>
+                Continue with Google
+            </button>
+        </div>
+    </div>
+</div>
   <div id="chat-actions-dropdown" class="w-32 bg-light-sidebar dark:bg-dark-sidebar rounded-lg shadow-lg border border-light-border dark:border-dark-border"></div>
 
   <script>
+    const API_BASE_URL = 'http://localhost:3001'; // Your Node.js backend URL
     const config = { API_ENDPOINT: 'https://text.pollinations.ai/openai' };
+    // --- CORRECTED Sign In Function ---
+async function handleSignIn(email, password) {
+    // 1. Basic input validation on the frontend
+    if (!email || !password) {
+        alert("Please enter both your email and password.");
+        return;
+    }
+
+    try {
+        // 2. Send the sign-in request to your Node.js backend
+        const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        // 3. Handle the response from the backend
+        if (response.ok) {
+            // SUCCESS CASE
+            console.log("Sign-in successful. Session data:", data.session);
+            // 3a. **FIXED:** Get the token from the correct path
+            localStorage.setItem('authToken', data.session.access_token);
+            alert('Sign in successful!');
+            closeAllModals();
+            // 3b. **ADDED:** Immediately load the user's chats and messages
+            loadDataFromServer();
+        } else {
+            // FAILURE CASE (e.g., wrong password, user not found)
+            // The backend provides the specific error message
+            throw new Error(data.error || 'Unknown sign-in error');
+        }
+
+    } catch (error) {
+        // CATCH-ALL FOR NETWORK ERRORS (e.g., backend is down) OR FAILED REQUESTS
+        console.error("Sign-in failed:", error);
+        alert('Error signing in: ' + error.message);
+    }
+}
+
+    // --- CORRECTED Sign Up Function ---
+async function handleSignUp(email, password) {
+    // 1. Basic input validation on the frontend
+    if (!email || !password) {
+        alert("Please provide both an email and a password to sign up.");
+        return;
+    }
+    if (password.length < 6) {
+        alert("For security, your password must be at least 6 characters long.");
+        return;
+    }
+
+    try {
+        // 2. Send the sign-up request to your Node.js backend
+        const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        // 3. Handle the response from the backend
+        if (response.ok) {
+            // SUCCESS CASE
+            console.log("Sign-up successful. Session data:", data.session);
+            // 3a. **FIXED:** Get the token from the correct path
+            localStorage.setItem('authToken', data.session.access_token);
+            alert('Sign-up successful! Please check your email for verification.');
+            closeAllModals();
+            // 3b. **ADDED:** Immediately load the (empty) chat state for the new user
+            loadDataFromServer();
+        } else {
+            // FAILURE CASE (e.g., user already exists)
+            // The backend provides the specific error message
+            throw new Error(data.error || 'Unknown sign-up error');
+        }
+
+    } catch (error) {
+        // CATCH-ALL FOR NETWORK ERRORS OR FAILED REQUESTS
+        console.error("Sign-up failed:", error);
+        alert('Error signing up: ' + error.message);
+    }
+}
+
+    async function handleGoogleLogin() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (!response.ok) throw new Error('Failed to log in with Google');
+            const data = await response.json();
+            localStorage.setItem('authToken', data.token);
+            alert('Google login successful!');
+            closeAllModals();
+            loadDataFromServer();
+        } catch (error) {
+            alert('Error with Google login: ' + error.message);
+        }
+    }
+async function handleLogout() {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Server error during logout');
+        }
+        
+    } catch (error) {
+        console.error("Logout failed:", error);
+        alert("Logout failed. Please try again. You will be logged out on this device.");
+    } finally {
+        localStorage.removeItem('authToken');
+        state.currentUser = null;
+        state.chats = [];
+        state.activeId = null;
+        updateLoginStateUI();
+        renderSidebar();
+        renderChat();
+    }
+}
+
+async function updateLoginStateUI() {
+    if (state.currentUser) {
+        elements.signinBtn.classList.add('hidden');
+        elements.logoutBtn.classList.remove('hidden');
+        // You can replace the button text or add the user's email next to it
+        elements.logoutBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            <span class="truncate">${state.currentUser.email}</span>`;
+    } else {
+        elements.signinBtn.classList.remove('hidden');
+        elements.logoutBtn.classList.add('hidden');
+    }
+}
+
+async function loadDataFromServer() {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        updateLoginStateUI();
+        return;
+    }
+
+    try {
+        // Fetch user info first
+        const userResponse = await fetch(`${API_BASE_URL}/api/user/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!userResponse.ok) throw new Error('Failed to fetch user data.');
+        state.currentUser = await userResponse.json();
+
+        // Then fetch chats
+        const chatsResponse = await fetch(`${API_BASE_URL}/api/chat`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!chatsResponse.ok) throw new Error('Failed to fetch chats.');
+        const chats = await chatsResponse.json();
+        state.chats = chats;
+
+        if (chats.length > 0) {
+            state.activeId = chats[0].id;
+            const messagesResponse = await fetch(`${API_BASE_URL}/api/chat/${state.activeId}/messages`, {
+                 headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!messagesResponse.ok) throw new Error('Failed to fetch messages.');
+            const messages = await messagesResponse.json();
+            const activeChat = state.chats.find(c => c.id === state.activeId);
+            if (activeChat) activeChat.messages = messages;
+        } else {
+            await handleNewChat();
+            return; 
+        }
+
+        renderSidebar();
+        renderChat();
+
+    } catch (error) {
+        console.error("Error loading data from server:", error);
+        alert(`An error occurred: ${error.message}. You may need to sign in again.`);
+        localStorage.removeItem('authToken'); // Clear potentially invalid token
+        state.currentUser = null;
+    } finally {
+        updateLoginStateUI();
+    }
+}
+// ++ ADD THIS NEW FUNCTION TO YOUR SCRIPT ++
+async function handleNewChat() {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        alert("Please sign in to create a new chat.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/chat`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ title: 'New Chat' }) // You can customize the title
+        });
+        if (!response.ok) throw new Error('Failed to create chat on server');
+
+        const newChatFromServer = await response.json();
+        newChatFromServer.messages = []; // Initialize with an empty messages array
+
+        state.chats.unshift(newChatFromServer); // Add to the top of the list
+        setActive(newChatFromServer.id); // Make it the active chat
+
+    } catch (error) {
+        console.error("Error creating new chat:", error);
+        alert("Could not create a new chat. Please try again.");
+    }
+}
+
     const SYSTEM_PROMPT = { role: 'system', content: `You are Fronix, a large language model. You are chatting with the user via the Fronix iOS app. This means most of the time your lines should be a sentence or two, unless the user's request requires reasoning or long-form outputs. Never use emojis, unless explicitly asked to. 
 Knowledge cutoff: 2024-06
 Current date: 2025-05-15
@@ -259,6 +561,8 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
 
     const elements = {
       body: document.body, sidebar: document.getElementById('sidebar'), sidebarOverlay: document.getElementById('sidebar-overlay'), chatList: document.getElementById('chat-list'), chatBox: document.getElementById('chat-box'), chatTitle: document.getElementById('chat-title'), userInput: document.getElementById('user-input'), sendBtn: document.getElementById('send-btn'), sendIcon: document.getElementById('send-icon'), saveIcon: document.getElementById('save-icon'), stopBtn: document.getElementById('stop-btn'), newChatBtn: document.getElementById('new-chat'), toggleSidebarBtn: document.getElementById('toggle-sidebar'), themeToggleBtn: document.getElementById('theme-toggle'), settingsBtn: document.getElementById('settings-btn'),
+      signinBtn: document.getElementById('signin-btn'),
+      logoutBtn: document.getElementById('logout-btn'),
       modelSelector: document.getElementById('model-selector'), modelDropdown: document.getElementById('model-dropdown'),
       chatActionsDropdown: document.getElementById('chat-actions-dropdown'),
       editIndicator: document.getElementById('edit-indicator'),
@@ -267,9 +571,10 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
       settingsModal: { container: document.getElementById('settings-modal'), fontOptions: document.getElementById('font-options'), fontWeightOptions: document.getElementById('font-weight-options'), closeBtn: document.getElementById('close-settings-btn'), resetBtn: document.getElementById('reset-settings-btn'), apiTokenInput: document.getElementById('api-token-input') },
       renameModal: { container: document.getElementById('rename-modal'), input: document.getElementById('rename-input'), saveBtn: document.getElementById('rename-save'), cancelBtn: document.getElementById('rename-cancel') },
       deleteModal: { container: document.getElementById('delete-modal'), message: document.getElementById('delete-message'), confirmBtn: document.getElementById('delete-confirm'), cancelBtn: document.getElementById('delete-cancel') },
+      signinModal: { container: document.getElementById('signin-modal'), closeBtn: document.getElementById('close-signin-btn') },
     };
 
-    let state = { chats: [], activeId: null, editingMessage: null, modalContext: {}, settings: { model: 'openai', font: 'inter', fontWeight: '400', apiToken: '' } };
+    let state = { chats: [], activeId: null, editingMessage: null, modalContext: {}, settings: { model: 'openai', font: 'inter', fontWeight: '400', apiToken: '' }, currentUser: null };
     let currentController = null; // For aborting fetch requests
     let isStreaming = false; // Flag to indicate if streaming is active
     let isScrolledUp = false; // Flag to indicate if the user has scrolled up
@@ -283,10 +588,13 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
         const d = localStorage.getItem('fronixState');
         if (d) {
             const p = JSON.parse(d);
-            state.chats = p.chats || [];
-            state.activeId = p.activeId || null;
+            // state.chats = p.chats || []; // Chat history will be loaded from server
+            // state.activeId = p.activeId || null;
             state.settings = { ...state.settings, ...p.settings };
             if (p.settings.apiToken) elements.settingsModal.apiTokenInput.value = p.settings.apiToken;
+        }
+        if (localStorage.getItem('authToken')) {
+            loadDataFromServer();
         }
     };
 
@@ -480,184 +788,58 @@ function scrollToBottom() {
 // And finally, replace your sendMessage function with this fully corrected version.
 async function sendMessage() {
     const input = elements.userInput.value.trim();
-    if ((!input && !attachedImageData) || !state.activeId || isStreaming) return; // Prevent sending if no input and no image, or already streaming
+    if (!input || !state.activeId || isStreaming) return;
 
-    const chat = state.chats.find(c => c.id === state.activeId);
-
-    if (state.editingMessage) {
-    // --- Start of Replacement ---
-    let newContent;
-    if (attachedImageData) {
-        // If an image is attached during the edit, save as multimodal
-        newContent = [
-            { type: 'text', text: input },
-            { type: 'image_url', image_url: { url: attachedImageData.dataUrl } }
-        ];
-    } else {
-        // Otherwise, save as plain text
-        newContent = input;
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        alert("Please sign in to send a message.");
+        animateModalOpen(elements.signinModal.container);
+        return;
     }
 
-    // Update the message content
-    chat.messages[state.editingMessage.messageIndex].content = newContent;
-    // Truncate history after this message
-    chat.messages.length = state.editingMessage.messageIndex + 1;
-    
-    exitEditMode(); // This will clear the preview and reset the UI
-    // --- End of Replacement ---
-} else {
-        let userMessageContent;
-        if (attachedImageData) {
-            // Construct the multimodal content array
-            userMessageContent = [
-                { type: 'text', text: input },
-                { type: 'image_url', image_url: { url: attachedImageData.dataUrl } }
-            ];
-        } else {
-            // Standard text message
-            userMessageContent = input;
-        }
-        addMessage('user', userMessageContent);
-
-        // After adding the message, clear the image preview
-        if (attachedImageData) {
-            attachedImageData = null;
-            document.getElementById('image-upload').value = null;
-            const imagePreviewContainer = document.getElementById('image-preview-container');
-            imagePreviewContainer.innerHTML = '';
-            imagePreviewContainer.classList.add('hidden');
-        }
-
-        if (chat.messages.length === 1) {
-            chat.title = input.length > 30 ? input.substring(0, 27) + '...' : input;
-            renderSidebar();
-        }
-    }
-
-    saveState();
+    addMessage('user', input);
     elements.userInput.value = '';
     elements.userInput.style.height = 'auto';
     elements.sendBtn.disabled = true;
 
-    // Show stop button, hide send/save
-    elements.sendBtn.classList.add('hidden');
-    elements.saveIcon.classList.add('hidden');
-    elements.sendIcon.classList.remove('hidden'); // Ensure send icon is visible when send button is shown
-    elements.stopBtn.classList.remove('hidden');
-
-    isStreaming = true; // Set streaming flag
-
     const assistantMessageId = 'assistant-msg-' + Date.now();
     addMessage('assistant', '...', assistantMessageId);
-
     const assistantMsgDiv = document.getElementById(assistantMessageId);
-    if (!assistantMsgDiv) {
-        console.error("Critical error: Could not find assistant message div in the DOM.");
-        elements.sendBtn.disabled = false;
-        elements.stopBtn.classList.add('hidden'); // Hide stop button on error
-        elements.sendBtn.classList.remove('hidden'); // Show send button on error
-        isStreaming = false; // Reset streaming flag
-        return;
-    }
-    
-    // Clear the loading dots and show the blinking cursor immediately
-    assistantMsgDiv.innerHTML = '<span class="blinking-cursor"></span>';
-
-    let accumulatedContent = '';
-    let buffer = '';
-    currentController = new AbortController(); // Create new controller
 
     try {
-        const messagesToSend = [SYSTEM_PROMPT, ...chat.messages.slice(0, -1)];
-        const headers = { 'Content-Type': 'application/json' };
-        if (state.settings.apiToken) {
-            headers['Authorization'] = `Bearer ${state.settings.apiToken}`;
-        }
-
-        const res = await fetch(config.API_ENDPOINT, {
+        const res = await fetch(`${API_BASE_URL}/api/chat/${state.activeId}/messages`, {
             method: 'POST',
-            headers,
-            body: JSON.stringify({
-                model: chat.model || state.settings.model,
-                messages: messagesToSend,
-                stream: true,
-                referrer: 'fronix'
-            }),
-            signal: currentController.signal // Pass the signal
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ message: input })
         });
 
         if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`API Error: ${res.status} ${res.statusText}\n${errorText}`);
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to get response from server');
         }
 
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
+        const newAssistantMessage = await res.json();
+        assistantMsgDiv.innerHTML = renderContent(newAssistantMessage.content);
+        renderMathInElement(assistantMsgDiv);
 
-        while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-                if (!line.startsWith('data: ')) continue;
-                const data = line.slice(6).trim();
-
-                if (data === '[DONE]') {
-                    // Finalize the stream. Use the full markdown parser.
-                    assistantMsgDiv.innerHTML = renderContent(accumulatedContent);
-                    renderMathInElement(assistantMsgDiv); // Re-render Katex for the final content
-                    chat.messages[chat.messages.length - 1].content = accumulatedContent;
-                    saveState();
-                    elements.sendBtn.disabled = false;
-                    return; // Stream successfully finished
-                }
-
-                try {
-                    const parsed = JSON.parse(data);
-                    const delta = parsed.choices?.[0]?.delta?.content;
-
-                    if (delta) {
-                        accumulatedContent += delta;
-                        // Use the full markdown parser for real-time block rendering
-                        assistantMsgDiv.innerHTML = renderContent(accumulatedContent) + '<span class="blinking-cursor"></span>';
-                        // Only auto-scroll if the user is not scrolled up
-                        if (!isScrolledUp) {
-                            elements.chatBox.parentElement.scrollTop = elements.chatBox.parentElement.scrollHeight;
-                        }
-                    }
-                } catch (e) {
-                    console.warn('JSON Parse Error:', e, "on data:", data);
-                }
-            }
+        // Update state with the new message from the server
+        const chat = state.chats.find(c => c.id === state.activeId);
+        if (chat) {
+            chat.messages[chat.messages.length - 1] = newAssistantMessage;
         }
-    } catch (error) {
-        if (error.name === 'AbortError') {
-            console.log('Message generation aborted.');
-            accumulatedContent += '\n\n*Response stopped.*'; // Indicate that the response was stopped
-        } else {
-            console.error("sendMessage Error:", error);
-            accumulatedContent = `⚠️ An error occurred: ${error.message}`;
-        }
-        assistantMsgDiv.innerHTML = renderContent(accumulatedContent); // Render final content even on error/abort
-        renderMathInElement(assistantMsgDiv); // Re-render Katex
-    } finally {
-        // This block runs if the stream finishes without a [DONE] marker, or after an error/abort.
-        // Ensure UI is reset regardless of outcome
-        elements.stopBtn.classList.add('hidden');
-        elements.sendBtn.classList.remove('hidden');
-        elements.sendBtn.disabled = false;
-        currentController = null; // Clear the controller
-        isStreaming = false; // Reset streaming flag
-        elements.scrollToBottomBtn.classList.remove('opacity-100', 'pointer-events-auto'); // Hide button
-        elements.scrollToBottomBtn.classList.add('opacity-0', 'pointer-events-none');
-        chat.messages[chat.messages.length - 1].content = accumulatedContent; // Save final content (including error/stopped message)
         saveState();
-    } // Added missing closing brace for finally block
-} // Added missing closing brace for sendMessage function
+
+    } catch (error) {
+        console.error("sendMessage Error:", error);
+        assistantMsgDiv.innerHTML = renderContent(`⚠️ An error occurred: ${error.message}`);
+    } finally {
+        elements.sendBtn.disabled = false;
+        isStreaming = false;
+    }
+}
 
     function copyMessage(text, btn) { navigator.clipboard.writeText(text).then(() => { const originalIcon = btn.innerHTML; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`; setTimeout(() => btn.innerHTML = originalIcon, 1500); }); };
     function enterEditMode(chatId, messageIndex) {
@@ -932,8 +1114,9 @@ async function sendMessage() {
     
     // --- Event Listeners ---
     document.addEventListener('DOMContentLoaded', init);
-elements.themeToggleBtn.onclick = toggleTheme;
-    elements.newChatBtn.onclick = () => { const chat = createChat(); state.chats.unshift(chat); setActive(chat.id); saveState(); if (window.innerWidth < 768) { toggleSidebar(); } };
+    elements.themeToggleBtn.onclick = toggleTheme;
+    // This was the instruction
+elements.newChatBtn.onclick = handleNewChat;
     elements.toggleSidebarBtn.onclick = toggleSidebar; 
     elements.sidebarOverlay.onclick = toggleSidebar;
     elements.userInput.addEventListener('input', () => { elements.userInput.style.height = 'auto'; elements.userInput.style.height = (elements.userInput.scrollHeight) + 'px'; });
@@ -954,27 +1137,105 @@ elements.themeToggleBtn.onclick = toggleTheme;
       window.location.reload();
     };
     elements.renameModal.saveBtn.onclick = () => { const { chatId } = state.modalContext; const newName = elements.renameModal.input.value.trim(); const chat = state.chats.find(c => c.id === chatId); if (chat && newName) { chat.title = newName; if (chat.id === state.activeId) elements.chatTitle.textContent = chat.title; renderSidebar(); saveState(); } closeAllModals(); };
-    elements.deleteModal.confirmBtn.onclick = () => {
+    elements.deleteModal.confirmBtn.onclick = async () => {
         const { chatId } = state.modalContext;
-        const idx = state.chats.findIndex(c => c.id === chatId);
-        if (idx > -1) {
-            state.chats.splice(idx, 1);
-            if (state.chats.length === 0) {
-                const newChat = createChat();
-                state.chats.push(newChat);
-                setActive(newChat.id);
-            } else if (chatId === state.activeId) {
-                const newActiveId = state.chats[Math.max(0, idx - 1)]?.id || state.chats[0]?.id;
-                setActive(newActiveId);
-            }
-            renderSidebar();
-            saveState();
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            alert("Authentication error. Please sign in again.");
+            return;
         }
-        closeAllModals();
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/chat/${chatId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete chat on server.');
+            }
+
+            // If successful, update UI
+            const idx = state.chats.findIndex(c => c.id === chatId);
+            if (idx > -1) {
+                state.chats.splice(idx, 1);
+                if (state.chats.length === 0) {
+                    await handleNewChat();
+                } else if (chatId === state.activeId) {
+                    const newActiveId = state.chats[Math.max(0, idx - 1)]?.id || state.chats[0]?.id;
+                    setActive(newActiveId);
+                } else {
+                   renderSidebar();
+                }
+            }
+        } catch (error) {
+            console.error("Error deleting chat:", error);
+            alert(`Failed to delete chat: ${error.message}`);
+        } finally {
+            closeAllModals();
+        }
     };
-    [elements.settingsModal.container, elements.renameModal.container, elements.deleteModal.container].forEach(el => el.onclick = (e) => { if (e.target === el) closeAllModals(); });
-    [elements.renameModal.cancelBtn, elements.deleteModal.cancelBtn].forEach(el => el.onclick = closeAllModals);
+    [elements.settingsModal.container, elements.renameModal.container, elements.deleteModal.container, elements.signinModal.container].forEach(el => el.onclick = (e) => { if (e.target === el) closeAllModals(); });
+    [elements.renameModal.cancelBtn, elements.deleteModal.cancelBtn, elements.signinModal.closeBtn].forEach(el => el.onclick = closeAllModals);
     elements.cancelEditBtn.onclick = exitEditMode;
+    elements.signinBtn.onclick = () => animateModalOpen(elements.signinModal.container);
+    elements.logoutBtn.onclick = handleLogout;
+    
+    // Sign In / Sign Up Toggle
+    const signinTabBtn = document.getElementById('signin-tab-btn');
+    const signupTabBtn = document.getElementById('signup-tab-btn');
+    const signinView = document.getElementById('signin-view');
+    const signupView = document.getElementById('signup-view');
+
+    signinTabBtn.addEventListener('click', () => {
+        signinView.classList.remove('hidden');
+        signupView.classList.add('hidden');
+        signinTabBtn.classList.add('text-accent', 'border-accent');
+        signinTabBtn.classList.remove('text-light-text-subtle', 'dark:text-dark-text-subtle', 'border-transparent');
+        signupTabBtn.classList.remove('text-accent', 'border-accent');
+        signupTabBtn.classList.add('text-light-text-subtle', 'dark:text-dark-text-subtle', 'border-transparent');
+    });
+
+    signupTabBtn.addEventListener('click', () => {
+        signupView.classList.remove('hidden');
+        signinView.classList.add('hidden');
+        signupTabBtn.classList.add('text-accent', 'border-accent');
+        signupTabBtn.classList.remove('text-light-text-subtle', 'dark:text-dark-text-subtle', 'border-transparent');
+        signinTabBtn.classList.remove('text-accent', 'border-accent');
+        signinTabBtn.classList.add('text-light-text-subtle', 'dark:text-dark-text-subtle', 'border-transparent');
+    });
+
+    // Password visibility toggle
+    const passwordInput = document.getElementById('password-input');
+    const passwordToggleBtn = document.getElementById('password-toggle-btn');
+    const eyeOpenIcon = document.getElementById('eye-open-icon');
+    const eyeClosedIcon = document.getElementById('eye-closed-icon');
+
+    passwordToggleBtn.addEventListener('click', () => {
+        const isPassword = passwordInput.type === 'password';
+        passwordInput.type = isPassword ? 'text' : 'password';
+        eyeOpenIcon.classList.toggle('hidden', isPassword);
+        eyeClosedIcon.classList.toggle('hidden', !isPassword);
+    });
+
+    // --- New Authentication Event Listeners ---
+    document.getElementById('signin-email-btn').onclick = () => {
+        const email = document.getElementById('signin-email').value;
+        const password = document.getElementById('password-input').value;
+        handleSignIn(email, password);
+    };
+
+    document.getElementById('signup-email-btn').onclick = () => {
+        const email = document.getElementById('signup-email').value;
+        const password = document.getElementById('signup-password').value;
+        handleSignUp(email, password);
+    };
+
+    document.getElementById('signin-google-btn').onclick = handleGoogleLogin;
+    document.getElementById('signup-google-btn').onclick = handleGoogleLogin;
+
+
     elements.modelSelector.onclick = () => {
       const isHidden = elements.modelDropdown.style.display === 'none' || elements.modelDropdown.style.display === '';
       elements.modelDropdown.style.display = isHidden ? 'block' : 'none';
