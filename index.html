@@ -274,8 +274,20 @@
                 </svg>
             </button>
             <textarea id="user-input" rows="1" class="flex-1 bg-transparent py-3 px-4 resize-none focus:outline-none" placeholder="Type your message..." style="max-height: 200px"></textarea>
-            <button id="send-btn" class="p-3 rounded-full bg-accent hover:bg-accent-hover text-white disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"><svg id="send-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg><svg id="save-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg></button>
-            <button id="stop-btn" class="p-3 rounded-full bg-red-600 hover:bg-red-700 text-white hidden"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"></rect></svg></button>
+            <button id="send-btn" class="p-3 rounded-full bg-accent hover:bg-accent-hover text-white disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
+              <svg id="send-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="19" x2="12" y2="5"></line>
+                <polyline points="5 12 12 5 19 12"></polyline>
+              </svg>
+              <svg id="stop-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+                <rect x="6" y="6" width="12" height="12" rx="1"></rect>
+              </svg>
+              <svg id="save-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -567,7 +579,7 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
     };
 
     const elements = {
-      body: document.body, sidebar: document.getElementById('sidebar'), sidebarOverlay: document.getElementById('sidebar-overlay'), chatList: document.getElementById('chat-list'), chatBox: document.getElementById('chat-box'), chatTitle: document.getElementById('chat-title'), userInput: document.getElementById('user-input'), sendBtn: document.getElementById('send-btn'), sendIcon: document.getElementById('send-icon'), saveIcon: document.getElementById('save-icon'), stopBtn: document.getElementById('stop-btn'), newChatBtn: document.getElementById('new-chat'), toggleSidebarBtn: document.getElementById('toggle-sidebar'), themeToggleBtn: document.getElementById('theme-toggle'), settingsBtn: document.getElementById('settings-btn'),
+      body: document.body, sidebar: document.getElementById('sidebar'), sidebarOverlay: document.getElementById('sidebar-overlay'), chatList: document.getElementById('chat-list'), chatBox: document.getElementById('chat-box'), chatTitle: document.getElementById('chat-title'), userInput: document.getElementById('user-input'), sendBtn: document.getElementById('send-btn'), sendIcon: document.getElementById('send-icon'), stopIcon: document.getElementById('stop-icon'), saveIcon: document.getElementById('save-icon'), newChatBtn: document.getElementById('new-chat'), toggleSidebarBtn: document.getElementById('toggle-sidebar'), themeToggleBtn: document.getElementById('theme-toggle'), settingsBtn: document.getElementById('settings-btn'),
       signinBtn: document.getElementById('signin-btn'),
       logoutBtn: document.getElementById('logout-btn'),
       profileSection: document.getElementById('profile-section'),
@@ -825,8 +837,11 @@ async function sendMessage() {
     }
 
     isStreaming = true;
-    elements.sendBtn.disabled = true;
-    elements.stopBtn.classList.remove('hidden');
+    // Transform send button to stop button
+    elements.sendIcon.classList.add('hidden');
+    elements.stopIcon.classList.remove('hidden');
+    elements.sendBtn.classList.remove('bg-accent', 'hover:bg-accent-hover');
+    elements.sendBtn.classList.add('bg-red-600', 'hover:bg-red-700');
     elements.userInput.value = '';
     elements.userInput.style.height = 'auto';
     
@@ -918,8 +933,12 @@ async function sendMessage() {
         }
     } finally {
         isStreaming = false;
+        // Restore send button from stop state
+        elements.stopIcon.classList.add('hidden');
+        elements.sendIcon.classList.remove('hidden');
+        elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+        elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
         elements.sendBtn.disabled = false;
-        elements.stopBtn.classList.add('hidden');
         currentController = null;
     }
 }
@@ -1170,8 +1189,15 @@ function init() {
         saveState();
     });
 
-    elements.stopBtn.onclick = () => {
-        if (currentController) currentController.abort();
+    // Dynamic click handler for send/stop button
+    elements.sendBtn.onclick = () => {
+        if (isStreaming) {
+            // Button is in stop state - abort the stream
+            if (currentController) currentController.abort();
+        } else {
+            // Button is in send state - send message
+            sendMessage();
+        }
     };
 
     elements.scrollToBottomBtn.onclick = scrollToBottom;
@@ -1238,7 +1264,6 @@ elements.newChatBtn.onclick = handleNewChat;
     elements.toggleSidebarBtn.onclick = toggleSidebar; 
     elements.sidebarOverlay.onclick = toggleSidebar;
     elements.userInput.addEventListener('input', () => { elements.userInput.style.height = 'auto'; elements.userInput.style.height = (elements.userInput.scrollHeight) + 'px'; });
-    elements.sendBtn.onclick = sendMessage; 
     elements.userInput.addEventListener('keydown', e => {
         const isMobile = window.innerWidth < 768;
         if (e.key === 'Enter' && !e.shiftKey) {
