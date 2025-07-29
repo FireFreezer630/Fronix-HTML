@@ -3,7 +3,6 @@
 //
 const express = require('express');
 const router = express.Router();
-const axios = require('axios');
 const supabase = require('../config/supabaseClient');
 const authMiddleware = require('../middleware/authMiddleware');
 
@@ -63,47 +62,59 @@ router.get('/:chatId/messages', authMiddleware, async (req, res) => {
     }
 });
 
-// POST a new message to a chat
-router.post('/:chatId/messages', authMiddleware, async (req, res) => {
+// POST to save messages after an AI stream is complete
+router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
     const { chatId } = req.params;
-    const { message } = req.body;
+    const { userMessage, assistantMessage } = req.body;
     const userId = req.user.id;
-
+    
+    if (!userMessage || !assistantMessage) {
+        return res.status(400).json({ error: 'Both user and assistant messages are required.' });
+    }
+    
     try {
-        // 1. Save user's message
-        await supabase.from('messages').insert({
-            chat_id: chatId,
-            user_id: userId,
-            role: 'user',
-            content: message
-        });
+        const { error } = await supabase.from('messages').insert([
+            { chat_id: chatId, user_id: userId, role: 'user', content: userMessage },
+            { chat_id: chatId, user_id: userId, role: 'assistant', content: assistantMessage }
+        ]);
+        
+        if (error) throw error;
+        res.status(201).json({ success: true, message: 'Conversation saved.' });
+    } catch (error) {
+        console.error("Error saving conversation:", error);
+        res.status(500).json({ error: 'Internal server error while saving conversation.' });
+    }
+});
 
-        // 2. Get AI response
-        const aiResponse = await axios.post(
-            process.env.AI_API_ENDPOINT,
-            { model: 'openai', messages: [{ role: 'user', content: message }], stream: false },
-            { headers: { 'Content-Type': 'application/json' } }
-        );
-        const aiMessageContent = aiResponse.data.choices[0].message.content;
-
-        // 3. Save AI's message and send it back
-        const { data: aiMessage, error: aiMessageError } = await supabase
-            .from('messages')
-            .insert({
-                chat_id: chatId,
-                user_id: userId,
-                role: 'assistant',
-                content: aiMessageContent
-            })
+// UPDATE a chat's title
+router.put('/:chatId', authMiddleware, async (req, res) => {
+    const { chatId } = req.params;
+    const { title } = req.body;
+    const userId = req.user.id;
+    
+    if (!title) {
+        return res.status(400).json({ error: 'Title is required' });
+    }
+    
+    try {
+        const { data, error } = await supabase
+            .from('chats')
+            .update({ title })
+            .eq('id', chatId)
+            .eq('user_id', userId)
             .select()
             .single();
-
-        if (aiMessageError) throw aiMessageError;
-
-        res.status(201).json(aiMessage);
+            
+        if (error) throw error;
+        
+        if (!data) {
+            return res.status(404).json({ error: 'Chat not found or you do not have permission to edit it.' });
+        }
+        
+        res.status(200).json(data);
     } catch (error) {
-        console.error("Chat processing error:", error);
-        res.status(500).json({ error: 'Internal server error in chat processing' });
+        console.error("Error updating chat title:", error);
+        res.status(500).json({ error: 'Error updating chat title' });
     }
 });
 

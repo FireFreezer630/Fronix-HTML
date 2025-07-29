@@ -347,11 +347,12 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmcmxtcnBsc2hpamJvc2F3cG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzEzMDYsImV4cCI6MjA2ODg0NzMwNn0.BzsC5u2LGbq3QydQCAKnIiJvrRHTdjx3HzNGdCzf_ac';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     // --- CORRECTED Sign In Function ---
-async function handleSignIn(email, password) {
+async function handleSignIn(email, password, retryCount = 0) {
     if (!email || !password) {
         alert("Please enter both your email and password.");
         return;
     }
+    const maxRetries = 2;
     try {
         // This function CORRECTLY calls your backend, not the client library.
         const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
@@ -371,7 +372,15 @@ async function handleSignIn(email, password) {
         alert('Sign in successful!');
     } catch (error) {
         console.error("Sign-in failed:", error);
-        alert('Error signing in: ' + error.message);
+        // Retry logic for network/fetch errors
+        if (retryCount < maxRetries && (error.message.includes('fetch failed') || error.message.includes('network'))) {
+            console.log(`Retrying sign-in attempt ${retryCount + 1}/${maxRetries + 1}...`);
+            setTimeout(() => {
+                handleSignIn(email, password, retryCount + 1);
+            }, 1000 * (retryCount + 1)); // Exponential backoff: 1s, 2s
+        } else {
+            alert('Error signing in: ' + error.message);
+        }
     }
 }
 
@@ -688,6 +697,12 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
 function addMessage(role, content, customId = null) {
     const chat = state.chats.find(c => c.id === state.activeId);
     if (!chat) return;
+    
+    // Initialize messages array if it doesn't exist
+    if (!chat.messages) {
+        chat.messages = [];
+    }
+    
     const message = { role, content };
     if (customId) {
         message.id = customId; // Add the custom ID if provided
@@ -798,59 +813,114 @@ function scrollToBottom() {
     });
 }
 
-// And finally, replace your sendMessage function with this fully corrected version.
 async function sendMessage() {
-    const input = elements.userInput.value.trim();
-    if (!input || !state.activeId || isStreaming) return;
+    const userInput = elements.userInput.value.trim();
+    const activeChat = state.chats.find(c => c.id === state.activeId);
+    if (!userInput || !activeChat || isStreaming) return;
 
     const token = localStorage.getItem('authToken');
     if (!token) {
         alert("Please sign in to send a message.");
-        animateModalOpen(elements.signinModal.container);
-        return;
+        return animateModalOpen(elements.signinModal.container);
     }
 
-    addMessage('user', input);
+    isStreaming = true;
+    elements.sendBtn.disabled = true;
+    elements.stopBtn.classList.remove('hidden');
     elements.userInput.value = '';
     elements.userInput.style.height = 'auto';
-    elements.sendBtn.disabled = true;
-
+    
+    addMessage('user', userInput);
+    
     const assistantMessageId = 'assistant-msg-' + Date.now();
-    addMessage('assistant', '...', assistantMessageId);
+    addMessage('assistant', '<span class="blinking-cursor"></span>', assistantMessageId);
     const assistantMsgDiv = document.getElementById(assistantMessageId);
+    
+    currentController = new AbortController();
+    let fullResponse = "";
 
     try {
-        const res = await fetch(`${API_BASE_URL}/api/chat/${state.activeId}/messages`, {
+        const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ message: input })
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            signal: currentController.signal,
+            body: JSON.stringify({
+                model: activeChat.model || 'openai',
+                messages: activeChat.messages.slice(0, -1)
+            }),
         });
 
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error || 'Failed to get response from server');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to get response from AI service.');
         }
 
-        const newAssistantMessage = await res.json();
-        assistantMsgDiv.innerHTML = renderContent(newAssistantMessage.content);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            
+            // Keep the last incomplete line in the buffer
+            buffer = lines.pop() || '';
+            
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) continue;
+                
+                if (trimmedLine === 'data: [DONE]') {
+                    // Stream completed
+                    break;
+                }
+                
+                if (trimmedLine.startsWith('data: ')) {
+                    try {
+                        const jsonStr = trimmedLine.slice(6); // Remove 'data: ' prefix
+                        const data = JSON.parse(jsonStr);
+                        
+                        // Extract content from choices[0].delta.content
+                        if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                            const content = data.choices[0].delta.content;
+                            fullResponse += content;
+                            assistantMsgDiv.innerHTML = renderStreamingContent(fullResponse + '<span class="blinking-cursor"></span>');
+                            scrollToBottom();
+                        }
+                    } catch (error) {
+                        console.warn('Failed to parse streaming chunk:', trimmedLine, error);
+                    }
+                }
+            }
+        }
+
+        assistantMsgDiv.innerHTML = renderContent(fullResponse);
         renderMathInElement(assistantMsgDiv);
 
-        // Update state with the new message from the server
-        const chat = state.chats.find(c => c.id === state.activeId);
-        if (chat) {
-            chat.messages[chat.messages.length - 1] = newAssistantMessage;
-        }
+        await fetch(`${API_BASE_URL}/api/chat/${activeChat.id}/save-messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ userMessage: userInput, assistantMessage: fullResponse })
+        });
+
+        activeChat.messages[activeChat.messages.length - 1].content = fullResponse;
         saveState();
 
     } catch (error) {
-        console.error("sendMessage Error:", error);
-        assistantMsgDiv.innerHTML = renderContent(`⚠️ An error occurred: ${error.message}`);
+        if (error.name === 'AbortError') {
+            assistantMsgDiv.innerHTML = renderContent(fullResponse + '\n\n*Stream stopped by user.*');
+        } else {
+            console.error("sendMessage Error:", error);
+            assistantMsgDiv.innerHTML = renderContent(`⚠️ An error occurred: ${error.message}`);
+        }
     } finally {
-        elements.sendBtn.disabled = false;
         isStreaming = false;
+        elements.sendBtn.disabled = false;
+        elements.stopBtn.classList.add('hidden');
+        currentController = null;
     }
 }
 
@@ -1184,7 +1254,49 @@ elements.newChatBtn.onclick = handleNewChat;
       localStorage.clear();
       window.location.reload();
     };
-    elements.renameModal.saveBtn.onclick = () => { const { chatId } = state.modalContext; const newName = elements.renameModal.input.value.trim(); const chat = state.chats.find(c => c.id === chatId); if (chat && newName) { chat.title = newName; if (chat.id === state.activeId) elements.chatTitle.textContent = chat.title; renderSidebar(); saveState(); } closeAllModals(); };
+    elements.renameModal.saveBtn.onclick = async () => {
+        const { chatId } = state.modalContext;
+        const newName = elements.renameModal.input.value.trim();
+        if (!newName) return;
+
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            alert("Authentication error. Please sign in again.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/chat/${chatId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ title: newName })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update chat title on server.');
+            }
+
+            const updatedChat = await response.json();
+            const chat = state.chats.find(c => c.id === chatId);
+            if (chat) {
+                chat.title = updatedChat.title;
+                if (chat.id === state.activeId) {
+                    elements.chatTitle.textContent = newName;
+                }
+                renderSidebar();
+                saveState();
+            }
+        } catch (error) {
+            console.error("Error renaming chat:", error);
+            alert(`Failed to rename chat: ${error.message}`);
+        } finally {
+            closeAllModals();
+        }
+    };
     elements.deleteModal.confirmBtn.onclick = async () => {
         const { chatId } = state.modalContext;
         const token = localStorage.getItem('authToken');
