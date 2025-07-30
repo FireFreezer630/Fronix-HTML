@@ -1,3 +1,7 @@
 node_modules/
 .env
 ./Backend/.env
+./docs
+docs/
+rls-policies.sql
+*.sql

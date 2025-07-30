@@ -358,6 +358,38 @@
     const SUPABASE_URL = 'https://dfrlmrplshijbosawpms.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmcmxtcnBsc2hpamJvc2F3cG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzEzMDYsImV4cCI6MjA2ODg0NzMwNn0.BzsC5u2LGbq3QydQCAKnIiJvrRHTdjx3HzNGdCzf_ac';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Token validation utility functions
+    function isTokenExpired(token) {
+        if (!token) return true;
+        
+        try {
+            // Parse JWT token to check expiration
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const currentTime = Math.floor(Date.now() / 1000);
+            
+            // Check if token is expired (with 30 second buffer)
+            return payload.exp && (payload.exp - 30) < currentTime;
+        } catch (error) {
+            console.warn("Invalid token format:", error);
+            return true; // Consider invalid tokens as expired
+        }
+    }
+    
+    async function validateAndRefreshToken() {
+        const token = localStorage.getItem('authToken');
+        
+        if (!token || isTokenExpired(token)) {
+            console.log("Token is expired or invalid. Triggering re-authentication...");
+            localStorage.removeItem('authToken');
+            state.currentUser = null;
+            updateLoginStateUI();
+            return null;
+        }
+        
+        return token;
+    }
+    
     // --- CORRECTED Sign In Function ---
 async function handleSignIn(email, password, retryCount = 0) {
     if (!email || !password) {
@@ -479,7 +511,30 @@ async function updateLoginStateUI() {
     }
 }
 
-async function loadDataFromServer() {
+// Utility function for retry mechanism with exponential backoff
+async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            const isLastAttempt = attempt === maxRetries;
+            const isNetworkError = error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch');
+            const isServerError = error.status >= 500;
+            const shouldRetry = !isLastAttempt && (isNetworkError || isServerError);
+            
+            if (shouldRetry) {
+                const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff
+                console.log(`Attempt ${attempt} failed, retrying in ${delay}ms...`, error.message);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            } else {
+                throw error;
+            }
+        }
+    }
+}
+
+async function loadDataFromServer(retryCount = 0) {
+    const maxRetries = 3;
     const token = localStorage.getItem('authToken');
     if (!token) {
         updateLoginStateUI();
@@ -487,46 +542,82 @@ async function loadDataFromServer() {
     }
 
     try {
-        // Fetch user info first
-        const userResponse = await fetch(`${API_BASE_URL}/api/user/me`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!userResponse.ok) throw new Error('Failed to fetch user data.');
-        state.currentUser = await userResponse.json();
-
-        // Then fetch chats
-        const chatsResponse = await fetch(`${API_BASE_URL}/api/chat`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!chatsResponse.ok) throw new Error('Failed to fetch chats.');
-        const chats = await chatsResponse.json();
-        state.chats = chats;
-
-        if (chats.length > 0) {
-            state.activeId = chats[0].id;
-            const messagesResponse = await fetch(`${API_BASE_URL}/api/chat/${state.activeId}/messages`, {
-                 headers: { 'Authorization': `Bearer ${token}` }
+        // Wrap the entire data loading process in retry mechanism
+        await retryWithBackoff(async () => {
+            // Fetch user info first
+            const userResponse = await fetch(`${API_BASE_URL}/api/user/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (!messagesResponse.ok) throw new Error('Failed to fetch messages.');
-            const messages = await messagesResponse.json();
-            const activeChat = state.chats.find(c => c.id === state.activeId);
-            if (activeChat) activeChat.messages = messages;
-        } else {
-            await handleNewChat();
-            return; 
-        }
+            
+            if (userResponse.status === 401 || userResponse.status === 403) {
+                throw new Error('AUTH_ERROR'); // Special error for authentication issues
+            }
+            if (!userResponse.ok) {
+                const error = new Error(`Failed to fetch user data. Status: ${userResponse.status}`);
+                error.status = userResponse.status;
+                throw error;
+            }
+            state.currentUser = await userResponse.json();
 
+            // Then fetch chats
+            const chatsResponse = await fetch(`${API_BASE_URL}/api/chat`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (chatsResponse.status === 401 || chatsResponse.status === 403) {
+                throw new Error('AUTH_ERROR');
+            }
+            if (!chatsResponse.ok) {
+                const error = new Error(`Failed to fetch chats. Status: ${chatsResponse.status}`);
+                error.status = chatsResponse.status;
+                throw error;
+            }
+            const chats = await chatsResponse.json();
+            state.chats = chats;
+
+            if (chats.length > 0) {
+                state.activeId = chats[0].id;
+                const messagesResponse = await fetch(`${API_BASE_URL}/api/chat/${state.activeId}/messages`, {
+                     headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (messagesResponse.status === 401 || messagesResponse.status === 403) {
+                    throw new Error('AUTH_ERROR');
+                }
+                if (!messagesResponse.ok) {
+                    const error = new Error(`Failed to fetch messages. Status: ${messagesResponse.status}`);
+                    error.status = messagesResponse.status;
+                    throw error;
+                }
+                const messages = await messagesResponse.json();
+                const activeChat = state.chats.find(c => c.id === state.activeId);
+                if (activeChat) activeChat.messages = messages;
+            } else {
+                await handleNewChat();
+                return;
+            }
+        });
+
+        // If we get here, everything succeeded
         renderSidebar();
         renderChat();
 
     } catch (error) {
         console.error("Error loading data from server:", error);
-        alert(`An error occurred: ${error.message}. You may need to sign in again.`);
-        localStorage.removeItem('authToken'); // Clear potentially invalid token
-        state.currentUser = null;
+        
+        // Only clear token and sign out on authentication errors
+        if (error.message === 'AUTH_ERROR') {
+            alert('Your session has expired. Please sign in again.');
+            localStorage.removeItem('authToken');
+            state.currentUser = null;
+        } else {
+            // For network/server errors, just show a warning but keep user signed in
+            console.warn('Temporary network issue:', error.message);
+            // Don't alert for temporary issues, just log them
+        }
     } finally {
         updateLoginStateUI();
-        updateProfileUI(); // Also update the profile UI
+        updateProfileUI();
     }
 }
 // ++ ADD THIS NEW FUNCTION TO YOUR SCRIPT ++
@@ -759,10 +850,21 @@ function renderChat() {
         if (isUser) {
             msgDiv.className = 'ml-auto w-fit max-w-[90%]';
             
-            if (Array.isArray(msg.content)) {
+            // Parse content if it's a JSON string from database
+            let content = msg.content;
+            if (typeof content === 'string' && (content.startsWith('[') || content.startsWith('{'))) {
+                try {
+                    content = JSON.parse(content);
+                } catch (e) {
+                    // If parsing fails, treat as regular text
+                    content = msg.content;
+                }
+            }
+            
+            if (Array.isArray(content)) {
                 const contentWrapper = document.createElement('div');
                 contentWrapper.className = 'p-4 rounded-2xl bg-light-user-bubble dark:bg-dark-user-bubble flex flex-col gap-3';
-                msg.content.forEach(part => {
+                content.forEach(part => {
                     if (part.type === 'text' && part.text) {
                         const p = document.createElement('p');
                         p.className = 'whitespace-pre-wrap';
@@ -771,7 +873,8 @@ function renderChat() {
                     } else if (part.type === 'image_url') {
                         const img = document.createElement('img');
                         img.src = part.image_url.url;
-                        img.className = 'w-48 h-auto rounded-lg';
+                        img.className = 'w-48 h-auto rounded-lg cursor-pointer';
+                        img.onclick = () => window.open(part.image_url.url, '_blank');
                         contentWrapper.appendChild(img);
                     }
                 });
@@ -780,7 +883,7 @@ function renderChat() {
                 msgDiv.classList.add('p-4', 'rounded-2xl', 'bg-light-user-bubble', 'dark:bg-dark-user-bubble');
                 const p = document.createElement('p');
                 p.className = 'whitespace-pre-wrap';
-                p.textContent = msg.content;
+                p.textContent = content;
                 msgDiv.appendChild(p);
             }
         } else {
@@ -828,12 +931,16 @@ function scrollToBottom() {
 async function sendMessage() {
     const userInput = elements.userInput.value.trim();
     const activeChat = state.chats.find(c => c.id === state.activeId);
-    if (!userInput || !activeChat || isStreaming) return;
+    if ((!userInput && !attachedImageData) || !activeChat || isStreaming) return;
 
-    const token = localStorage.getItem('authToken');
+    // Validate token before proceeding
+    const token = await validateAndRefreshToken();
     if (!token) {
-        alert("Please sign in to send a message.");
-        return animateModalOpen(elements.signinModal.container);
+        alert("Your session has expired. Please sign in again.");
+        setTimeout(() => {
+            animateModalOpen(elements.signinModal.container);
+        }, 1000);
+        return;
     }
 
     isStreaming = true;
@@ -845,7 +952,32 @@ async function sendMessage() {
     elements.userInput.value = '';
     elements.userInput.style.height = 'auto';
     
-    addMessage('user', userInput);
+    // Format user message with image if attached
+    let userMessageContent;
+    if (attachedImageData) {
+        userMessageContent = [
+            { type: 'text', text: userInput },
+            {
+                type: 'image_url',
+                image_url: {
+                    url: attachedImageData.dataUrl
+                }
+            }
+        ];
+    } else {
+        userMessageContent = userInput;
+    }
+    
+    addMessage('user', userMessageContent);
+    
+    // Clear attached image immediately after adding to chat history
+    if (attachedImageData) {
+        attachedImageData = null;
+        document.getElementById('image-upload').value = null;
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        imagePreviewContainer.innerHTML = '';
+        imagePreviewContainer.classList.add('hidden');
+    }
     
     const assistantMessageId = 'assistant-msg-' + Date.now();
     addMessage('assistant', '<span class="blinking-cursor"></span>', assistantMessageId);
@@ -861,13 +993,47 @@ async function sendMessage() {
             signal: currentController.signal,
             body: JSON.stringify({
                 model: activeChat.model || 'openai',
-                messages: activeChat.messages.slice(0, -1)
+                messages: activeChat.messages
             }),
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to get response from AI service.');
+            if (!response.ok) {
+                let errorMessage = 'Failed to get response from AI service.';
+                // Enhanced error logging for failed requests
+                console.error("❌ FRONTEND HTTP Error Response:");
+                console.error("  - Status:", response.status);
+                console.error("  - Status Text:", response.statusText);
+                console.error("  - Headers:", Object.fromEntries(response.headers.entries()));
+                console.error("  - URL:", response.url);
+                // Try to read response body for detailed error
+                let responseBody = null;
+                try {
+                    const responseText = await response.text();
+                    console.error("  - Response Body (text):", responseText);
+                    // Try to parse as JSON
+                    try {
+                        responseBody = JSON.parse(responseText);
+                        console.error("  - Response Body (parsed):", responseBody);
+                    } catch (parseError) {
+                        console.error("  - Response Body (not JSON):", responseText);
+                    }
+                } catch (readError) {
+                    console.error("  - Could not read response body:", readError);
+                }
+                // Handle different HTTP status codes
+                if (response.status === 401 || response.status === 403) {
+                    errorMessage = 'Invalid or expired token';
+                } else {
+                    try {
+                        errorMessage = responseBody?.error || responseText || `HTTP ${response.status}: ${response.statusText}`;
+                    } catch (e) {
+                        // If we can't parse the error response, use default message
+                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                }
+                throw new Error(errorMessage);
+            }
         }
 
         const reader = response.body.getReader();
@@ -915,10 +1081,11 @@ async function sendMessage() {
         assistantMsgDiv.innerHTML = renderContent(fullResponse);
         renderMathInElement(assistantMsgDiv);
 
+        // Save conversation to database
         await fetch(`${API_BASE_URL}/api/chat/${activeChat.id}/save-messages`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ userMessage: userInput, assistantMessage: fullResponse })
+            body: JSON.stringify({ userMessage: userMessageContent, assistantMessage: fullResponse })
         });
 
         activeChat.messages[activeChat.messages.length - 1].content = fullResponse;
@@ -928,18 +1095,94 @@ async function sendMessage() {
         if (error.name === 'AbortError') {
             assistantMsgDiv.innerHTML = renderContent(fullResponse + '\n\n*Stream stopped by user.*');
         } else {
-            console.error("sendMessage Error:", error);
-            assistantMsgDiv.innerHTML = renderContent(`⚠️ An error occurred: ${error.message}`);
+            console.error("❌ FRONTEND sendMessage Error:", error);
+            console.error("❌ FRONTEND Error message:", error.message);
+            console.error("❌ FRONTEND Error stack:", error.stack);
+            
+            // Try to extract more details from fetch response error
+            if (error.response) {
+                console.error("❌ FRONTEND Error response status:", error.response.status);
+                console.error("❌ FRONTEND Error response data:", error.response.data);
+            }
+            
+            // For failed fetch with response text
+            if (typeof error.text === 'function') {
+                try {
+                    const errorText = await error.text();
+                    console.error("❌ FRONTEND Error response text:", errorText);
+                } catch (e) {
+                    console.error("❌ FRONTEND Could not read error text:", e);
+                }
+            }
+            
+            // Check for authentication errors first
+            const isAuthError = error.message.includes('Invalid or expired token') ||
+                               error.message.includes('401') ||
+                               error.message.includes('403') ||
+                               error.message.includes('Unauthorized') ||
+                               error.message.includes('Authentication failed');
+            
+            if (isAuthError) {
+                // Handle authentication errors - prompt for re-login
+                assistantMsgDiv.innerHTML = renderContent('⚠️ Your session has expired. Please sign in again.');
+                localStorage.removeItem('authToken');
+                state.currentUser = null;
+                updateLoginStateUI();
+                window.sendMessageRetryCount = 0; // Reset retry counter
+                setTimeout(() => {
+                    animateModalOpen(elements.signinModal.container);
+                }, 1500);
+                return; // Don't retry auth errors
+            }
+            
+            // Enhanced error checking with detailed logging
+            const isNetworkError = error.message.includes('fetch') || error.message.includes('Failed to get response') || error.message.includes('network');
+            const isServerError = error.message.includes('500') || error.message.includes('502') || error.message.includes('503');
+            const shouldRetry = isNetworkError || isServerError;
+            
+            console.error("❌ FRONTEND Error classification:");
+            console.error("  - Is Network Error:", isNetworkError);
+            console.error("  - Is Server Error:", isServerError);
+            console.error("  - Should Retry:", shouldRetry);
+            console.error("  - Current Retry Count:", window.sendMessageRetryCount || 0);
+            
+            if (shouldRetry && (!window.sendMessageRetryCount || window.sendMessageRetryCount < 2)) {
+                // Initialize or increment retry counter
+                window.sendMessageRetryCount = (window.sendMessageRetryCount || 0) + 1;
+                
+                assistantMsgDiv.innerHTML = renderContent(`🔄 Connection issue detected. Retrying... (${window.sendMessageRetryCount}/2)`);
+                
+                // Retry after a short delay
+                setTimeout(async () => {
+                    // Reset UI state for retry
+                    elements.userInput.value = userInput; // Restore the user input
+                    // Call sendMessage again (it will handle the retry logic)
+                    await sendMessage();
+                }, 1500 * window.sendMessageRetryCount); // Progressive delay: 1.5s, 3s
+                
+                return; // Don't execute finally block yet
+            } else {
+                // Max retries reached or non-retryable error
+                window.sendMessageRetryCount = 0; // Reset counter
+                if (shouldRetry) {
+                    assistantMsgDiv.innerHTML = renderContent(`⚠️ Connection failed after multiple attempts. Please check your internet connection and try again.`);
+                } else {
+                    assistantMsgDiv.innerHTML = renderContent(`⚠️ An error occurred: ${error.message}`);
+                }
+            }
         }
     } finally {
-        isStreaming = false;
-        // Restore send button from stop state
-        elements.stopIcon.classList.add('hidden');
-        elements.sendIcon.classList.remove('hidden');
-        elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-        elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
-        elements.sendBtn.disabled = false;
-        currentController = null;
+        // Only reset if we're not retrying
+        if (!window.sendMessageRetryCount || window.sendMessageRetryCount === 0) {
+            isStreaming = false;
+            // Restore send button from stop state
+            elements.stopIcon.classList.add('hidden');
+            elements.sendIcon.classList.remove('hidden');
+            elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
+            elements.sendBtn.disabled = false;
+            currentController = null;
+        }
     }
 }
 
@@ -1230,11 +1473,19 @@ function init() {
     imageUpload.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (!file) return;
-
+        
+        // Check file size (50MB limit)
+        const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+        if (file.size > maxSize) {
+            alert('File size must be less than 50MB.');
+            imageUpload.value = null;
+            return;
+        }
+        
         const reader = new FileReader();
         reader.onload = (e) => {
             attachedImageData = { file: file, dataUrl: e.target.result };
-            
+
             imagePreviewContainer.innerHTML = `
                 <div class="relative inline-block">
                     <img src="${e.target.result}" class="h-20 w-20 object-cover rounded-lg">
