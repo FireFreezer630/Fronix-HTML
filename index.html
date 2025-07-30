@@ -659,14 +659,21 @@ Image input capabilities: Enabled
 Personality: v2
 Over the course of the conversation, you adapt to the user’s tone and preference. Try to match the user’s vibe, tone, and generally how they are speaking. You want the conversation to feel natural. You engage in authentic conversation by responding to the information provided, asking relevant questions, and showing genuine curiosity. If natural, continue the conversation with casual conversation.
 `};
-    const MODELS = { 
-      'openai': 'OpenAI (Default)', 
-      'openai-large': 'OpenAI (Large)', 
-      'openai-fast': 'OpenAI (Fast)', 
-      'deepseek-reasoning': 'DeepSeek Reasoning', 
+    const MODELS = {
+      'openai': 'OpenAI (Default)',
+      'openai-large': 'OpenAI (Large)',
+      'openai-fast': 'OpenAI (Fast)',
+      'deepseek-reasoning': 'DeepSeek Reasoning',
       'openai-reasoning': 'OpenAI (Reasoning)',
-      'grok': 'Grok', 
-      'elixposearch': 'Elixpo Search' 
+      'grok': 'Grok',
+      'elixposearch': 'Elixpo Search',
+      'claude-opus-4': 'Claude Opus 4',
+      'o4-mini-medium': 'O4 Mini Medium',
+      'o4-mini-high': 'O4 Mini High',
+      'gpt-4o-mini-search-preview': 'GPT-4o Mini Search',
+      'gemini-2.5-flash-thinking': 'Gemini 2.5 Flash Thinking',
+      'kimi-k2': 'Kimi K2',
+      'deepseek-r1-uncensored': 'DeepSeek R1 Uncensored'
     };
 
     const elements = {
@@ -789,7 +796,7 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
         } else {
             state.activeId = null;
         }
-        elements.chatTitle.textContent = 'Fronix';
+        updateModelSelectorDisplay();
         renderModelDropdown();
         renderSidebar();
         renderChat();
@@ -1322,6 +1329,13 @@ async function sendMessage() {
     function renderFontWeightOptions() { const currentWeight = state.settings.fontWeight; elements.settingsModal.fontWeightOptions.innerHTML = `<div class="flex justify-between items-center"><label class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">Font Weight</label><span id="font-weight-label" class="text-sm text-light-text-subtle dark:text-dark-text-subtle">${FONT_WEIGHTS[currentWeight]}</span></div><input type="range" id="font-weight-slider" class="w-full h-2 bg-light-border dark:bg-dark-border rounded-lg appearance-none cursor-pointer accent-accent" min="0" max="${Object.keys(FONT_WEIGHTS).length - 1}" step="1" value="${Object.keys(FONT_WEIGHTS).indexOf(currentWeight)}">`; document.getElementById('font-weight-slider').addEventListener('input', (e) => { const weight = Object.keys(FONT_WEIGHTS)[e.target.value]; applyFontWeight(weight); document.getElementById('font-weight-label').textContent = FONT_WEIGHTS[weight]; }); }
     
     // --- Model Selection ---
+    function updateModelSelectorDisplay() {
+      const currentModel = state.settings.model || 'openai';
+      const modelName = MODELS[currentModel] || 'Unknown Model';
+      elements.chatTitle.textContent = modelName;
+      console.log('🔄 Updated model selector display to:', modelName);
+    }
+
     function renderModelDropdown() {
       elements.modelDropdown.innerHTML = '';
       Object.entries(MODELS).forEach(([key, name]) => {
@@ -1329,11 +1343,12 @@ async function sendMessage() {
         const isSelected = key === state.settings.model;
         btn.className = `w-full text-left px-3 py-2 text-sm transition-colors ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`;
         btn.textContent = name;
-        btn.onclick = () => { 
-          state.settings.model = key; 
+        btn.onclick = () => {
+          state.settings.model = key;
           const activeChat = state.chats.find(c => c.id === state.activeId);
           if (activeChat) activeChat.model = key;
           saveState();
+          updateModelSelectorDisplay();
           renderModelDropdown();
           elements.modelDropdown.style.display = 'none';
         };
