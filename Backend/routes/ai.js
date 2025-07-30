@@ -17,6 +17,127 @@ function safeStringify(obj, space = 2) {
     }, space);
 }
 
+// ====================================
+// API Key Pool Management System
+// ====================================
+
+class ApiKeyPool {
+    constructor() {
+        // Load all valid V2 API keys from environment variables
+        this.keys = [
+            process.env.AI_API_KEY_V2,
+            process.env.AI_API_KEY_V2_3,
+            process.env.AI_API_KEY_V2_4,
+            process.env.AI_API_KEY_V2_5
+        ].filter(key => key && key.trim() !== ''); // Remove empty keys
+        
+        this.currentIndex = 0;
+        this.maxRetries = this.keys.length;
+        
+        console.log(`🔑 API Key Pool initialized with ${this.keys.length} keys`);
+        if (this.keys.length === 0) {
+            console.error('❌ No valid V2 API keys found in environment variables!');
+        }
+    }
+    
+    getCurrentKey() {
+        if (this.keys.length === 0) {
+            throw new Error('No API keys available');
+        }
+        return this.keys[this.currentIndex];
+    }
+    
+    rotateToNextKey() {
+        if (this.keys.length <= 1) {
+            console.warn('⚠️ Only one API key available, cannot rotate');
+            return false;
+        }
+        
+        const previousIndex = this.currentIndex;
+        this.currentIndex = (this.currentIndex + 1) % this.keys.length;
+        
+        console.log(`🔄 API Key rotated from index ${previousIndex} to ${this.currentIndex}`);
+        return true;
+    }
+    
+    getAllKeysExhausted() {
+        // If we've tried all keys, return true
+        return this.currentIndex === 0 && this.keys.length > 1;
+    }
+    
+    resetToFirstKey() {
+        this.currentIndex = 0;
+        console.log('🔄 API Key pool reset to first key');
+    }
+}
+
+// Global API key pool instance
+const apiKeyPool = new ApiKeyPool();
+
+// Enhanced API request function with automatic key rotation for axios.post
+async function makeApiRequestWithRetry(url, requestBody, requestOptions, maxRetries = null) {
+    const retryLimit = maxRetries || apiKeyPool.maxRetries;
+    let attempt = 0;
+    let lastError = null;
+    
+    while (attempt < retryLimit) {
+        try {
+            // Get current API key
+            const currentKey = apiKeyPool.getCurrentKey();
+            
+            // Update authorization header with current key
+            const updatedOptions = {
+                ...requestOptions,
+                headers: {
+                    ...requestOptions.headers,
+                    'Authorization': `Bearer ${currentKey}`
+                }
+            };
+            
+            console.log(`🔑 Attempt ${attempt + 1}/${retryLimit} using API key index: ${apiKeyPool.currentIndex}`);
+            
+            // Make the API request
+            const response = await axios.post(url, requestBody, updatedOptions);
+            
+            // Request successful - reset to first key for next time
+            if (attempt > 0) {
+                apiKeyPool.resetToFirstKey();
+            }
+            
+            return response;
+            
+        } catch (error) {
+            lastError = error;
+            
+            // Check if it's a rate limit error (429)
+            if (error.response && error.response.status === 429) {
+                console.log(`⚠️ Rate limit hit on key ${apiKeyPool.currentIndex + 1}/${apiKeyPool.keys.length}`);
+                
+                // Try to rotate to next key
+                const rotated = apiKeyPool.rotateToNextKey();
+                if (rotated) {
+                    console.log(`🔄 Retrying with next API key...`);
+                    attempt++;
+                    continue;
+                } else {
+                    console.error('❌ No more API keys to try');
+                    break;
+                }
+            } else {
+                // For non-rate-limit errors, don't retry
+                console.error(`❌ API request failed with non-rate-limit error:`, error.response?.status, error.message);
+                break;
+            }
+        }
+        
+        attempt++;
+    }
+    
+    // All retries exhausted
+    console.error(`❌ All API key retries exhausted. Last error:`, lastError.message);
+    throw lastError;
+}
+
 router.post('/chat', authMiddleware, async (req, res) => {
     const { model, messages } = req.body;
 
@@ -45,7 +166,10 @@ router.post('/chat', authMiddleware, async (req, res) => {
             'kimi-k2',
             'deepseek-r1-uncensored'
         ];
+        console.log('🔍 Checking if model is V2:', model);
+        console.log('🔍 V2_MODELS array:', V2_MODELS);
         isV2Model = V2_MODELS.includes(model);
+        console.log('🔍 isV2Model result:', isV2Model);
         
         // Select appropriate endpoint and authentication
         if (isV2Model) {
@@ -63,8 +187,8 @@ router.post('/chat', authMiddleware, async (req, res) => {
             modelId = modelMapping[model];
             apiHeaders = {
                 'Content-Type': 'application/json',
-                'Accept': 'text/event-stream',
-                'Authorization': `Bearer ${process.env.AI_API_KEY_V2}`
+                'Accept': 'text/event-stream'
+                // Authorization header will be set by makeApiRequestWithRetry
             };
         } else {
             apiEndpoint = process.env.AI_API_ENDPOINT;
@@ -106,7 +230,7 @@ router.post('/chat', authMiddleware, async (req, res) => {
             ), null, 2));
         }
 
-        const aiResponse = await axios.post(
+        const aiResponse = await makeApiRequestWithRetry(
             apiEndpoint,
             requestBody,
             {
@@ -241,6 +365,112 @@ router.post('/chat', authMiddleware, async (req, res) => {
             console.error('❌ Unexpected error:', error);
             console.error('❌ Error stack:', error.stack);
             res.status(500).json({ error: 'Internal server error occurred while contacting the AI service.' });
+        }
+    }
+});
+
+// Image generation endpoint
+router.post('/images/generations', authMiddleware, async (req, res) => {
+    const { model, prompt, n = 1, size = '1024x1024', quality = 'standard', response_format = 'url', style = 'vivid', user } = req.body;
+
+    if (!model || !prompt) {
+        return res.status(400).json({ error: 'Invalid request body. "model" and "prompt" are required.' });
+    }
+
+    // Declare variables outside try block for error handling access
+    let requestBody, apiHeaders, apiEndpoint;
+    
+    try {
+        // A4F Image Generation API configuration
+        apiEndpoint = `${process.env.AI_API_ENDPOINT_V2}/images/generations`;
+        apiHeaders = {
+            'Content-Type': 'application/json'
+            // Authorization header will be set by makeApiRequestWithRetry
+        };
+
+        // Format request body according to OpenAI Images API format
+        requestBody = {
+            model,
+            prompt,
+            n,
+            size,
+            quality,
+            response_format,
+            style
+        };
+
+        if (user) {
+            requestBody.user = user;
+        }
+
+        // Enhanced debug logging for image generation request
+        console.log('🎨 Image Generation API Request');
+        console.log('🎨 Making API request to:', apiEndpoint);
+        console.log('🎨 Request model:', model);
+        console.log('🎨 Request prompt:', prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''));
+        console.log('🎨 Image count:', n);
+        console.log('🎨 Image size:', size);
+        console.log('🎨 Quality:', quality);
+        console.log('🎨 Response format:', response_format);
+        console.log('🎨 Style:', style);
+
+        const aiResponse = await makeApiRequestWithRetry(
+            apiEndpoint,
+            requestBody,
+            {
+                headers: apiHeaders,
+                responseType: 'json'
+            }
+        );
+
+        console.log('✅ Image Generation API Response Status:', aiResponse.status);
+        console.log('✅ Generated images count:', aiResponse.data?.data?.length);
+
+        // Return the response data directly (OpenAI compatible format)
+        res.json(aiResponse.data);
+
+    } catch (error) {
+        console.error('❌ Error calling Image Generation service:', error.message);
+        
+        // Handle different types of errors
+        if (error.response) {
+            const status = error.response.status;
+            const errorData = error.response.data;
+            
+            // Enhanced logging for debugging
+            console.error('❌ Image API Response Status:', status);
+            console.error('❌ Image API Response Headers:', JSON.stringify(error.response.headers, null, 2));
+            
+            // Log full response data for analysis
+            if (typeof errorData === 'string') {
+                console.error('❌ Image API Response Data (string):', errorData);
+            } else if (typeof errorData === 'object') {
+                console.error('❌ Image API Response Data (object):', safeStringify(errorData));
+            } else {
+                console.error('❌ Image API Response Data (other):', errorData);
+            }
+            
+            // Log the original request for debugging
+            console.error('❌ Original Image Request Body:', safeStringify(requestBody));
+            console.error('❌ Image Request Headers:', safeStringify(apiHeaders));
+            console.error('❌ Image API Endpoint:', apiEndpoint);
+            
+            if (status === 429) {
+                res.status(429).json({ error: 'Rate limit exceeded. Please try again later.' });
+            } else if (status === 400) {
+                res.status(400).json({ error: 'Invalid request format for Image Generation service.' });
+            } else {
+                res.status(status).json({
+                    error: errorData?.error?.message || 'An error occurred while contacting the Image Generation service.'
+                });
+            }
+        } else if (error.code === 'ECONNRESET' || error.code === 'ENOTFOUND') {
+            console.error('❌ Network error:', error.code);
+            res.status(503).json({ error: 'Image Generation service is temporarily unavailable. Please try again later.' });
+        } else {
+            console.error('❌ Unexpected error:', error);
+            console.error('❌ Error stack:', error.stack);
+            res.status(500).json({ error: 'Internal server error occurred while contacting the Image Generation service.' });
         }
     }
 });

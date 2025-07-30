@@ -660,20 +660,24 @@ Personality: v2
 Over the course of the conversation, you adapt to the user’s tone and preference. Try to match the user’s vibe, tone, and generally how they are speaking. You want the conversation to feel natural. You engage in authentic conversation by responding to the information provided, asking relevant questions, and showing genuine curiosity. If natural, continue the conversation with casual conversation.
 `};
     const MODELS = {
-      'openai': 'OpenAI (Default)',
-      'openai-large': 'OpenAI (Large)',
-      'openai-fast': 'OpenAI (Fast)',
-      'deepseek-reasoning': 'DeepSeek Reasoning',
-      'openai-reasoning': 'OpenAI (Reasoning)',
-      'grok': 'Grok',
-      'elixposearch': 'Elixpo Search',
-      'claude-opus-4': 'Claude Opus 4',
-      'o4-mini-medium': 'O4 Mini Medium',
-      'o4-mini-high': 'O4 Mini High',
-      'gpt-4o-mini-search-preview': 'GPT-4o Mini Search',
-      'gemini-2.5-flash-thinking': 'Gemini 2.5 Flash Thinking',
-      'kimi-k2': 'Kimi K2',
-      'deepseek-r1-uncensored': 'DeepSeek R1 Uncensored'
+      // Text Models
+      'openai': { name: 'OpenAI (Default)', type: 'text' },
+      'openai-large': { name: 'OpenAI (Large)', type: 'text' },
+      'openai-fast': { name: 'OpenAI (Fast)', type: 'text' },
+      'deepseek-reasoning': { name: 'DeepSeek Reasoning', type: 'text' },
+      'openai-reasoning': { name: 'OpenAI (Reasoning)', type: 'text' },
+      'grok': { name: 'Grok', type: 'text' },
+      'elixposearch': { name: 'Elixpo Search', type: 'text' },
+      'claude-opus-4': { name: 'Claude Opus 4', type: 'text' },
+      'o4-mini-medium': { name: 'O4 Mini Medium', type: 'text' },
+      'o4-mini-high': { name: 'O4 Mini High', type: 'text' },
+      'gpt-4o-mini-search-preview': { name: 'GPT-4o Mini Search', type: 'text' },
+      'gemini-2.5-flash-thinking': { name: 'Gemini 2.5 Flash Thinking', type: 'text' },
+      'kimi-k2': { name: 'Kimi K2', type: 'text' },
+      'deepseek-r1-uncensored': { name: 'DeepSeek R1 Uncensored', type: 'text' },
+      
+      // Image Generation Models
+      'provider-4/imagen-4': { name: 'Imagen 4', type: 'image' }
     };
 
     const elements = {
@@ -994,15 +998,45 @@ async function sendMessage() {
     let fullResponse = "";
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            signal: currentController.signal,
-            body: JSON.stringify({
-                model: activeChat.model || 'openai',
-                messages: activeChat.messages
-            }),
-        });
+        // Detect model type and route accordingly
+        const currentModel = activeChat.model || state.settings.model || 'openai';
+        const modelData = MODELS[currentModel] || { name: 'OpenAI (Default)', type: 'text' };
+        const isImageModel = modelData.type === 'image';
+        
+        console.log('🔍 Current model for request:', currentModel);
+        console.log('🔍 Model data:', modelData);
+        console.log('🔍 Is image model:', isImageModel);
+        
+        let response;
+        if (isImageModel) {
+            // Route to image generation API
+            console.log('🎨 Routing to image generation API for model:', currentModel);
+            response = await fetch(`${API_BASE_URL}/api/ai/images/generations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                signal: currentController.signal,
+                body: JSON.stringify({
+                    model: currentModel,
+                    prompt: userInput,
+                    n: 1,
+                    size: '1024x1024',
+                    quality: 'standard',
+                    response_format: 'url'
+                }),
+            });
+        } else {
+            // Route to text chat API
+            console.log('💬 Routing to text chat API for model:', currentModel);
+            response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                signal: currentController.signal,
+                body: JSON.stringify({
+                    model: currentModel,
+                    messages: activeChat.messages
+                }),
+            });
+        }
 
         if (!response.ok) {
             if (!response.ok) {
@@ -1043,50 +1077,68 @@ async function sendMessage() {
             }
         }
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        
-        while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            
-            // Keep the last incomplete line in the buffer
-            buffer = lines.pop() || '';
-            
-            for (const line of lines) {
-                const trimmedLine = line.trim();
-                if (!trimmedLine) continue;
-                
-                if (trimmedLine === 'data: [DONE]') {
-                    // Stream completed
-                    break;
+        if (isImageModel) {
+            // Handle image generation response (not streaming)
+            const imageData = await response.json();
+            console.log('🎨 Image generation response:', imageData);
+            if (imageData.data && imageData.data.length > 0) {
+                const imageUrl = imageData.data[0].url;
+                const revisedPrompt = imageData.data[0].revised_prompt;
+                fullResponse = `![Generated Image](${imageUrl})`;
+                if (revisedPrompt && revisedPrompt !== userInput) {
+                    fullResponse += `\n\n*Revised prompt: ${revisedPrompt}*`;
                 }
+                assistantMsgDiv.innerHTML = renderContent(fullResponse);
+            } else {
+                throw new Error('No image data received from API');
+            }
+        } else {
+            // Handle text streaming response
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
                 
-                if (trimmedLine.startsWith('data: ')) {
-                    try {
-                        const jsonStr = trimmedLine.slice(6); // Remove 'data: ' prefix
-                        const data = JSON.parse(jsonStr);
-                        
-                        // Extract content from choices[0].delta.content
-                        if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
-                            const content = data.choices[0].delta.content;
-                            fullResponse += content;
-                            assistantMsgDiv.innerHTML = renderStreamingContent(fullResponse + '<span class="blinking-cursor"></span>');
-                            scrollToBottom();
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                
+                // Keep the last incomplete line in the buffer
+                buffer = lines.pop() || '';
+                
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine) continue;
+                    
+                    if (trimmedLine === 'data: [DONE]') {
+                        // Stream completed
+                        break;
+                    }
+                    
+                    if (trimmedLine.startsWith('data: ')) {
+                        try {
+                            const jsonStr = trimmedLine.slice(6); // Remove 'data: ' prefix
+                            const data = JSON.parse(jsonStr);
+                            
+                            // Extract content from choices[0].delta.content
+                            if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                                const content = data.choices[0].delta.content;
+                                fullResponse += content;
+                                assistantMsgDiv.innerHTML = renderStreamingContent(fullResponse + '<span class="blinking-cursor"></span>');
+                                scrollToBottom();
+                            }
+                        } catch (error) {
+                            console.warn('Failed to parse streaming chunk:', trimmedLine, error);
                         }
-                    } catch (error) {
-                        console.warn('Failed to parse streaming chunk:', trimmedLine, error);
                     }
                 }
             }
-        }
 
-        assistantMsgDiv.innerHTML = renderContent(fullResponse);
-        renderMathInElement(assistantMsgDiv);
+            assistantMsgDiv.innerHTML = renderContent(fullResponse);
+            renderMathInElement(assistantMsgDiv);
+        }
 
         // Save conversation to database
         await fetch(`${API_BASE_URL}/api/chat/${activeChat.id}/save-messages`, {
@@ -1190,6 +1242,57 @@ async function sendMessage() {
             elements.sendBtn.disabled = false;
             currentController = null;
         }
+    }
+}
+
+// --- Image Generation Function ---
+async function generateImage(prompt, model = 'provider-4/imagen-4') {
+    if (!prompt?.trim()) {
+        console.error('❌ Image generation requires a prompt');
+        return null;
+    }
+
+    try {
+        console.log('🎨 Starting image generation with prompt:', prompt);
+        console.log('🎨 Using model:', model);
+
+        const response = await fetch(`${API_BASE}/api/ai/images/generations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                model: model,
+                prompt: prompt,
+                n: 1,
+                size: '1024x1024',
+                quality: 'standard',
+                response_format: 'url'
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Image generation failed:', response.status, errorText);
+            throw new Error(`Image generation failed: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ Image generated successfully:', data);
+
+        if (data.data && data.data.length > 0) {
+            return {
+                url: data.data[0].url,
+                revised_prompt: data.data[0].revised_prompt
+            };
+        } else {
+            throw new Error('No image data received from API');
+        }
+
+    } catch (error) {
+        console.error('❌ Image generation error:', error);
+        throw error;
     }
 }
 
@@ -1331,18 +1434,31 @@ async function sendMessage() {
     // --- Model Selection ---
     function updateModelSelectorDisplay() {
       const currentModel = state.settings.model || 'openai';
-      const modelName = MODELS[currentModel] || 'Unknown Model';
-      elements.chatTitle.textContent = modelName;
-      console.log('🔄 Updated model selector display to:', modelName);
+      const modelData = MODELS[currentModel] || { name: 'Unknown Model', type: 'text' };
+      const displayName = modelData.name;
+      const modelType = modelData.type === 'image' ? ' 🎨' : ' 💬';
+      elements.chatTitle.textContent = displayName + modelType;
+      console.log('🔄 Updated model selector display to:', displayName, `(${modelData.type})`);
     }
 
     function renderModelDropdown() {
       elements.modelDropdown.innerHTML = '';
-      Object.entries(MODELS).forEach(([key, name]) => {
+      
+      // Separate models by type
+      const textModels = Object.entries(MODELS).filter(([_, data]) => data.type === 'text');
+      const imageModels = Object.entries(MODELS).filter(([_, data]) => data.type === 'image');
+      
+      // Add Text Models section
+      const textHeader = document.createElement('div');
+      textHeader.className = 'px-3 py-2 text-xs font-medium text-light-text-subtle dark:text-dark-text-subtle uppercase tracking-wider border-b border-light-border dark:border-dark-border';
+      textHeader.textContent = '💬 Text Models';
+      elements.modelDropdown.appendChild(textHeader);
+      
+      textModels.forEach(([key, data]) => {
         const btn = document.createElement('button');
         const isSelected = key === state.settings.model;
         btn.className = `w-full text-left px-3 py-2 text-sm transition-colors ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`;
-        btn.textContent = name;
+        btn.textContent = data.name;
         btn.onclick = () => {
           state.settings.model = key;
           const activeChat = state.chats.find(c => c.id === state.activeId);
@@ -1354,6 +1470,32 @@ async function sendMessage() {
         };
         elements.modelDropdown.appendChild(btn);
       });
+      
+      // Add Image Generation section
+      if (imageModels.length > 0) {
+        const imgHeader = document.createElement('div');
+        imgHeader.className = 'px-3 py-2 text-xs font-medium text-light-text-subtle dark:text-dark-text-subtle uppercase tracking-wider border-b border-light-border dark:border-dark-border mt-2';
+        imgHeader.textContent = '🎨 Image Generation';
+        elements.modelDropdown.appendChild(imgHeader);
+        
+        imageModels.forEach(([key, data]) => {
+          const btn = document.createElement('button');
+          const isSelected = key === state.settings.model;
+          btn.className = `w-full text-left px-3 py-2 text-sm transition-colors ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`;
+          btn.textContent = data.name;
+          btn.onclick = () => {
+            state.settings.model = key;
+            const activeChat = state.chats.find(c => c.id === state.activeId);
+            if (activeChat) activeChat.model = key;
+            saveState();
+            updateModelSelectorDisplay();
+            renderModelDropdown();
+            elements.modelDropdown.style.display = 'none';
+            console.log('🖼️ Selected image model:', key);
+          };
+          elements.modelDropdown.appendChild(btn);
+        });
+      }
     }
 
     // --- Theme & Initialization ---
