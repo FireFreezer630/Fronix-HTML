@@ -34,7 +34,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 // --- END: CORRECTED CORS CONFIGURATION ---
 
-app.use(express.json());
+// Increase JSON body size limit to 50MB for image support
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
 
 // Routes
 app.use('/api/auth', authRoutes);
