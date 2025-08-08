@@ -16,6 +16,7 @@ const PORT = process.env.PORT || 3001;
 const allowedOrigins = [
     'http://localhost:3000',
     'http://127.0.0.1:5500', // Example: for VS Code Live Server
+    'https://fronix.netlify.app',
     // Add any other origins you are using for development here
 ];
 
