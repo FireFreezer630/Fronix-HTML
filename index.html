@@ -6,7 +6,7 @@
   <title>Fronix.ai</title>
   
   <!-- Libraries -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="output.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -265,7 +265,7 @@
         </div>
 
         <!-- Input Bar -->
-        <div class="max-w-3xl mx-auto p-4">
+        <div class="max-w-3xl mx-auto p-4 relative">
           <div class="flex items-end space-x-2 p-2 rounded-2xl bg-light-sidebar dark:bg-dark-sidebar shadow-lg">
             <input type="file" id="image-upload" class="hidden" accept="image/png, image/jpeg, image/webp, image/gif">
             <button id="attach-btn" class="p-3 rounded-full hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors text-light-text-subtle dark:text-dark-text-subtle">
@@ -287,6 +287,12 @@
                 <polyline points="17 21 17 13 7 13 7 21"></polyline>
                 <polyline points="7 3 7 8 15 8"></polyline>
               </svg>
+            </button>
+          </div>
+          <!-- Autocomplete Suggestions -->
+          <div id="autocomplete-suggestions" class="absolute bottom-full left-0 w-full mb-2 p-2 rounded-lg shadow-lg bg-light-sidebar dark:bg-dark-sidebar border border-light-border dark:border-dark-border hidden">
+            <button id="study-command-btn" class="w-full text-left px-3 py-2 text-sm text-light-text dark:text-dark-text hover:bg-light-border-hover dark:hover:bg-dark-border-hover rounded-md">
+                /study - Toggle study mode
             </button>
           </div>
         </div>
@@ -573,37 +579,63 @@ async function loadDataFromServer(retryCount = 0) {
                 throw error;
             }
             const chats = await chatsResponse.json();
-            state.chats = chats;
+            state.chats = chats; // Store all chats
 
-            if (chats.length > 0) {
-                state.activeId = chats[0].id;
-                const messagesResponse = await fetch(`${API_BASE_URL}/api/chat/${state.activeId}/messages`, {
-                     headers: { 'Authorization': `Bearer ${token}` }
+            // Fetch messages for each chat
+            for (let i = 0; i < state.chats.length; i++) {
+                const chat = state.chats[i];
+                const messagesResponse = await fetch(`${API_BASE_URL}/api/chat/${chat.id}/messages`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-                
+
                 if (messagesResponse.status === 401 || messagesResponse.status === 403) {
                     throw new Error('AUTH_ERROR');
                 }
                 if (!messagesResponse.ok) {
-                    const error = new Error(`Failed to fetch messages. Status: ${messagesResponse.status}`);
+                    const error = new Error(`Failed to fetch messages for chat ${chat.id}. Status: ${messagesResponse.status}`);
                     error.status = messagesResponse.status;
                     throw error;
                 }
                 const messages = await messagesResponse.json();
-                const activeChat = state.chats.find(c => c.id === state.activeId);
-                if (activeChat) activeChat.messages = messages;
+                chat.messages = messages; // Store messages directly in the chat object
+            }
+
+            // Set active chat based on persisted ID or default to the first chat
+            const currentActiveIdBeforeLoad = state.activeId; // Store current activeId
+            const lastActiveChatIdFromLocalStorage = localStorage.getItem('lastActiveChatId');
+
+            let newActiveId = null;
+
+            // Priority 1: If current activeId exists and is in the newly fetched chats
+            if (currentActiveIdBeforeLoad && state.chats.some(chat => chat.id === currentActiveIdBeforeLoad)) {
+                newActiveId = currentActiveIdBeforeLoad;
+            }
+            // Priority 2: If no current activeId, or current activeId not found, try localStorage
+            else if (lastActiveChatIdFromLocalStorage && state.chats.some(chat => chat.id === lastActiveChatIdFromLocalStorage)) {
+                newActiveId = lastActiveChatIdFromLocalStorage;
+            }
+            // Priority 3: If neither, default to the first chat
+            else if (state.chats.length > 0) {
+                newActiveId = state.chats[0].id;
+            }
+
+            if (newActiveId !== null) {
+                state.activeId = newActiveId;
             } else {
+                // If no chats exist, create a new one
                 await handleNewChat();
-                return;
+                return; // handleNewChat will set activeId and render
             }
         });
 
         // If we get here, everything succeeded
+        console.log('[loadDataFromServer] Data loaded successfully. Current state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+        console.log('[loadDataFromServer] Current state.activeId:', state.activeId);
         renderSidebar();
         renderChat();
 
     } catch (error) {
-        console.error("Error loading data from server:", error);
+        console.error("[loadDataFromServer] Error loading data from server:", error);
         
         // Only clear token and sign out on authentication errors
         if (error.message === 'AUTH_ERROR') {
@@ -612,12 +644,13 @@ async function loadDataFromServer(retryCount = 0) {
             state.currentUser = null;
         } else {
             // For network/server errors, just show a warning but keep user signed in
-            console.warn('Temporary network issue:', error.message);
+            console.warn('[loadDataFromServer] Temporary network issue:', error.message);
             // Don't alert for temporary issues, just log them
         }
     } finally {
         updateLoginStateUI();
         updateProfileUI();
+        console.log('[loadDataFromServer] Finished. Final state.activeId:', state.activeId);
     }
 }
 // ++ ADD THIS NEW FUNCTION TO YOUR SCRIPT ++
@@ -628,6 +661,25 @@ async function handleNewChat() {
         return;
     }
 
+    // Optimistically create a new chat object with a temporary ID
+    const tempChatId = `temp-${Date.now()}`;
+    const newChat = {
+        id: tempChatId,
+        title: 'New Chat',
+        messages: [],
+        model: state.settings.model // Default model
+    };
+
+    // Add the new chat to the state and set it as active
+    console.log('[handleNewChat] Optimistically adding new chat:', newChat);
+    state.chats.unshift(newChat);
+    setActive(tempChatId);
+    renderSidebar(); // Update sidebar immediately
+    renderChat(); // Render empty chat immediately
+    saveState();
+    console.log('[handleNewChat] State after optimistic add. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+    console.log('[handleNewChat] State after optimistic add. state.activeId:', state.activeId);
+
     try {
         const response = await fetch(`${API_BASE_URL}/api/chat`, {
             method: 'POST',
@@ -635,19 +687,53 @@ async function handleNewChat() {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ title: 'New Chat' }) // You can customize the title
+            body: JSON.stringify({ title: 'New Chat' })
         });
-        if (!response.ok) throw new Error('Failed to create chat on server');
+
+        if (!response.ok) {
+            throw new Error('Failed to create chat on server');
+        }
 
         const newChatFromServer = await response.json();
         newChatFromServer.messages = []; // Initialize with an empty messages array
 
-        state.chats.unshift(newChatFromServer); // Add to the top of the list
-        setActive(newChatFromServer.id); // Make it the active chat
+        // Find the optimistically added chat and update its real ID
+        const index = state.chats.findIndex(chat => chat.id === tempChatId);
+        if (index !== -1) {
+            state.chats[index].id = newChatFromServer.id;
+            state.chats[index].created_at = newChatFromServer.created_at; // Update timestamp if needed
+            state.activeId = newChatFromServer.id; // Ensure activeId is the real one
+        } else {
+            // Fallback if optimistic chat not found (shouldn't happen)
+            state.chats.unshift(newChatFromServer);
+            state.activeId = newChatFromServer.id;
+        }
+        
+        console.log('[handleNewChat] New chat created on server:', newChatFromServer);
+        
+        renderSidebar(); // Re-render to update ID in sidebar
+        saveState(); // Save state with real ID
+        console.log('[handleNewChat] State after successful backend save. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+        console.log('[handleNewChat] State after successful backend save. state.activeId:', state.activeId);
 
     } catch (error) {
-        console.error("Error creating new chat:", error);
+        console.error("[handleNewChat] Error creating new chat:", error);
         alert("Could not create a new chat. Please try again.");
+
+        // Revert optimistic update on error
+        const index = state.chats.findIndex(chat => chat.id === tempChatId);
+        if (index !== -1) {
+            state.chats.splice(index, 1); // Remove optimistic chat
+            // If the deleted chat was active, set a new active chat
+            if (state.activeId === tempChatId) {
+                state.activeId = state.chats.length > 0 ? state.chats[0].id : null;
+            }
+            renderSidebar(); // Re-render sidebar after removal
+            renderChat(); // Re-render chat area
+            saveState();
+            console.log('[handleNewChat] State after error rollback. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+            console.log('[handleNewChat] State after error rollback. state.activeId:', state.activeId);
+        }
     }
 }
 
@@ -668,16 +754,14 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
       'openai-reasoning': { name: 'OpenAI (Reasoning)', type: 'text' },
       'grok': { name: 'Grok', type: 'text' },
       'elixposearch': { name: 'Elixpo Search', type: 'text' },
-      'claude-opus-4': { name: 'Claude Opus 4', type: 'text' },
       'o4-mini-medium': { name: 'O4 Mini Medium', type: 'text' },
       'o4-mini-high': { name: 'O4 Mini High', type: 'text' },
-      'gpt-4o-mini-search-preview': { name: 'GPT-4o Mini Search', type: 'text' },
       'gemini-2.5-flash-thinking': { name: 'Gemini 2.5 Flash Thinking', type: 'text' },
-      'kimi-k2': { name: 'Kimi K2', type: 'text' },
+      'provider-6/kimi-k2-instruct': { name: 'Kimi K2', type: 'text' },
       'deepseek-r1-uncensored': { name: 'DeepSeek R1 Uncensored', type: 'text' },
       
       // Image Generation Models
-      'provider-4/imagen-4': { name: 'Imagen 4', type: 'image' }
+      // 'provider-4/imagen-4': { name: 'Imagen 4', type: 'image' }
     };
 
     const elements = {
@@ -696,6 +780,8 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
       editIndicator: document.getElementById('edit-indicator'),
       cancelEditBtn: document.getElementById('cancel-edit-btn'),
       scrollToBottomBtn: document.getElementById('scroll-to-bottom-btn'), // Added scroll to bottom button
+      autocompleteSuggestions: document.getElementById('autocomplete-suggestions'), // Added for autocomplete
+      studyCommandBtn: document.getElementById('study-command-btn'), // Added for study command autocomplete
       settingsModal: { container: document.getElementById('settings-modal'), fontOptions: document.getElementById('font-options'), fontWeightOptions: document.getElementById('font-weight-options'), closeBtn: document.getElementById('close-settings-btn'), resetBtn: document.getElementById('reset-settings-btn'), apiTokenInput: document.getElementById('api-token-input') },
       renameModal: { container: document.getElementById('rename-modal'), input: document.getElementById('rename-input'), saveBtn: document.getElementById('rename-save'), cancelBtn: document.getElementById('rename-cancel') },
       deleteModal: { container: document.getElementById('delete-modal'), message: document.getElementById('delete-message'), confirmBtn: document.getElementById('delete-confirm'), cancelBtn: document.getElementById('delete-cancel') },
@@ -706,20 +792,38 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
     let currentController = null; // For aborting fetch requests
     let isStreaming = false; // Flag to indicate if streaming is active
     let isScrolledUp = false; // Flag to indicate if the user has scrolled up
+    let isGeneratingTitle = false; // Flag to indicate if title generation is in progress
     let attachedImageData = null; // To store { file, dataUrl }
+
+    // New function to update the state of the send button
+    function updateSendButtonState() {
+        const userInputEmpty = elements.userInput.value.trim() === '';
+        if (isStreaming) {
+            elements.sendBtn.disabled = false; // Always enabled as a stop button during streaming
+        } else {
+            // Button is disabled if input is empty OR title is generating.
+            // If AI response just finished, and input is empty, the button should still be enabled.
+            elements.sendBtn.disabled = isGeneratingTitle; // Only disabled if title is generating
+        }
+    }
     const FONTS = { 'inter': 'Inter', 'sans-serif': 'Sans Serif', 'work-sans': 'Work Sans', 'yu-gothic': 'Yu Gothic' };
     const FONT_WEIGHTS = { '300': 'Thin', '400': 'Regular', '500': 'Medium', '600': 'Semibold', '700': 'Bold' };
 
     const createChat = (title = 'New Chat') => ({ id: Date.now().toString(), title, messages: [], model: state.settings.model });
-    const saveState = () => localStorage.setItem('fronixState', JSON.stringify(state));
+    const saveState = () => {
+        localStorage.setItem('fronixState', JSON.stringify(state));
+        localStorage.setItem('lastActiveChatId', state.activeId); // Persist active chat ID
+    };
     const loadState = () => {
         const d = localStorage.getItem('fronixState');
         if (d) {
             const p = JSON.parse(d);
-            // state.chats = p.chats || []; // Chat history will be loaded from server
-            // state.activeId = p.activeId || null;
             state.settings = { ...state.settings, ...p.settings };
             if (p.settings.apiToken) elements.settingsModal.apiTokenInput.value = p.settings.apiToken;
+        }
+        const lastActiveChatId = localStorage.getItem('lastActiveChatId'); // Load last active chat ID
+        if (lastActiveChatId) {
+            state.activeId = lastActiveChatId;
         }
         if (localStorage.getItem('authToken')) {
             loadDataFromServer();
@@ -792,19 +896,27 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
     }
 
     function setActive(id) {
-        if (state.editingMessage) exitEditMode();
+        console.log(`[setActive] Attempting to set active chat to ID: ${id}`);
+        if (state.editingMessage) {
+            console.log('[setActive] Exiting edit mode before changing chat.');
+            exitEditMode();
+        }
         state.activeId = id;
         const chat = state.chats.find(c => c.id === id);
         if (chat) {
             state.settings.model = chat.model || 'openai';
+            console.log(`[setActive] Chat found. Setting model to: ${state.settings.model}`);
         } else {
             state.activeId = null;
+            console.log(`[setActive] Chat with ID ${id} not found. Setting activeId to null.`);
         }
         updateModelSelectorDisplay();
         renderModelDropdown();
+        console.log(`[setActive] Calling renderSidebar and renderChat for chat ID: ${state.activeId}`);
         renderSidebar();
-        renderChat();
+        renderChat(); // This will now use the messages already loaded in state.chats
         saveState();
+        console.log(`[setActive] Active chat set to: ${state.activeId}. State saved.`);
     }
     
 // Place this function where your current addMessage is.
@@ -822,8 +934,10 @@ function addMessage(role, content, customId = null) {
         message.id = customId; // Add the custom ID if provided
     }
     chat.messages.push(message);
+    console.log('[addMessage] Message added. Chat messages (after push):', JSON.parse(JSON.stringify(chat.messages))); // Deep copy for logging
     renderChat(); // RenderChat will now correctly use the ID
     saveState();
+    console.log('[addMessage] State saved after adding message. Current chat messages:', JSON.parse(JSON.stringify(chat.messages))); // Deep copy for logging
 };
 
 // Place this function where your current renderChat is.
@@ -942,7 +1056,11 @@ function scrollToBottom() {
 async function sendMessage() {
     const userInput = elements.userInput.value.trim();
     const activeChat = state.chats.find(c => c.id === state.activeId);
-    if ((!userInput && !attachedImageData) || !activeChat || isStreaming) return;
+    console.log(`[sendMessage] Start: isStreaming = ${isStreaming}, isGeneratingTitle = ${isGeneratingTitle}`);
+    if ((!userInput && !attachedImageData) || !activeChat || isStreaming || isGeneratingTitle) {
+        console.log(`[sendMessage] Aborting due to input/chat/streaming/title gen state. isStreaming = ${isStreaming}, isGeneratingTitle = ${isGeneratingTitle}`);
+        return;
+    }
 
     // Validate token before proceeding
     const token = await validateAndRefreshToken();
@@ -954,14 +1072,74 @@ async function sendMessage() {
         return;
     }
 
-    isStreaming = true;
-    // Transform send button to stop button
+    // Handle /study command
+    if (userInput.trim().startsWith('/study')) {
+        const command = userInput.trim().split(' ')[0];
+        if (command === '/study') {
+            elements.userInput.value = '';
+            elements.userInput.style.height = 'auto';
+            addMessage('user', '/study'); // Add user's command to chat history
+
+            const originalStudyMode = activeChat.study_mode; // Store original for rollback
+            const newStudyModeStatus = !originalStudyMode;
+
+            // Optimistically update study_mode status
+            activeChat.study_mode = newStudyModeStatus;
+            saveState();
+            addMessage('assistant', `📚 Study mode ${newStudyModeStatus ? 'enabled' : 'disabled'}.`); // Optimistic system message
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/chat/${activeChat.id}/toggle-study-mode`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to toggle study mode.');
+                }
+                // No further UI updates needed for success, as it was handled optimistically
+                console.log(`Study mode toggled successfully to: ${data.study_mode}`);
+
+            } catch (error) {
+                console.error("Error toggling study mode:", error);
+                alert(`Failed to toggle study mode: ${error.message}`);
+
+                // Revert optimistic UI update on error
+                activeChat.study_mode = originalStudyMode;
+                saveState();
+                // Optionally remove the optimistic system message, or add a new error message
+                // For simplicity, we'll add a new error message
+                addMessage('assistant', `⚠️ Failed to toggle study mode. Reverting to ${originalStudyMode ? 'enabled' : 'disabled'}.`);
+            } finally {
+                // Reset UI elements after command execution (ensure they are always re-enabled)
+                elements.sendIcon.classList.remove('hidden');
+                elements.stopIcon.classList.add('hidden');
+                elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
+                updateSendButtonState(); // Update button state
+                elements.userInput.disabled = false; // Ensure user input is re-enabled
+                isStreaming = false;
+            }
+            return; // Exit sendMessage function after handling /study command
+    }
+}
+
+    // Call updateSendButtonState at the start of sendMessage (after /study handling)
+    updateSendButtonState();
+
     elements.sendIcon.classList.add('hidden');
     elements.stopIcon.classList.remove('hidden');
     elements.sendBtn.classList.remove('bg-accent', 'hover:bg-accent-hover');
     elements.sendBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+    // elements.sendBtn.disabled = true; // No longer disable here, managed by updateSendButtonState
+    // elements.userInput.disabled = true; // User input should not be disabled
     elements.userInput.value = '';
     elements.userInput.style.height = 'auto';
+    isStreaming = true; // Indicate that AI is streaming (moved here)
     
     // Format user message with image if attached
     let userMessageContent;
@@ -979,8 +1157,16 @@ async function sendMessage() {
         userMessageContent = userInput;
     }
     
-    addMessage('user', userMessageContent);
-    
+    const userMessageObj = { role: 'user', content: userMessageContent };
+    const assistantMessageObj = { role: 'assistant', content: '...', id: 'assistant-msg-' + Date.now() }; // Temporary ID for placeholder
+
+    // Optimistically add user and assistant placeholder messages
+    activeChat.messages.push(userMessageObj);
+    activeChat.messages.push(assistantMessageObj);
+    console.log('[sendMessage] Messages optimistically added. activeChat.messages (after push):', JSON.parse(JSON.stringify(activeChat.messages))); // Deep copy for logging
+    renderChat(); // Render immediately with new messages
+    scrollToBottom();
+
     // Clear attached image immediately after adding to chat history
     if (attachedImageData) {
         attachedImageData = null;
@@ -990,9 +1176,7 @@ async function sendMessage() {
         imagePreviewContainer.classList.add('hidden');
     }
     
-    const assistantMessageId = 'assistant-msg-' + Date.now();
-    addMessage('assistant', '<span class="blinking-cursor"></span>', assistantMessageId);
-    const assistantMsgDiv = document.getElementById(assistantMessageId);
+    const assistantMsgDiv = document.getElementById(assistantMessageObj.id); // Get the placeholder div
     
     currentController = new AbortController();
     let fullResponse = "";
@@ -1033,7 +1217,8 @@ async function sendMessage() {
                 signal: currentController.signal,
                 body: JSON.stringify({
                     model: currentModel,
-                    messages: activeChat.messages
+                    messages: activeChat.messages,
+                    chatId: activeChat.id // Pass chatId for study mode check
                 }),
             });
         }
@@ -1136,35 +1321,120 @@ async function sendMessage() {
                 }
             }
 
+            // Update the content of the optimistic assistant message
+            assistantMessageObj.content = fullResponse;
+            // Update the actual message in state.chats after stream completes
+            const currentChat = state.chats.find(c => c.id === activeChat.id);
+            if (currentChat) {
+                const messageToUpdate = currentChat.messages.find(m => m.id === assistantMessageObj.id);
+                if (messageToUpdate) {
+                    messageToUpdate.content = fullResponse;
+                    delete messageToUpdate.id; // Remove temporary ID
+                }
+            }
+            saveState(); // Save state after content is fully received
+            console.log('[sendMessage] State updated after AI stream completion. activeChat.messages (after update):', JSON.parse(JSON.stringify(activeChat.messages))); // Deep copy for logging
+
             assistantMsgDiv.innerHTML = renderContent(fullResponse);
             renderMathInElement(assistantMsgDiv);
         }
 
-        // Save conversation to database
-        await fetch(`${API_BASE_URL}/api/chat/${activeChat.id}/save-messages`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ userMessage: userMessageContent, assistantMessage: fullResponse })
-        });
+        // Reset streaming state and button BEFORE title generation
+        isStreaming = false;
+        elements.stopIcon.classList.add('hidden');
+        elements.sendIcon.classList.remove('hidden');
+        elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+        elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
+        updateSendButtonState(); // Re-enable the button using the new function
+        elements.userInput.disabled = false; // Re-enable user input
+        currentController = null;
 
-        activeChat.messages[activeChat.messages.length - 1].content = fullResponse;
-        saveState();
+        // Save messages to backend AFTER AI response is complete and processed
+        // This is now in its own try-catch block to prevent aggressive rollback on save failures.
+        try {
+            // Find the actual user and assistant messages that were just sent/received
+            const lastUserMessage = activeChat.messages.findLast(m => m.role === 'user');
+            const lastAssistantMessage = activeChat.messages.findLast(m => m.role === 'assistant');
 
+            const saveResponse = await fetch(`${API_BASE_URL}/api/chat/${activeChat.id}/save-messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    userMessage: lastUserMessage.content,
+                    assistantMessage: lastAssistantMessage.content
+                })
+            });
+            const data = await saveResponse.json(); // Parse response to JSON here
+
+            if (!saveResponse.ok) {
+                console.error("❌ FRONTEND: Failed to save messages to backend:", data);
+                // Do NOT throw error here, just log. UI should not revert.
+                // Optionally, display a subtle "failed to save" message to user.
+            } else {
+                console.log("✅ Messages successfully saved to backend.");
+                // Check if a new title was generated and returned
+                if (data.generatedTitle) { // Now 'data' is defined
+                    activeChat.title = data.generatedTitle;
+                    renderSidebar(); // Re-render sidebar to show the new title
+                    console.log(`📝 Chat title updated to: "${data.generatedTitle}"`);
+                }
+            }
+            } catch (saveError) {
+                console.error("❌ FRONTEND: Error calling save-messages API:", saveError);
+                // Do NOT perform UI rollback here.
+                // Optionally, display a subtle "failed to save" message to user.
+            }
+    
+            // Ensure UI is fully updated before potentially running title generation
+            requestAnimationFrame(() => {
+                console.log(`[sendMessage] After AI response & save (rAF): isStreaming = ${isStreaming}, sendBtn hidden: ${elements.sendIcon.classList.contains('hidden')}, stopBtn hidden: ${elements.stopIcon.classList.contains('hidden')}`);
+    
+                // After the second message, check for title generation
+                if (activeChat.messages.length >= 2 && activeChat.title === 'New Chat') {
+                    // The backend will handle the title generation asynchronously.
+                    // For now, we will rely on a full page reload or subsequent data fetch
+                    // to pick up the new title. This avoids a race condition with loadDataFromServer.
+                    console.log("📝 Chat title generation triggered on backend. Title will update on next data load, or has been updated by response.");
+                }
+            });
     } catch (error) {
+        // This catch block now primarily handles errors during AI response generation/streaming
+        // or authentication errors, without affecting message persistence errors.
         if (error.name === 'AbortError') {
+            if (activeChat) {
+                activeChat.messages.pop(); // Remove only AI placeholder
+                renderChat(); // Re-render to reflect reverted state
+                saveState();
+            }
             assistantMsgDiv.innerHTML = renderContent(fullResponse + '\n\n*Stream stopped by user.*');
+            isStreaming = false;
+            elements.stopIcon.classList.add('hidden');
+            elements.sendIcon.classList.remove('hidden');
+            elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
+            updateSendButtonState();
         } else {
+            if (activeChat) {
+                // For other errors, remove both user message and AI placeholder
+                activeChat.messages.pop(); // Remove AI placeholder
+                activeChat.messages.pop(); // Remove user message
+                console.log('[sendMessage] Other Error: Messages reverted. activeChat.messages:', activeChat.messages);
+                renderChat(); // Re-render to reflect reverted state
+                saveState();
+                console.log('[sendMessage] Other Error: State saved after rollback.');
+            }
             console.error("❌ FRONTEND sendMessage Error:", error);
             console.error("❌ FRONTEND Error message:", error.message);
             console.error("❌ FRONTEND Error stack:", error.stack);
             
-            // Try to extract more details from fetch response error
             if (error.response) {
                 console.error("❌ FRONTEND Error response status:", error.response.status);
                 console.error("❌ FRONTEND Error response data:", error.response.data);
             }
             
-            // For failed fetch with response text
             if (typeof error.text === 'function') {
                 try {
                     const errorText = await error.text();
@@ -1174,7 +1444,6 @@ async function sendMessage() {
                 }
             }
             
-            // Check for authentication errors first
             const isAuthError = error.message.includes('Invalid or expired token') ||
                                error.message.includes('401') ||
                                error.message.includes('403') ||
@@ -1182,19 +1451,17 @@ async function sendMessage() {
                                error.message.includes('Authentication failed');
             
             if (isAuthError) {
-                // Handle authentication errors - prompt for re-login
                 assistantMsgDiv.innerHTML = renderContent('⚠️ Your session has expired. Please sign in again.');
                 localStorage.removeItem('authToken');
                 state.currentUser = null;
                 updateLoginStateUI();
-                window.sendMessageRetryCount = 0; // Reset retry counter
+                window.sendMessageRetryCount = 0;
                 setTimeout(() => {
                     animateModalOpen(elements.signinModal.container);
                 }, 1500);
-                return; // Don't retry auth errors
+                return;
             }
             
-            // Enhanced error checking with detailed logging
             const isNetworkError = error.message.includes('fetch') || error.message.includes('Failed to get response') || error.message.includes('network');
             const isServerError = error.message.includes('500') || error.message.includes('502') || error.message.includes('503');
             const shouldRetry = isNetworkError || isServerError;
@@ -1206,41 +1473,24 @@ async function sendMessage() {
             console.error("  - Current Retry Count:", window.sendMessageRetryCount || 0);
             
             if (shouldRetry && (!window.sendMessageRetryCount || window.sendMessageRetryCount < 2)) {
-                // Initialize or increment retry counter
                 window.sendMessageRetryCount = (window.sendMessageRetryCount || 0) + 1;
                 
                 assistantMsgDiv.innerHTML = renderContent(`🔄 Connection issue detected. Retrying... (${window.sendMessageRetryCount}/2)`);
                 
-                // Retry after a short delay
                 setTimeout(async () => {
-                    // Reset UI state for retry
-                    elements.userInput.value = userInput; // Restore the user input
-                    // Call sendMessage again (it will handle the retry logic)
+                    elements.userInput.value = userInput;
                     await sendMessage();
-                }, 1500 * window.sendMessageRetryCount); // Progressive delay: 1.5s, 3s
+                }, 1500 * window.sendMessageRetryCount);
                 
-                return; // Don't execute finally block yet
+                return;
             } else {
-                // Max retries reached or non-retryable error
-                window.sendMessageRetryCount = 0; // Reset counter
+                window.sendMessageRetryCount = 0;
                 if (shouldRetry) {
                     assistantMsgDiv.innerHTML = renderContent(`⚠️ Connection failed after multiple attempts. Please check your internet connection and try again.`);
                 } else {
                     assistantMsgDiv.innerHTML = renderContent(`⚠️ An error occurred: ${error.message}`);
                 }
             }
-        }
-    } finally {
-        // Only reset if we're not retrying
-        if (!window.sendMessageRetryCount || window.sendMessageRetryCount === 0) {
-            isStreaming = false;
-            // Restore send button from stop state
-            elements.stopIcon.classList.add('hidden');
-            elements.sendIcon.classList.remove('hidden');
-            elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-            elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
-            elements.sendBtn.disabled = false;
-            currentController = null;
         }
     }
 }
@@ -1380,7 +1630,7 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
     }
     function animateModalClose(modalContainer, onComplete = () => {}) {
         const modalContent = modalContainer.querySelector('.modal-content');
-        anime({ targets: modalContent, scale: 0.92, opacity: 0, duration: 200, easing: 'easeInCubic', complete: () => { modalContainer.style.display = 'none'; onComplete(); } });
+        anime({ targets: modalContent, scale: 0.95, opacity: 0, duration: 100, easing: 'easeInCubic', complete: () => { modalContainer.style.display = 'none'; onComplete(); } });
     }
     function openRenameModal(chatId) { state.modalContext.chatId = chatId; const chat = state.chats.find(c=>c.id === chatId); if(!chat) return; elements.renameModal.input.value = chat.title; animateModalOpen(elements.renameModal.container); }
     function openDeleteModal(chatId) { state.modalContext.chatId = chatId; const chat = state.chats.find(c=>c.id === chatId); if(!chat) return; elements.deleteModal.message.textContent = `Are you sure you want to delete "${chat.title}"?`; animateModalOpen(elements.deleteModal.container); }
@@ -1589,6 +1839,9 @@ function init() {
         saveState();
     });
 
+    // Initial state update for send button
+    updateSendButtonState();
+
     // Dynamic click handler for send/stop button
     elements.sendBtn.onclick = () => {
         if (isStreaming) {
@@ -1671,7 +1924,19 @@ function init() {
 elements.newChatBtn.onclick = handleNewChat;
     elements.toggleSidebarBtn.onclick = toggleSidebar; 
     elements.sidebarOverlay.onclick = toggleSidebar;
-    elements.userInput.addEventListener('input', () => { elements.userInput.style.height = 'auto'; elements.userInput.style.height = (elements.userInput.scrollHeight) + 'px'; });
+    elements.userInput.addEventListener('input', () => {
+        elements.userInput.style.height = 'auto';
+        elements.userInput.style.height = (elements.userInput.scrollHeight) + 'px';
+        updateSendButtonState(); // Update button state on input change
+
+        const inputValue = elements.userInput.value;
+        if (inputValue.startsWith('/')) {
+            elements.autocompleteSuggestions.classList.remove('hidden');
+        } else {
+            elements.autocompleteSuggestions.classList.add('hidden');
+        }
+    });
+
     elements.userInput.addEventListener('keydown', e => {
         const isMobile = window.innerWidth < 768;
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -1680,6 +1945,12 @@ elements.newChatBtn.onclick = handleNewChat;
                 sendMessage();
             }
         }
+    });
+
+    elements.studyCommandBtn.addEventListener('click', () => {
+        elements.userInput.value = '/study';
+        elements.autocompleteSuggestions.classList.add('hidden');
+        elements.userInput.focus();
     });
     elements.settingsBtn.onclick = () => animateModalOpen(elements.settingsModal.container);
     elements.settingsModal.closeBtn.onclick = () => animateModalClose(elements.settingsModal.container);
@@ -1698,6 +1969,24 @@ elements.newChatBtn.onclick = handleNewChat;
             return;
         }
 
+        const chatToRename = state.chats.find(c => c.id === chatId);
+        if (!chatToRename) {
+            closeAllModals();
+            return;
+        }
+        const originalTitle = chatToRename.title; // Store original title for rollback
+
+        // Optimistic UI update
+        chatToRename.title = newName;
+        if (chatId === state.activeId) {
+            elements.chatTitle.textContent = newName;
+        }
+        console.log('[renameModal.saveBtn.onclick] State after optimistic update. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+        console.log('[renameModal.saveBtn.onclick] State after optimistic update. state.activeId:', state.activeId);
+        renderSidebar(); // Update sidebar immediately
+        saveState();
+
+        closeAllModals(); // Close modal immediately after optimistic update
         try {
             const response = await fetch(`${API_BASE_URL}/api/chat/${chatId}`, {
                 method: 'PUT',
@@ -1713,21 +2002,25 @@ elements.newChatBtn.onclick = handleNewChat;
                 throw new Error(errorData.error || 'Failed to update chat title on server.');
             }
 
-            const updatedChat = await response.json();
-            const chat = state.chats.find(c => c.id === chatId);
-            if (chat) {
-                chat.title = updatedChat.title;
-                if (chat.id === state.activeId) {
-                    elements.chatTitle.textContent = newName;
-                }
-                renderSidebar();
-                saveState();
-            }
+            // Backend confirmed, no further UI changes needed for success beyond optimistic update
+            console.log(`Chat ${chatId} renamed successfully to "${newName}"`);
+
         } catch (error) {
             console.error("Error renaming chat:", error);
             alert(`Failed to rename chat: ${error.message}`);
-        } finally {
-            closeAllModals();
+            
+            // Revert optimistic UI update on error
+            chatToRename.title = originalTitle;
+            if (chatId === state.activeId) {
+                elements.chatTitle.textContent = originalTitle;
+            }
+            console.log('[renameModal.saveBtn.onclick] Error rollback. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+            console.log('[renameModal.saveBtn.onclick] Error rollback. state.activeId:', state.activeId);
+            renderSidebar(); // Re-render sidebar to show original title
+            saveState();
+        } finally { // Ensure button state is updated
+            updateSendButtonState();
+            console.log('[renameModal.saveBtn.onclick] Finally block executed. Button state updated.');
         }
     };
     elements.deleteModal.confirmBtn.onclick = async () => {
@@ -1737,6 +2030,30 @@ elements.newChatBtn.onclick = handleNewChat;
             alert("Authentication error. Please sign in again.");
             return;
         }
+
+        const chatToDeleteIndex = state.chats.findIndex(c => c.id === chatId);
+        if (chatToDeleteIndex === -1) {
+            closeAllModals();
+            return;
+        }
+        const chatToDelete = state.chats[chatToDeleteIndex]; // Store chat for rollback
+
+        // Optimistic UI update: Remove chat from state and re-render
+        state.chats.splice(chatToDeleteIndex, 1);
+        
+        let oldActiveId = state.activeId; // Store current activeId for potential rollback
+
+        if (state.chats.length === 0) {
+            state.activeId = null; // No chats left, clear activeId
+        } else if (chatId === oldActiveId) {
+            // If the deleted chat was the active one, activate the nearest chat
+            state.activeId = state.chats[Math.max(0, chatToDeleteIndex - 1)]?.id || state.chats[0]?.id;
+        }
+        
+        renderSidebar(); // Update sidebar immediately
+        renderChat(); // Update chat area immediately
+        saveState();
+        closeAllModals(); // Close modal immediately after optimistic update
 
         try {
             const response = await fetch(`${API_BASE_URL}/api/chat/${chatId}`, {
@@ -1749,29 +2066,35 @@ elements.newChatBtn.onclick = handleNewChat;
                 throw new Error(errorData.error || 'Failed to delete chat on server.');
             }
 
-            // If successful, update UI
-            const idx = state.chats.findIndex(c => c.id === chatId);
-            if (idx > -1) {
-                state.chats.splice(idx, 1);
-                if (state.chats.length === 0) {
-                    await handleNewChat();
-                } else if (chatId === state.activeId) {
-                    const newActiveId = state.chats[Math.max(0, idx - 1)]?.id || state.chats[0]?.id;
-                    setActive(newActiveId);
-                } else {
-                   renderSidebar();
-                }
+            // Backend confirmed, no further UI changes needed for success beyond optimistic update
+            console.log(`Chat ${chatId} deleted successfully.`);
+            // If no chats left after deletion, ensure a new chat is created
+            if (state.chats.length === 0) {
+                await handleNewChat();
             }
+
         } catch (error) {
             console.error("Error deleting chat:", error);
             alert(`Failed to delete chat: ${error.message}`);
-        } finally {
-            closeAllModals();
+            
+            // Revert optimistic UI update on error
+            state.chats.splice(chatToDeleteIndex, 0, chatToDelete); // Re-add chat
+            state.activeId = oldActiveId; // Restore activeId
+            console.log('[deleteModal.confirmBtn.onclick] Error rollback. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+            console.log('[deleteModal.confirmBtn.onclick] Error rollback. state.activeId:', state.activeId);
+            renderSidebar(); // Re-render sidebar
+            renderChat(); // Re-render chat area
+            saveState();
+        } finally { // Ensure button state is updated
+            updateSendButtonState();
+            console.log('[deleteModal.confirmBtn.onclick] Finally block executed. Button state updated.');
         }
     };
     [elements.settingsModal.container, elements.renameModal.container, elements.deleteModal.container, elements.signinModal.container].forEach(el => el.onclick = (e) => { if (e.target === el) closeAllModals(); });
     [elements.renameModal.cancelBtn, elements.deleteModal.cancelBtn, elements.signinModal.closeBtn].forEach(el => el.onclick = closeAllModals);
     elements.cancelEditBtn.onclick = exitEditMode;
+    updateSendButtonState(); // Call after exitEditMode
+    console.log('[init] Initial button state update after exitEditMode listener setup.');
     elements.signinBtn.onclick = () => animateModalOpen(elements.signinModal.container);
     elements.logoutBtn.onclick = handleLogout;
     elements.profileBtn.onclick = () => {

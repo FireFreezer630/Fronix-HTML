@@ -6,6 +6,8 @@ const router = express.Router();
 const supabase = require('../config/supabaseClient');
 const authMiddleware = require('../middleware/authMiddleware');
 const crypto = require('crypto');
+const { generateChatTitle } = require('../utils/titleGenerator');
+const { getFirstTwoNonTrivialMessages } = require('../utils/messageUtils');
 
 // GET all chats for the logged-in user
 router.get('/', authMiddleware, async (req, res) => {
@@ -20,6 +22,27 @@ router.get('/', authMiddleware, async (req, res) => {
         res.status(200).json(data);
     } catch (error) {
         res.status(500).json({ error: 'Error fetching chats' });
+    }
+});
+// GET a single chat by ID
+router.get('/:chatId', authMiddleware, async (req, res) => {
+    const { chatId } = req.params;
+    try {
+        const { data, error } = await supabase
+            .from('chats')
+            .select('*')
+            .eq('id', chatId)
+            .eq('user_id', req.user.id)
+            .single();
+
+        if (error) throw error;
+        if (!data) {
+            return res.status(404).json({ error: 'Chat not found or unauthorized.' });
+        }
+        res.status(200).json(data);
+    } catch (error) {
+        console.error("Error fetching single chat:", error);
+        res.status(500).json({ error: 'Error fetching chat' });
     }
 });
 
@@ -68,6 +91,10 @@ router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
     const { chatId } = req.params;
     const { userMessage, assistantMessage } = req.body;
     const userId = req.user.id;
+
+    console.log(`[Save Messages] Received request for chatId: ${chatId}`);
+    console.log(`[Save Messages] User message:`, userMessage);
+    console.log(`[Save Messages] Assistant message:`, assistantMessage);
     
     if (!userMessage || !assistantMessage) {
         return res.status(400).json({ error: 'Both user and assistant messages are required.' });
@@ -84,7 +111,41 @@ router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
         ]);
         
         if (error) throw error;
-        res.status(201).json({ success: true, message: 'Conversation saved.' });
+
+        // Check if it's time to generate a title
+        const { data: messages, error: messagesError } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('chat_id', chatId);
+
+        let nonTrivialMessages = [];
+        if (messagesError) {
+            console.error('Error fetching messages for title generation:', messagesError);
+        } else {
+            nonTrivialMessages = messages.filter(m => !/^(hi|hello|yo)$/i.test(m.content.trim()));
+            console.log(`Message count for chat ${chatId}: ${messages.length}, Non-trivial messages: ${nonTrivialMessages.length}`);
+            if (nonTrivialMessages.length >= 2) {
+                console.log('Triggering title generation...');
+                await generateChatTitle(chatId, nonTrivialMessages);
+            }
+        }
+        let responsePayload = { success: true, message: 'Conversation saved.' };
+        if (nonTrivialMessages.length >= 2) {
+            // After title generation, fetch the updated chat to get the new title
+            const { data: updatedChat, error: updatedChatError } = await supabase
+                .from('chats')
+                .select('title')
+                .eq('id', chatId)
+                .single();
+
+            if (updatedChatError) {
+                console.error('Error fetching updated chat title:', updatedChatError);
+            } else if (updatedChat && updatedChat.title !== 'New Chat') {
+                responsePayload.generatedTitle = updatedChat.title;
+                console.log(`[Save Messages] Returning generated title: "${updatedChat.title}"`);
+            }
+        }
+        res.status(201).json(responsePayload);
     } catch (error) {
         console.error("Error saving conversation:", error);
         res.status(500).json({ error: 'Internal server error while saving conversation.' });
@@ -94,7 +155,7 @@ router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
 // UPDATE a chat's title
 router.put('/:chatId', authMiddleware, async (req, res) => {
     const { chatId } = req.params;
-    const { title } = req.body;
+    const { title, title_generated } = req.body;
     const userId = req.user.id;
     
     if (!title) {
@@ -104,7 +165,7 @@ router.put('/:chatId', authMiddleware, async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('chats')
-            .update({ title })
+            .update({ title, title_generated })
             .eq('id', chatId)
             .eq('user_id', userId)
             .select()
@@ -277,5 +338,85 @@ router.delete('/cleanup-images', authMiddleware, async (req, res) => {
     }
 });
 
+
+router.post('/:chatId/toggle-study-mode', authMiddleware, async (req, res) => {
+    const { chatId } = req.params;
+    const userId = req.user.id;
+
+    console.log(`[Toggle Study Mode] Received request for chatId: ${chatId}, userId: ${userId}`);
+
+    try {
+        // Fetch the current study_mode status
+        const { data: chat, error: fetchError } = await supabase
+            .from('chats')
+            .select('study_mode')
+            .eq('id', chatId)
+            .eq('user_id', userId) // Ensure user owns the chat
+            .single();
+
+        if (fetchError) {
+            console.error(`[Toggle Study Mode] Error fetching chat ${chatId} for user ${userId}:`, fetchError);
+            throw fetchError;
+        }
+        if (!chat) {
+            console.warn(`[Toggle Study Mode] Chat ${chatId} not found or unauthorized for user ${userId}.`);
+            return res.status(404).json({ error: 'Chat not found or unauthorized.' });
+        }
+
+        const newStudyModeStatus = !chat.study_mode;
+        console.log(`[Toggle Study Mode] Current study_mode for chat ${chatId}: ${chat.study_mode}. New status will be: ${newStudyModeStatus}`);
+
+        // Update the study_mode status
+        const { data, error: updateError } = await supabase
+            .from('chats')
+            .update({ study_mode: newStudyModeStatus })
+            .eq('id', chatId)
+            .eq('user_id', userId)
+            .select()
+            .single();
+
+        if (updateError) {
+            console.error(`[Toggle Study Mode] Error updating study_mode for chat ${chatId} for user ${userId}:`, updateError);
+            throw updateError;
+        }
+
+        console.log(`[Toggle Study Mode] Successfully updated chat ${chatId} to study_mode: ${newStudyModeStatus}`);
+        res.status(200).json({
+            success: true,
+            study_mode: newStudyModeStatus,
+            message: `Study mode ${newStudyModeStatus ? 'enabled' : 'disabled'} for chat ${chatId}.`
+        });
+
+    } catch (error) {
+        console.error("[Toggle Study Mode] Unhandled error:", error);
+        res.status(500).json({ error: 'Failed to toggle study mode.' });
+    }
+});
+
+router.post('/generate-missing-titles', authMiddleware, async (req, res) => {
+    try {
+        const { data: chats, error } = await supabase
+            .from('chats')
+            .select('id')
+            .eq('title_generated', false)
+            .eq('user_id', req.user.id);
+
+        if (error) throw error;
+
+        let titlesGenerated = 0;
+        for (const chat of chats) {
+            const messages = await getFirstTwoNonTrivialMessages(chat.id);
+            if (messages.length === 2) {
+                await generateChatTitle(chat.id, messages);
+                titlesGenerated++;
+            }
+        }
+
+        res.status(200).json({ success: true, message: `${titlesGenerated} titles generated.` });
+    } catch (error) {
+        console.error('Error generating missing titles:', error);
+        res.status(500).json({ error: 'Error generating missing titles' });
+    }
+});
 
 module.exports = router;

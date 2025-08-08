@@ -68,6 +68,8 @@ CREATE TABLE public.chats (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   user_id uuid NOT NULL DEFAULT auth.uid(),
   title text,
+  study_mode boolean NOT NULL DEFAULT false,
+  title_generated boolean NOT NULL DEFAULT false,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT chats_pkey PRIMARY KEY (id),
   CONSTRAINT chats_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)

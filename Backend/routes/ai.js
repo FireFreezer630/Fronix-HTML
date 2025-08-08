@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const supabase = require('../config/supabaseClient'); // Import supabase client
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Safe JSON stringification to handle circular references
@@ -75,32 +76,42 @@ class ApiKeyPool {
 const apiKeyPool = new ApiKeyPool();
 
 // Enhanced API request function with automatic key rotation for axios.post
-async function makeApiRequestWithRetry(url, requestBody, requestOptions, maxRetries = null) {
-    const retryLimit = maxRetries || apiKeyPool.maxRetries;
+async function makeApiRequestWithRetry(url, requestBody, requestOptions, maxRetries = null, specificKey = null) {
+    const retryLimit = maxRetries || (specificKey ? 1 : apiKeyPool.maxRetries); // Only 1 retry for specificKey
     let attempt = 0;
     let lastError = null;
     
     while (attempt < retryLimit) {
         try {
-            // Get current API key
-            const currentKey = apiKeyPool.getCurrentKey();
+            let currentKey;
+            if (specificKey) {
+                currentKey = specificKey; // Use the provided specific key
+            } else {
+                currentKey = apiKeyPool.getCurrentKey(); // Use pooled key for rotation
+            }
             
-            // Update authorization header with current key
-            const updatedOptions = {
-                ...requestOptions,
-                headers: {
+            // If no key is available (e.g., for V1 if specificKey is null and pool is empty),
+            // and the endpoint requires it, this will fail.
+            if (!currentKey && url.includes('pollinations.ai/openai')) { // Check for V1 endpoint
+                 throw new Error('API key for V1 Pollinations.ai endpoint is missing.');
+            }
+
+            // Update authorization header with current key if available
+            const updatedOptions = { ...requestOptions };
+            if (currentKey) { // Only add Authorization header if a key is present
+                updatedOptions.headers = {
                     ...requestOptions.headers,
                     'Authorization': `Bearer ${currentKey}`
-                }
-            };
+                };
+            }
             
-            console.log(`🔑 Attempt ${attempt + 1}/${retryLimit} using API key index: ${apiKeyPool.currentIndex}`);
+            console.log(`🔑 Attempt ${attempt + 1}/${retryLimit} using API key: ${specificKey ? 'Specific Key' : `Pool Index ${apiKeyPool.currentIndex}`}`);
             
             // Make the API request
             const response = await axios.post(url, requestBody, updatedOptions);
             
-            // Request successful - reset to first key for next time
-            if (attempt > 0) {
+            // Request successful - reset to first key for next time (only if using the pool)
+            if (attempt > 0 && !specificKey) {
                 apiKeyPool.resetToFirstKey();
             }
             
@@ -109,8 +120,8 @@ async function makeApiRequestWithRetry(url, requestBody, requestOptions, maxRetr
         } catch (error) {
             lastError = error;
             
-            // Check if it's a rate limit error (429)
-            if (error.response && error.response.status === 429) {
+            // Check if it's a rate limit error (429) and if we should retry
+            if (error.response && error.response.status === 429 && !specificKey) { // Only retry with rotation if not using a specific key
                 console.log(`⚠️ Rate limit hit on key ${apiKeyPool.currentIndex + 1}/${apiKeyPool.keys.length}`);
                 
                 // Try to rotate to next key
@@ -120,16 +131,15 @@ async function makeApiRequestWithRetry(url, requestBody, requestOptions, maxRetr
                     attempt++;
                     continue;
                 } else {
-                    console.error('❌ No more API keys to try');
+                    console.error('❌ No more API keys to try in pool');
                     break;
                 }
             } else {
-                // For non-rate-limit errors, don't retry
-                console.error(`❌ API request failed with non-rate-limit error:`, error.response?.status, error.message);
+                // For non-rate-limit errors or if using a specific key, don't retry
+                console.error(`❌ API request failed with non-retryable error:`, error.response?.status, error.message);
                 break;
             }
         }
-        
         attempt++;
     }
     
@@ -139,7 +149,7 @@ async function makeApiRequestWithRetry(url, requestBody, requestOptions, maxRetr
 }
 
 router.post('/chat', authMiddleware, async (req, res) => {
-    const { model, messages } = req.body;
+    const { model, messages, chatId } = req.body; // Added chatId
 
     if (!model || !messages || !Array.isArray(messages)) {
         return res.status(400).json({ error: 'Invalid request body. "model" and a "messages" array are required.' });
@@ -149,6 +159,52 @@ router.post('/chat', authMiddleware, async (req, res) => {
     let requestBody, apiHeaders, apiEndpoint, modelId, isV2Model;
     
     try {
+        // Fetch study_mode status from the chats table
+        let isStudyMode = false;
+        if (chatId) {
+            console.log(`🔍 Fetching study mode for chatId: ${chatId}, userId: ${req.user.id}`);
+            const { data: chatData, error: chatError } = await supabase
+                .from('chats')
+                .select('study_mode')
+                .eq('id', chatId)
+                .eq('user_id', req.user.id) // Ensure user owns the chat
+                .single();
+
+            if (chatError) {
+                console.error('Error fetching chat study mode:', chatError.message);
+                // Continue without study mode if there's an error
+            } else if (chatData) {
+                isStudyMode = chatData.study_mode;
+                console.log(`📚 Study mode for chat ${chatId}: ${isStudyMode}`);
+            } else {
+                console.log(`⚠️ No chat data found for chatId: ${chatId}`);
+            }
+        } else {
+            console.log('⚠️ No chatId provided for study mode check');
+        }
+        
+        // Load study mode prompt content
+        let studyModePrompt = '';
+        if (isStudyMode) {
+            const fs = require('fs/promises'); // Import fs for file reading
+            const path = require('path'); // Import path for path manipulation
+            try {
+                studyModePrompt = await fs.readFile(path.join(__dirname, '../../study-mode.md'), 'utf8');
+                console.log('📚 Study mode prompt loaded successfully.');
+            } catch (fileError) {
+                console.error('Error reading study-mode.md:', fileError.message);
+                studyModePrompt = 'You are currently in study mode. Please provide academic and guiding responses.'; // Fallback prompt
+            }
+        }
+
+        // Prepare messages for the AI model
+        let messagesForAI = [...messages]; // Create a copy to avoid modifying original req.body
+        if (isStudyMode) {
+            // Prepend the study mode prompt as a system message
+            messagesForAI.unshift({ role: 'system', content: studyModePrompt });
+            console.log('📚 Study mode prompt injected into AI messages.');
+        }
+
         // Set proper SSE headers for streaming response
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
@@ -191,18 +247,20 @@ router.post('/chat', authMiddleware, async (req, res) => {
                 // Authorization header will be set by makeApiRequestWithRetry
             };
         } else {
+            // V1 models (Pollinations.ai)
             apiEndpoint = process.env.AI_API_ENDPOINT;
             modelId = model;
             apiHeaders = {
                 'Content-Type': 'application/json',
                 'Accept': 'text/event-stream'
             };
+            // The specific V1 API key will be passed directly to makeApiRequestWithRetry
         }
         
         // Format request body according to OpenAI-compatible format
         requestBody = {
             model: modelId,
-            messages: messages,
+            messages: messagesForAI, // Use the modified messages array
             stream: true
         };
 
@@ -230,14 +288,29 @@ router.post('/chat', authMiddleware, async (req, res) => {
             ), null, 2));
         }
 
-        const aiResponse = await makeApiRequestWithRetry(
-            apiEndpoint,
-            requestBody,
-            {
-                headers: apiHeaders,
-                responseType: 'stream'
-            }
-        );
+        let aiResponse;
+        if (isV2Model) {
+            aiResponse = await makeApiRequestWithRetry(
+                apiEndpoint,
+                requestBody,
+                {
+                    headers: apiHeaders,
+                    responseType: 'stream'
+                }
+            );
+        } else {
+            // For V1 models, pass the specific AI_API_KEY
+            aiResponse = await makeApiRequestWithRetry(
+                apiEndpoint,
+                requestBody,
+                {
+                    headers: apiHeaders,
+                    responseType: 'stream'
+                },
+                null, // maxRetries (use default defined in function)
+                process.env.AI_API_KEY // Pass the specific V1 API key
+            );
+        }
 
         console.log('✅ API Response Status:', aiResponse.status);
         console.log('✅ API Response Headers:', JSON.stringify(aiResponse.headers, null, 2));
