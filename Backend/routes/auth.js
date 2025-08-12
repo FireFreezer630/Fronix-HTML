@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../config/supabaseClient');
 const authMiddleware = require('../middleware/authMiddleware');
+const cache = require('../utils/cache');
 
 // Sign up
 router.post('/signup', async (req, res) => {
@@ -22,7 +23,7 @@ router.post('/signup', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
+// Sign in
 // Sign in
 router.post('/signin', async (req, res) => {
     const { email, password } = req.body;
@@ -37,12 +38,26 @@ router.post('/signin', async (req, res) => {
             return res.status(400).json({ error: error.message });
         }
 
-        res.status(200).json({ user: data.user, session: data.session });
+        // Try to attach prefetched bootstrap payload if available
+        let bootstrap = null;
+        const cachedByEmail = cache.get(email);
+        if (cachedByEmail) {
+            bootstrap = cachedByEmail;
+            // Normalize and re-key by userId for subsequent use
+            if (data?.user?.id) {
+                cache.set(data.user.id, bootstrap, 300);
+                cache.del(email); // remove pre-login email cache
+            }
+        } else if (data?.user?.id) {
+            const cachedById = cache.get(data.user.id);
+            if (cachedById) bootstrap = cachedById;
+        }
+
+        res.status(200).json({ user: data.user, session: data.session, bootstrap });
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 
 
 // Sign out

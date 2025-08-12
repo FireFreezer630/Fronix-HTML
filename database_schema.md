@@ -31,6 +31,9 @@ content: '[
 1. **Supabase Storage Bucket**: `chat_images` bucket created with RLS policies
 2. **Message Content**: Now stores JSON strings for multimodal content
 3. **Foreign Key**: Fixed messages.chat_id foreign key constraint
+4. **Indexes**:
+   - CREATE INDEX IF NOT EXISTS idx_messages_chat_created ON public.messages (chat_id, created_at DESC);
+   - CREATE INDEX IF NOT EXISTS idx_chats_user_updated ON public.chats (user_id, created_at DESC);
 
 ## RLS Policies Applied
 

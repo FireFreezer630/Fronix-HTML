@@ -365,6 +365,28 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmcmxtcnBsc2hpamJvc2F3cG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzEzMDYsImV4cCI6MjA2ODg0NzMwNn0.BzsC5u2LGbq3QydQCAKnIiJvrRHTdjx3HzNGdCzf_ac';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
+    // --- Email Prefetch Helpers ---
+    let lastPrefetchedEmail = null;
+    let prefetchTimer = null;
+    function isValidEmail(email) {
+        return /[^@\s]+@[^@\s]+\.[^@\s]+/.test(email);
+    }
+    async function prefetchUserDataByEmail(email) {
+        try {
+            if (!email || !isValidEmail(email)) return;
+            if (lastPrefetchedEmail === email) return;
+            lastPrefetchedEmail = email;
+            await fetch(`${API_BASE_URL}/api/user/pre-fetch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+        } catch (e) {
+            // Non-blocking best-effort
+            console.warn('Prefetch failed (non-blocking):', e.message);
+        }
+    }
+
     // Token validation utility functions
     function isTokenExpired(token) {
         if (!token) return true;
@@ -404,6 +426,13 @@ async function handleSignIn(email, password, retryCount = 0) {
     }
     const maxRetries = 2;
     try {
+        // Pre-fetch user data
+        await fetch(`${API_BASE_URL}/api/user/pre-fetch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+
         // This function CORRECTLY calls your backend, not the client library.
         const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
             method: 'POST',
@@ -414,12 +443,16 @@ async function handleSignIn(email, password, retryCount = 0) {
         if (!response.ok) {
             throw new Error(data.error || 'Unknown sign-in error');
         }
-        // The onAuthStateChange listener will detect the login and handle the rest.
-        // We manually set the token to speed up the process.
+        // Manually set token and hydrate from bootstrap if provided
         localStorage.setItem('authToken', data.session.access_token);
-        loadDataFromServer();
+        if (data.bootstrap) {
+            hydrateFromBootstrap(data.bootstrap);
+            renderSidebar();
+            renderChat();
+        } else {
+            loadDataFromServer();
+        }
         closeAllModals();
-        alert('Sign in successful!');
     } catch (error) {
         console.error("Sign-in failed:", error);
         // Retry logic for network/fetch errors
@@ -431,6 +464,41 @@ async function handleSignIn(email, password, retryCount = 0) {
         } else {
             alert('Error signing in: ' + error.message);
         }
+    }
+}
+
+function hydrateFromBootstrap(bootstrap) {
+    // Normalize and load profile/preferences
+    if (bootstrap?.profile) {
+        state.currentUser = {
+            ...(state.currentUser || {}),
+            id: bootstrap.userId,
+            email: state.currentUser?.email || (document.getElementById('signin-email')?.value || ''),
+            username: bootstrap.profile.username || 'User',
+            plan: bootstrap.profile.plan || 'basic'
+        };
+    } else {
+        state.currentUser = {
+            ...(state.currentUser || {}),
+            id: bootstrap.userId,
+            email: state.currentUser?.email || (document.getElementById('signin-email')?.value || '')
+        };
+    }
+    // Load chats and messages directly
+    state.chats = (bootstrap.chats || []).map(c => ({
+        id: c.id,
+        title: c.title,
+        study_mode: c.study_mode,
+        title_generated: c.title_generated,
+        created_at: c.created_at,
+        messages: c.messages || []
+    }));
+    // Select active chat
+    const lastActiveChatIdFromLocalStorage = localStorage.getItem('lastActiveChatId');
+    if (lastActiveChatIdFromLocalStorage && state.chats.some(chat => chat.id === lastActiveChatIdFromLocalStorage)) {
+        state.activeId = lastActiveChatIdFromLocalStorage;
+    } else if (!state.activeId && state.chats.length > 0) {
+        state.activeId = state.chats[0].id;
     }
 }
 
@@ -467,13 +535,13 @@ async function handleSignUp(email, password) {
         try {
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
+                options: {
+                    redirectTo: 'https://fronix.netlify.app'
+                }
             });
             if (error) {
                 throw new Error('Supabase Google login failed: ' + error.message);
             }
-            // Supabase will handle the redirect. No further code is needed here.
-            // After login, the user will be redirected back, and the session
-            // will be handled by the onAuthStateChange listener (which we'll add).
         } catch (error) {
             console.error("Error during Google login:", error);
             alert(error.message);
@@ -547,86 +615,99 @@ async function loadDataFromServer(retryCount = 0) {
         return;
     }
 
+    // Check if data is already in state
+    if (state.currentUser && state.chats.length > 0) {
+        return;
+    }
+
     try {
-        // Wrap the entire data loading process in retry mechanism
-        await retryWithBackoff(async () => {
-            // Fetch user info first
-            const userResponse = await fetch(`${API_BASE_URL}/api/user/me`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            
-            if (userResponse.status === 401 || userResponse.status === 403) {
-                throw new Error('AUTH_ERROR'); // Special error for authentication issues
-            }
-            if (!userResponse.ok) {
-                const error = new Error(`Failed to fetch user data. Status: ${userResponse.status}`);
-                error.status = userResponse.status;
-                throw error;
-            }
-            state.currentUser = await userResponse.json();
-
-            // Then fetch chats
-            const chatsResponse = await fetch(`${API_BASE_URL}/api/chat`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            
-            if (chatsResponse.status === 401 || chatsResponse.status === 403) {
-                throw new Error('AUTH_ERROR');
-            }
-            if (!chatsResponse.ok) {
-                const error = new Error(`Failed to fetch chats. Status: ${chatsResponse.status}`);
-                error.status = chatsResponse.status;
-                throw error;
-            }
-            const chats = await chatsResponse.json();
-            state.chats = chats; // Store all chats
-
-            // Fetch messages for each chat
-            for (let i = 0; i < state.chats.length; i++) {
-                const chat = state.chats[i];
-                const messagesResponse = await fetch(`${API_BASE_URL}/api/chat/${chat.id}/messages`, {
+        // First try a single bootstrap request (leverages server cache)
+        const bootstrapResponse = await fetch(`${API_BASE_URL}/api/user/bootstrap`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (bootstrapResponse.ok) {
+            const bootstrap = await bootstrapResponse.json();
+            hydrateFromBootstrap(bootstrap);
+        } else {
+            // Fallback to legacy multi-request flow under retry wrapper
+            await retryWithBackoff(async () => {
+                // Fetch user info first
+                const userResponse = await fetch(`${API_BASE_URL}/api/user/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-
-                if (messagesResponse.status === 401 || messagesResponse.status === 403) {
-                    throw new Error('AUTH_ERROR');
+                
+                if (userResponse.status === 401 || userResponse.status === 403) {
+                    throw new Error('AUTH_ERROR'); // Special error for authentication issues
                 }
-                if (!messagesResponse.ok) {
-                    const error = new Error(`Failed to fetch messages for chat ${chat.id}. Status: ${messagesResponse.status}`);
-                    error.status = messagesResponse.status;
+                if (!userResponse.ok) {
+                    const error = new Error(`Failed to fetch user data. Status: ${userResponse.status}`);
+                    error.status = userResponse.status;
                     throw error;
                 }
-                const messages = await messagesResponse.json();
-                chat.messages = messages; // Store messages directly in the chat object
-            }
+                state.currentUser = await userResponse.json();
 
-            // Set active chat based on persisted ID or default to the first chat
-            const currentActiveIdBeforeLoad = state.activeId; // Store current activeId
-            const lastActiveChatIdFromLocalStorage = localStorage.getItem('lastActiveChatId');
+                // Then fetch chats
+                const chatsResponse = await fetch(`${API_BASE_URL}/api/chat`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (chatsResponse.status === 401 || chatsResponse.status === 403) {
+                    throw new Error('AUTH_ERROR');
+                }
+                if (!chatsResponse.ok) {
+                    const error = new Error(`Failed to fetch chats. Status: ${chatsResponse.status}`);
+                    error.status = chatsResponse.status;
+                    throw error;
+                }
+                const chats = await chatsResponse.json();
+                state.chats = chats; // Store all chats
 
-            let newActiveId = null;
+                // Fetch messages for each chat
+                for (let i = 0; i < state.chats.length; i++) {
+                    const chat = state.chats[i];
+                    const messagesResponse = await fetch(`${API_BASE_URL}/api/chat/${chat.id}/messages`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
 
-            // Priority 1: If current activeId exists and is in the newly fetched chats
-            if (currentActiveIdBeforeLoad && state.chats.some(chat => chat.id === currentActiveIdBeforeLoad)) {
-                newActiveId = currentActiveIdBeforeLoad;
-            }
-            // Priority 2: If no current activeId, or current activeId not found, try localStorage
-            else if (lastActiveChatIdFromLocalStorage && state.chats.some(chat => chat.id === lastActiveChatIdFromLocalStorage)) {
-                newActiveId = lastActiveChatIdFromLocalStorage;
-            }
-            // Priority 3: If neither, default to the first chat
-            else if (state.chats.length > 0) {
-                newActiveId = state.chats[0].id;
-            }
+                    if (messagesResponse.status === 401 || messagesResponse.status === 403) {
+                        throw new Error('AUTH_ERROR');
+                    }
+                    if (!messagesResponse.ok) {
+                        const error = new Error(`Failed to fetch messages for chat ${chat.id}. Status: ${messagesResponse.status}`);
+                        error.status = messagesResponse.status;
+                        throw error;
+                    }
+                    const messages = await messagesResponse.json();
+                    chat.messages = messages; // Store messages directly in the chat object
+                }
 
-            if (newActiveId !== null) {
-                state.activeId = newActiveId;
-            } else {
-                // If no chats exist, create a new one
-                await handleNewChat();
-                return; // handleNewChat will set activeId and render
-            }
-        });
+                // Set active chat based on persisted ID or default to the first chat
+                const currentActiveIdBeforeLoad = state.activeId; // Store current activeId
+                const lastActiveChatIdFromLocalStorage = localStorage.getItem('lastActiveChatId');
+
+                let newActiveId = null;
+
+                // Priority 1: If current activeId exists and is in the newly fetched chats
+                if (currentActiveIdBeforeLoad && state.chats.some(chat => chat.id === currentActiveIdBeforeLoad)) {
+                    newActiveId = currentActiveIdBeforeLoad;
+                }
+                // Priority 2: If no current activeId, or current activeId not found, try localStorage
+                else if (lastActiveChatIdFromLocalStorage && state.chats.some(chat => chat.id === lastActiveChatIdFromLocalStorage)) {
+                    newActiveId = lastActiveChatIdFromLocalStorage;
+                }
+                // Priority 3: If neither, default to the first chat
+                else if (state.chats.length > 0) {
+                    newActiveId = state.chats[0].id;
+                }
+
+                if (newActiveId !== null) {
+                    state.activeId = newActiveId;
+                } else if (state.chats.length === 0) { // Only create a new chat if there are no existing chats
+                    await handleNewChat();
+                    return; // handleNewChat will set activeId and render
+                }
+            });
+        }
 
         // If we get here, everything succeeded
         console.log('[loadDataFromServer] Data loaded successfully. Current state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
@@ -691,6 +772,25 @@ async function handleNewChat() {
         });
 
         if (!response.ok) {
+            // Try to recover by refetching chats; if the chat exists already, sync it
+            console.warn('[handleNewChat] Create failed, attempting recovery via GET /api/chat');
+            const listResp = await fetch(`${API_BASE_URL}/api/chat`, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (listResp.ok) {
+                const list = await listResp.json();
+                const latest = list && list.length ? list[0] : null;
+                if (latest) {
+                    // Map optimistic chat to latest if needed
+                    const idx = state.chats.findIndex(c => c.id === tempChatId);
+                    if (idx !== -1) {
+                        state.chats[idx].id = latest.id;
+                        state.chats[idx].created_at = latest.created_at;
+                        state.activeId = latest.id;
+                        renderSidebar();
+                        saveState();
+                        return;
+                    }
+                }
+            }
             throw new Error('Failed to create chat on server');
         }
 
@@ -718,22 +818,42 @@ async function handleNewChat() {
 
     } catch (error) {
         console.error("[handleNewChat] Error creating new chat:", error);
-        alert("Could not create a new chat. Please try again.");
+        // Auto-recovery: attempt one retry after short delay
+        try {
+            await new Promise(r => setTimeout(r, 400));
+            const retryResp = await fetch(`${API_BASE_URL}/api/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ title: 'New Chat' })
+            });
+            if (retryResp.ok) {
+                const newChatFromServer = await retryResp.json();
+                const idx = state.chats.findIndex(chat => chat.id === tempChatId);
+                if (idx !== -1) {
+                    state.chats[idx].id = newChatFromServer.id;
+                    state.chats[idx].created_at = newChatFromServer.created_at;
+                    state.activeId = newChatFromServer.id;
+                    renderSidebar();
+                    saveState();
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn('[handleNewChat] Retry failed:', e.message);
+        }
 
-        // Revert optimistic update on error
+        // Final fallback: rollback optimistic chat
         const index = state.chats.findIndex(chat => chat.id === tempChatId);
         if (index !== -1) {
-            state.chats.splice(index, 1); // Remove optimistic chat
-            // If the deleted chat was active, set a new active chat
+            state.chats.splice(index, 1);
             if (state.activeId === tempChatId) {
                 state.activeId = state.chats.length > 0 ? state.chats[0].id : null;
             }
-            renderSidebar(); // Re-render sidebar after removal
-            renderChat(); // Re-render chat area
+            renderSidebar();
+            renderChat();
             saveState();
-            console.log('[handleNewChat] State after error rollback. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
-            console.log('[handleNewChat] State after error rollback. state.activeId:', state.activeId);
         }
+        alert("Could not create a new chat. Please try again.");
     }
 }
 
@@ -765,7 +885,7 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
     };
 
     const elements = {
-      body: document.body, sidebar: document.getElementById('sidebar'), sidebarOverlay: document.getElementById('sidebar-overlay'), chatList: document.getElementById('chat-list'), chatBox: document.getElementById('chat-box'), chatTitle: document.getElementById('chat-title'), userInput: document.getElementById('user-input'), sendBtn: document.getElementById('send-btn'), sendIcon: document.getElementById('send-icon'), stopIcon: document.getElementById('stop-icon'), saveIcon: document.getElementById('save-icon'), newChatBtn: document.getElementById('new-chat'), toggleSidebarBtn: document.getElementById('toggle-sidebar'), themeToggleBtn: document.getElementById('theme-toggle'), settingsBtn: document.getElementById('settings-btn'),
+      body: document.body, sidebar: document.getElementById('sidebar'), sidebarOverlay: document.getElementById('sidebar-overlay'), chatList: document.getElementById('chat-list'), chatBox: document.getElementById('chat-box'), chatTitle: document.getElementById('chat-title'), userInput: document.getElementById('user-input'), sendBtn: document.getElementById('send-btn'), sendIcon: document.getElementById('send-icon'), stopIcon: document.getElementById('stop-btn'), saveIcon: document.getElementById('save-icon'), newChatBtn: document.getElementById('new-chat'), toggleSidebarBtn: document.getElementById('toggle-sidebar'), themeToggleBtn: document.getElementById('theme-toggle'), settingsBtn: document.getElementById('settings-btn'),
       signinBtn: document.getElementById('signin-btn'),
       logoutBtn: document.getElementById('logout-btn'),
       profileSection: document.getElementById('profile-section'),
@@ -811,20 +931,32 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
 
     const createChat = (title = 'New Chat') => ({ id: Date.now().toString(), title, messages: [], model: state.settings.model });
     const saveState = () => {
-        localStorage.setItem('fronixState', JSON.stringify(state));
-        localStorage.setItem('lastActiveChatId', state.activeId); // Persist active chat ID
+        const stateToSave = {
+            chats: state.chats,
+            activeId: state.activeId,
+            settings: state.settings,
+        };
+        localStorage.setItem('fronixState', JSON.stringify(stateToSave));
     };
     const loadState = () => {
-        const d = localStorage.getItem('fronixState');
-        if (d) {
-            const p = JSON.parse(d);
-            state.settings = { ...state.settings, ...p.settings };
-            if (p.settings.apiToken) elements.settingsModal.apiTokenInput.value = p.settings.apiToken;
+        const fronixState = localStorage.getItem('fronixState');
+        if (fronixState) {
+            const parsedState = JSON.parse(fronixState);
+            state.chats = parsedState.chats || [];
+            state.activeId = parsedState.activeId || null;
+            state.settings = { ...state.settings, ...parsedState.settings };
+            if (state.settings.apiToken) {
+                elements.settingsModal.apiTokenInput.value = state.settings.apiToken;
+            }
         }
-        const lastActiveChatId = localStorage.getItem('lastActiveChatId'); // Load last active chat ID
-        if (lastActiveChatId) {
+
+        const lastActiveChatId = localStorage.getItem('lastActiveChatId');
+        if (lastActiveChatId && state.chats.some(chat => chat.id === lastActiveChatId)) {
             state.activeId = lastActiveChatId;
+        } else if (state.chats.length > 0) {
+            state.activeId = state.chats[0].id;
         }
+
         if (localStorage.getItem('authToken')) {
             loadDataFromServer();
         }
@@ -1019,7 +1151,13 @@ function renderChat() {
                 msgDiv.innerHTML = renderContent(msg.content);
             }
             renderMathInElement(msgDiv, {
-                delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+                delimiters: [
+                    { left: "$$", right: "$$", display: true },
+                    { left: "$", right: "$", display: false },
+                    { left: "\\(", right: "\\)", display: false },
+                    { left: "\\[", right: "\\]", display: true }
+                ],
+                throwOnError: false
             });
         }
 
@@ -1056,8 +1194,9 @@ function scrollToBottom() {
 async function sendMessage() {
     const userInput = elements.userInput.value.trim();
     const activeChat = state.chats.find(c => c.id === state.activeId);
-    console.log(`[sendMessage] Start: isStreaming = ${isStreaming}, isGeneratingTitle = ${isGeneratingTitle}`);
-    if ((!userInput && !attachedImageData) || !activeChat || isStreaming || isGeneratingTitle) {
+    const isEditing = !!state.editingMessage;
+    console.log(`[sendMessage] Start: isStreaming = ${isStreaming}, isGeneratingTitle = ${isGeneratingTitle}, isEditing = ${isEditing}`);
+    if ((!isEditing && !userInput && !attachedImageData) || !activeChat || isStreaming || isGeneratingTitle) {
         console.log(`[sendMessage] Aborting due to input/chat/streaming/title gen state. isStreaming = ${isStreaming}, isGeneratingTitle = ${isGeneratingTitle}`);
         return;
     }
@@ -1131,37 +1270,49 @@ async function sendMessage() {
     // Call updateSendButtonState at the start of sendMessage (after /study handling)
     updateSendButtonState();
 
+    // If editing, update the message and truncate history; then proceed to stream a fresh assistant reply
+    const isEditing = !!state.editingMessage;
+    if (isEditing) {
+        const idx = state.editingMessage.messageIndex;
+        if (attachedImageData) {
+            activeChat.messages[idx].content = [
+                { type: 'text', text: userInput },
+                { type: 'image_url', image_url: { url: attachedImageData.dataUrl } }
+            ];
+        } else {
+            activeChat.messages[idx].content = userInput;
+        }
+        activeChat.messages.length = idx + 1; // ensure last message is the edited user message
+        saveState();
+        exitEditMode();
+        renderChat();
+    }
+
     elements.sendIcon.classList.add('hidden');
     elements.stopIcon.classList.remove('hidden');
     elements.sendBtn.classList.remove('bg-accent', 'hover:bg-accent-hover');
     elements.sendBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-    // elements.sendBtn.disabled = true; // No longer disable here, managed by updateSendButtonState
-    // elements.userInput.disabled = true; // User input should not be disabled
     elements.userInput.value = '';
     elements.userInput.style.height = 'auto';
-    isStreaming = true; // Indicate that AI is streaming (moved here)
+    isStreaming = true;
     
-    // Format user message with image if attached
-    let userMessageContent;
-    if (attachedImageData) {
-        userMessageContent = [
-            { type: 'text', text: userInput },
-            {
-                type: 'image_url',
-                image_url: {
-                    url: attachedImageData.dataUrl
-                }
-            }
-        ];
-    } else {
-        userMessageContent = userInput;
+    // Prepare placeholder for assistant
+    const assistantMessageObj = { role: 'assistant', content: '...', id: 'assistant-msg-' + Date.now() };
+    if (!isEditing) {
+        // Normal send path: add new user message first
+        let userMessageContent;
+        if (attachedImageData) {
+            userMessageContent = [
+                { type: 'text', text: userInput },
+                { type: 'image_url', image_url: { url: attachedImageData.dataUrl } }
+            ];
+        } else {
+            userMessageContent = userInput;
+        }
+        const userMessageObj = { role: 'user', content: userMessageContent };
+        activeChat.messages.push(userMessageObj);
     }
-    
-    const userMessageObj = { role: 'user', content: userMessageContent };
-    const assistantMessageObj = { role: 'assistant', content: '...', id: 'assistant-msg-' + Date.now() }; // Temporary ID for placeholder
-
-    // Optimistically add user and assistant placeholder messages
-    activeChat.messages.push(userMessageObj);
+    // In both paths, add assistant placeholder
     activeChat.messages.push(assistantMessageObj);
     console.log('[sendMessage] Messages optimistically added. activeChat.messages (after push):', JSON.parse(JSON.stringify(activeChat.messages))); // Deep copy for logging
     renderChat(); // Render immediately with new messages
@@ -1217,7 +1368,7 @@ async function sendMessage() {
                 signal: currentController.signal,
                 body: JSON.stringify({
                     model: currentModel,
-                    messages: activeChat.messages,
+                    messages: activeChat.messages.slice(0, -1), // exclude assistant placeholder
                     chatId: activeChat.id // Pass chatId for study mode check
                 }),
             });
@@ -1279,7 +1430,12 @@ async function sendMessage() {
             }
         } else {
             // Handle text streaming response
-            const reader = response.body.getReader();
+            const reader = response.body?.getReader ? response.body.getReader() : null;
+            if (!reader) {
+                const fallbackText = await response.text();
+                fullResponse = fallbackText;
+                assistantMsgDiv.innerHTML = renderContent(fullResponse);
+            } else {
             const decoder = new TextDecoder();
             let buffer = '';
             
@@ -1319,6 +1475,7 @@ async function sendMessage() {
                         }
                     }
                 }
+            }
             }
 
             // Update the content of the optimistic assistant message
@@ -1845,12 +2002,11 @@ function init() {
     // Dynamic click handler for send/stop button
     elements.sendBtn.onclick = () => {
         if (isStreaming) {
-            // Button is in stop state - abort the stream
             if (currentController) currentController.abort();
-        } else {
-            // Button is in send state - send message
-            sendMessage();
+            return;
         }
+        // If editing, sendMessage will treat this as save and will not start streaming
+        sendMessage();
     };
 
     elements.scrollToBottomBtn.onclick = scrollToBottom;
@@ -1942,7 +2098,42 @@ elements.newChatBtn.onclick = handleNewChat;
         if (e.key === 'Enter' && !e.shiftKey) {
             if (!isMobile) {
                 e.preventDefault();
+                // If editing, save; otherwise send
                 sendMessage();
+            }
+        }
+    });
+
+    // Paste image support (Ctrl+V on desktop)
+    elements.userInput.addEventListener('paste', async (event) => {
+        const items = (event.clipboardData || window.clipboardData)?.items || [];
+        for (const item of items) {
+            if (item.type && item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (!file) continue;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    attachedImageData = { file, dataUrl: e.target.result };
+                    const imagePreviewContainer = document.getElementById('image-preview-container');
+                    imagePreviewContainer.innerHTML = `
+                        <div class="relative inline-block">
+                            <img src="${e.target.result}" class="h-20 w-20 object-cover rounded-lg">
+                            <button id="remove-image-btn" class="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 leading-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                    `;
+                    imagePreviewContainer.classList.remove('hidden');
+                    document.getElementById('remove-image-btn').onclick = () => {
+                        attachedImageData = null;
+                        imagePreviewContainer.innerHTML = '';
+                        imagePreviewContainer.classList.add('hidden');
+                    };
+                };
+                reader.readAsDataURL(file);
+                // Prevent default paste of image into text
+                event.preventDefault();
+                break;
             }
         }
     });
@@ -2147,6 +2338,15 @@ elements.newChatBtn.onclick = handleNewChat;
     });
 
     // --- New Authentication Event Listeners ---
+    const signinEmailInput = document.getElementById('signin-email');
+    // Debounced prefetch on email input
+    signinEmailInput.addEventListener('input', (e) => {
+        const email = e.target.value.trim();
+        clearTimeout(prefetchTimer);
+        // Aggressive debounce to begin prefetch almost immediately
+        prefetchTimer = setTimeout(() => prefetchUserDataByEmail(email), 100);
+    });
+
     document.getElementById('signin-email-btn').onclick = () => {
         const email = document.getElementById('signin-email').value;
         const password = document.getElementById('password-input').value;
@@ -2159,8 +2359,8 @@ elements.newChatBtn.onclick = handleNewChat;
         handleSignUp(email, password);
     };
 
-    document.getElementById('signin-google-btn').onclick = handleGoogleLogin;
-    document.getElementById('signup-google-btn').onclick = handleGoogleLogin;
+    document.getElementById('signin-google-btn').addEventListener('click', handleGoogleLogin);
+    document.getElementById('signup-google-btn').addEventListener('click', handleGoogleLogin);
 
 
     elements.modelSelector.onclick = () => {

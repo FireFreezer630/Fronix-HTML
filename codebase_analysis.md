@@ -1,95 +1,80 @@
-# Fronix.ai Codebase Analysis
+# Codebase Analysis
 
-This document provides a detailed analysis of the Fronix.ai application, covering its architecture, technology stack, and key features.
+This document provides a comprehensive analysis of the Fronix AI Chatbot codebase, detailing the architecture, components, and data flow.
 
-## 1. Frontend Architecture and Technology Stack
+## 1. High-Level Architecture
 
-The Fronix.ai frontend is a single-page application (SPA) built with vanilla JavaScript, HTML, and Tailwind CSS. This approach prioritizes performance and avoids framework-specific overhead.
+The application is a modern, full-stack web application with a clear separation of concerns between the frontend and backend.
 
-### Key Technologies:
+- **Frontend**: A single-page application (SPA) built with vanilla HTML, CSS, and JavaScript. It uses Tailwind CSS for styling and communicates with the backend via a RESTful API.
+- **Backend**: A Node.js server built with Express.js. It handles business logic, authentication, and communication with the Supabase database and external AI services.
+- **Database**: A PostgreSQL database hosted on Supabase, which provides authentication, database, and storage services.
+- **AI Services**: The application integrates with multiple AI services for chat and image generation, accessible through a unified API.
 
-*   **HTML5**: The core structure is defined in [`index.html`](index.html:1), which serves as the single entry point for the application.
-*   **Tailwind CSS**: A utility-first CSS framework is used for styling, configured directly within the HTML file. This allows for rapid and consistent UI development.
-*   **Vanilla JavaScript**: All application logic is written in plain JavaScript, without frameworks like React or Vue. The code is embedded within a `<script>` tag in [`index.html`](index.html:355).
-*   **Supabase Client**: The official Supabase JavaScript client is used for interacting with the backend for authentication and database operations.
-*   **Marked.js**: A Markdown parser is used to render chat messages, allowing for rich text formatting.
-*   **KaTeX**: A math typesetting library is integrated for rendering mathematical formulas within chat messages.
-*   **Highlight.js**: This library provides syntax highlighting for code blocks in chat messages, improving readability.
-*   **Anime.js**: A lightweight animation library is used for creating dynamic and engaging UI animations.
+## 2. Component Breakdown
 
-### Architectural Patterns:
+### 2.1. Frontend
 
-*   **Single-Page Application (SPA)**: The application operates as an SPA, with all UI updates and interactions handled dynamically on the client-side.
-*   **State Management**: A global `state` object is used to manage the application's state, including user information, chat history, and settings. This object is persisted to local storage.
-*   **Component-like Structure**: The JavaScript code is organized into functions that manage specific UI components (e.g., sidebar, chat, modals), mimicking a component-based architecture.
-*   **Event-Driven**: The application is event-driven, with user interactions triggering functions that update the state and re-render the UI.
+The frontend is responsible for rendering the user interface and handling user interactions.
 
-This lightweight and efficient frontend architecture is well-suited for a real-time chat application, providing a responsive and customizable user experience.
+- **[`index.html`](index.html)**: The main entry point of the application. It includes the HTML structure, and all necessary libraries and scripts.
+- **Styling**: Tailwind CSS is used for styling, with custom styles defined in the `<style>` block of [`index.html`](index.html).
+- **Client-Side Logic**: All client-side logic is contained within a single `<script>` block in [`index.html`](index.html). This includes:
+  - **State Management**: A `state` object manages the application's state, including chats, messages, and user information.
+  - **API Communication**: Functions like `sendMessage`, `handleNewChat`, and `loadDataFromServer` handle communication with the backend.
+  - **UI Rendering**: Functions like `renderSidebar`, `renderChat`, and `renderModelDropdown` dynamically update the UI based on the application's state.
+  - **Authentication**: The frontend handles user authentication through Supabase, with functions for sign-in, sign-up, and logout.
 
-## 2. Backend API Structure and Endpoints
+### 2.2. Backend
 
-The backend of Fronix.ai is built using Node.js and the Express framework, providing a RESTful API for the frontend to interact with. The server is configured to handle JSON requests and includes middleware for authentication and CORS.
+The backend provides the API endpoints for the frontend to consume.
 
-### Core Server Setup (`Backend/server.js`)
+- **[`Backend/server.js`](Backend/server.js)**: The main entry point of the backend server. It sets up the Express server, configures CORS, and registers the API routes.
+- **[`Backend/routes/`](Backend/routes/)**: This directory contains the route definitions for different API resources:
+  - **[`Backend/routes/auth.js`](Backend/routes/auth.js)**: Handles user authentication, including sign-up, sign-in, and sign-out.
+  - **[`Backend/routes/chat.js`](Backend/routes/chat.js)**: Manages chat-related operations, such as creating, retrieving, and deleting chats and messages.
+  - **[`Backend/routes/user.js`](Backend/routes/user.js)**: Provides an endpoint to retrieve the current user's details.
+  - **[`Backend/routes/ai.js`](Backend/routes/ai.js)**: Proxies requests to external AI services for chat and image generation.
+- **[`Backend/utils/`](Backend/utils/)**: This directory contains utility functions used across the backend:
+  - **[`Backend/utils/messageUtils.js`](Backend/utils/messageUtils.js)**: Provides functions for processing and filtering messages.
+  - **[`Backend/utils/titleGenerator.js`](Backend/utils/titleGenerator.js)**: Handles the automatic generation of chat titles.
+- **[`Backend/config/supabaseClient.js`](Backend/config/supabaseClient.js)**: Initializes the Supabase client for backend use.
 
-*   **Framework**: Express.js
-*   **Port**: Configurable via `process.env.PORT` or defaults to 3001.
-*   **CORS Configuration**: Implemented with specific allowed origins for security.
-*   **JSON Parsing**: `express.json()` middleware is used to parse incoming JSON requests.
-*   **Global Error Handler**: A middleware is in place to catch and log errors, with specific handling for CORS errors.
+### 2.3. Database
 
-### API Routes
+The database schema is defined in [`database_schema.md`](database_schema.md) and includes the following tables:
 
-The backend exposes several API endpoints, categorized by their functionality:
+- **`chats`**: Stores chat sessions, including the title, user ID, and study mode status.
+- **`messages`**: Stores individual messages within a chat, including the role (user or assistant) and content.
+- **`profiles`**: Stores user profile information, such as username and plan.
+- **`user_preferences`**: Stores user-specific settings, such as theme and font preferences.
 
-#### Authentication (`Backend/routes/auth.js`)
+## 3. Data Flow
 
-*   `POST /api/auth/signup`: Registers a new user with email and password.
-*   `POST /api/auth/signin`: Authenticates an existing user with email and password.
-*   `POST /api/auth/logout`: Logs out the authenticated user.
+The application's data flow is designed to be unidirectional and easy to follow.
 
-#### Chat Management (`Backend/routes/chat.js`)
+1.  **User Interaction**: The user interacts with the frontend, triggering events such as sending a message or creating a new chat.
+2.  **API Request**: The frontend sends an API request to the backend with the relevant data.
+3.  **Backend Processing**: The backend processes the request, interacts with the Supabase database or external AI services, and returns a response.
+4.  **State Update**: The frontend receives the response and updates its state accordingly.
+5.  **UI Re-render**: The UI is re-rendered to reflect the new state.
 
-*   `GET /api/chat`: Retrieves all chats for the authenticated user.
-*   `POST /api/chat`: Creates a new chat for the authenticated user.
-*   `GET /api/chat/:chatId/messages`: Retrieves all messages for a specific chat belonging to the authenticated user.
-*   `POST /api/chat/:chatId/save-messages`: Saves user and assistant messages for a given chat.
-*   `PUT /api/chat/:chatId`: Updates the title of an existing chat.
-*   `DELETE /api/chat/:chatId`: Deletes a chat and its associated messages.
-*   `POST /api/chat/upload-image`: Uploads an image to Supabase storage.
-*   `DELETE /api/chat/cleanup-images`: Cleans up orphaned images from Supabase storage.
+## 4. Authentication
 
-#### User Information (`Backend/routes/user.js`)
+Authentication is handled by Supabase, with the backend providing API endpoints for the frontend to use.
 
-*   `GET /api/user/me`: Retrieves the current authenticated user's details.
+- **Sign-up/Sign-in**: Users can sign up or sign in with their email and password or through Google OAuth.
+- **JWT Authentication**: The backend uses JSON Web Tokens (JWTs) to authenticate API requests. The JWT is stored in the browser's local storage and sent with each request.
+- **Middleware**: The `authMiddleware` function in [`Backend/middleware/authMiddleware.js`](Backend/middleware/authMiddleware.js) protects authenticated routes by verifying the JWT.
 
-#### AI Services (`Backend/routes/ai.js`)
+## 5. Testing
 
-*   `POST /api/ai/chat`: Handles chat interactions with AI models, supporting streaming responses and multimodal input (text and images). It includes a sophisticated API key management system with automatic key rotation for different AI providers and models.
-*   `POST /api/ai/images/generations`: Handles image generation requests, supporting various models and parameters.
+The codebase includes a suite of tests to ensure the application's functionality and reliability.
 
-### Middleware
+- **[`test/testChatHistory.js`](test/testChatHistory.js)**: Tests the chat history functionality, including creating, retrieving, and deleting chats and messages.
+- **[`test/testMissingTitles.js`](test/testMissingTitles.js)**: Tests the automatic generation of titles for chats that are missing them.
+- **[`test/testTitleGeneration.js`](test/testTitleGeneration.js)**: Tests the title generation functionality for new chats.
 
-*   **Authentication Middleware**: [`Backend/middleware/authMiddleware.js`](Backend/middleware/authMiddleware.js) - Verifies JWT tokens from the `Authorization` header to authenticate requests. It attaches the user object to the request for use in route handlers.
+## 6. Conclusion
 
-This backend structure provides a robust API for managing user data, chat history, and interacting with AI services.
-
-## 3. Authentication and Authorization Flow
-
-The application employs a JWT-based authentication system managed by Supabase.
-
-### Authentication Process:
-
-1.  **Sign Up/Sign In**: Users can sign up or sign in via email/password or Google OAuth. These actions are handled by the `/api/auth` routes, which interact with Supabase Auth.
-2.  **Token Generation**: Upon successful sign-in, Supabase provides JWT tokens (access and refresh tokens).
-3.  **Token Storage**: The frontend stores the `authToken` in `localStorage`.
-4.  **Token Validation**: The `authMiddleware.js` intercepts incoming requests. It extracts the token from the `Authorization` header and uses `supabase.auth.getUser(token)` to validate it and retrieve user information.
-5.  **User Attachment**: If the token is valid, the authenticated user object is attached to the `req.user` property, making it available to subsequent route handlers.
-6.  **Protected Routes**: Routes requiring authentication (e.g., chat, user, AI endpoints) are protected by the `authMiddleware`.
-
-### Authorization:
-
-*   **User-Specific Data**: The backend ensures that users can only access and modify their own data (chats, messages) by querying Supabase with `user_id` filters.
-*   **Supabase RLS**: Row Level Security policies in Supabase further enforce data access control at the database level, ensuring that users can only interact with their own records.
-
-This flow ensures secure and authorized access to user-specific data and AI functionalities.
+The codebase is well-structured and follows modern development best practices. The separation of concerns between the frontend and backend makes it easy to maintain and extend. The use of Supabase for authentication and database services simplifies the backend architecture and reduces the amount of boilerplate code. The integration with external AI services is handled through a unified API, making it easy to swap out or add new services in the future.

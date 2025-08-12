@@ -3,6 +3,7 @@
 Strictly obey these rules
 
 ## Guidelines
+- **Use Required tools:** For any user request think about it and and make sure you have every info required, do not assume anything and if you require any docs or real time info or any info prone to change even the slightest, make use of the given MCPs and tools freely WITHOUT any hesitation .
 - **`apply_diff` Precision:** The `SEARCH` block in `apply_diff` requires an *exact, 100% match* of the target content, including all whitespace, comments, and newlines. Always use `read_file` immediately before crafting an `apply_diff` if there is any doubt about the current file content, especially after other modifications or user feedback.
 
 - **Mode-Specific File Editing:** Before using any file modification tool (`apply_diff`, `write_to_file`, `insert_content`, `search_and_replace`), always verify that the current `mode` allows editing the target file type. Refer to the `FileRestrictionError` message if encountered for allowed patterns.

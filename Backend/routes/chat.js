@@ -8,6 +8,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const crypto = require('crypto');
 const { generateChatTitle } = require('../utils/titleGenerator');
 const { getFirstTwoNonTrivialMessages } = require('../utils/messageUtils');
+const cache = require('../utils/cache');
 
 // GET all chats for the logged-in user
 router.get('/', authMiddleware, async (req, res) => {
@@ -60,6 +61,8 @@ router.post('/', authMiddleware, async (req, res) => {
             .single(); // Get the new chat back
 
         if (error) throw error;
+        // Invalidate cached bootstrap for this user
+        cache.del(req.user.id);
         res.status(201).json(data);
     } catch (error) {
         console.error("Error creating new chat:", error);
@@ -74,7 +77,7 @@ router.get('/:chatId/messages', authMiddleware, async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('messages')
-            .select('*')
+            .select('id, chat_id, user_id, role, content, created_at')
             .eq('chat_id', chatId)
             .eq('user_id', req.user.id)
             .order('created_at', { ascending: true });
@@ -145,6 +148,8 @@ router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
                 console.log(`[Save Messages] Returning generated title: "${updatedChat.title}"`);
             }
         }
+        // Invalidate cached bootstrap for this user (new messages)
+        cache.del(userId);
         res.status(201).json(responsePayload);
     } catch (error) {
         console.error("Error saving conversation:", error);
@@ -176,7 +181,8 @@ router.put('/:chatId', authMiddleware, async (req, res) => {
         if (!data) {
             return res.status(404).json({ error: 'Chat not found or you do not have permission to edit it.' });
         }
-        
+        // Invalidate cached bootstrap for this user (rename)
+        cache.del(userId);
         res.status(200).json(data);
     } catch (error) {
         console.error("Error updating chat title:", error);
@@ -203,6 +209,8 @@ router.delete('/:chatId', authMiddleware, async (req, res) => {
         }
 
         // The 'ON DELETE CASCADE' constraint handles deleting all associated messages.
+        // Invalidate cached bootstrap for this user (delete)
+        cache.del(userId);
         res.status(200).json({ message: 'Chat deleted successfully' });
 
     } catch (error) {
@@ -248,6 +256,8 @@ router.post('/upload-image', authMiddleware, async (req, res) => {
             .from('chat_images')
             .getPublicUrl(`${req.user.id}/${uniqueFileName}`);
             
+        // Invalidate cached bootstrap for this user (new asset)
+        cache.del(req.user.id);
         res.status(200).json({
             success: true,
             url: publicUrl.publicUrl,
@@ -381,6 +391,8 @@ router.post('/:chatId/toggle-study-mode', authMiddleware, async (req, res) => {
         }
 
         console.log(`[Toggle Study Mode] Successfully updated chat ${chatId} to study_mode: ${newStudyModeStatus}`);
+        // Invalidate cached bootstrap for this user (study_mode changed)
+        cache.del(userId);
         res.status(200).json({
             success: true,
             study_mode: newStudyModeStatus,

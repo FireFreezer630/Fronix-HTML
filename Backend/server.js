@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -33,6 +34,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+// Enable gzip/Brotli compression for API responses
+app.use(compression());
 // --- END: CORRECTED CORS CONFIGURATION ---
 
 // Increase JSON body size limit to 50MB for image support
