@@ -71,16 +71,32 @@ router.post('/', authMiddleware, async (req, res) => {
 // GET all messages for a specific chat
 router.get('/:chatId/messages', authMiddleware, async (req, res) => {
     const { chatId } = req.params;
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+
     try {
-        const { data, error } = await supabase
+        const { data, error, count } = await supabase
             .from('messages')
-            .select('*')
+            .select('*', { count: 'exact' })
             .eq('chat_id', chatId)
             .eq('user_id', req.user.id)
-            .order('created_at', { ascending: true });
+            .order('created_at', { ascending: true })
+            .order('id', { ascending: true }) // Secondary sort for stability
+            .range(offset, offset + limit - 1);
 
         if (error) throw error;
-        res.status(200).json(data);
+
+        const totalPages = Math.ceil(count / limit);
+        if (page > totalPages && count > 0) {
+            return res.status(404).json({ error: 'Page not found' });
+        }
+
+        res.status(200).json({
+            messages: data,
+            currentPage: Number(page),
+            totalPages,
+            totalMessages: count
+        });
     } catch (error) {
         res.status(500).json({ error: 'Error fetching messages' });
     }
@@ -93,58 +109,60 @@ router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
     const userId = req.user.id;
 
     console.log(`[Save Messages] Received request for chatId: ${chatId}`);
-    console.log(`[Save Messages] User message:`, userMessage);
-    console.log(`[Save Messages] Assistant message:`, assistantMessage);
     
-    if (!userMessage || !assistantMessage) {
-        return res.status(400).json({ error: 'Both user and assistant messages are required.' });
+    if (!userMessage || !assistantMessage || !userMessage.content || !assistantMessage.content) {
+        return res.status(400).json({ error: 'Both user and assistant messages with content are required.' });
     }
-    
+
     try {
-        // Prepare messages with proper content structure
-        const userContent = typeof userMessage === 'object' ? JSON.stringify(userMessage) : userMessage;
-        const assistantContent = typeof assistantMessage === 'object' ? JSON.stringify(assistantMessage) : assistantMessage;
-        
+        // Basic content validation
+        if (typeof userMessage.content !== 'string' || typeof assistantMessage.content !== 'string') {
+            return res.status(400).json({ error: 'Message content must be a string.' });
+        }
+
         const { error } = await supabase.from('messages').insert([
-            { chat_id: chatId, user_id: userId, role: 'user', content: userContent },
-            { chat_id: chatId, user_id: userId, role: 'assistant', content: assistantContent }
+            { chat_id: chatId, user_id: userId, role: 'user', content: userMessage.content },
+            { chat_id: chatId, user_id: userId, role: 'assistant', content: assistantMessage.content }
         ]);
         
         if (error) throw error;
 
-        // Check if it's time to generate a title
-        const { data: messages, error: messagesError } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('chat_id', chatId);
+        // Check if a title needs to be generated
+        const { data: chat, error: chatError } = await supabase
+            .from('chats')
+            .select('title, title_generated')
+            .eq('id', chatId)
+            .single();
 
-        let nonTrivialMessages = [];
-        if (messagesError) {
-            console.error('Error fetching messages for title generation:', messagesError);
-        } else {
-            nonTrivialMessages = messages.filter(m => !/^(hi|hello|yo)$/i.test(m.content.trim()));
-            console.log(`Message count for chat ${chatId}: ${messages.length}, Non-trivial messages: ${nonTrivialMessages.length}`);
-            if (nonTrivialMessages.length >= 2) {
+        if (chatError) {
+            console.error('Error fetching chat for title generation check:', chatError);
+        } else if (!chat.title_generated && chat.title === 'New Chat') {
+            const messages = await getFirstTwoNonTrivialMessages(chatId);
+            if (messages.length >= 2) {
                 console.log('Triggering title generation...');
-                await generateChatTitle(chatId, nonTrivialMessages);
+                try {
+                    await generateChatTitle(chatId, messages);
+                } catch (titleError) {
+                    console.error('Error generating title, but continuing:', titleError);
+                }
             }
         }
+        
         let responsePayload = { success: true, message: 'Conversation saved.' };
-        if (nonTrivialMessages.length >= 2) {
-            // After title generation, fetch the updated chat to get the new title
-            const { data: updatedChat, error: updatedChatError } = await supabase
-                .from('chats')
-                .select('title')
-                .eq('id', chatId)
-                .single();
 
-            if (updatedChatError) {
-                console.error('Error fetching updated chat title:', updatedChatError);
-            } else if (updatedChat && updatedChat.title !== 'New Chat') {
-                responsePayload.generatedTitle = updatedChat.title;
-                console.log(`[Save Messages] Returning generated title: "${updatedChat.title}"`);
-            }
+        // Fetch the possibly updated title to return
+        const { data: updatedChat, error: updatedChatError } = await supabase
+            .from('chats')
+            .select('title')
+            .eq('id', chatId)
+            .single();
+
+        if (updatedChatError) {
+            console.error('Error fetching updated chat title:', updatedChatError);
+        } else if (updatedChat) {
+            responsePayload.title = updatedChat.title;
         }
+
         res.status(201).json(responsePayload);
     } catch (error) {
         console.error("Error saving conversation:", error);
@@ -276,11 +294,13 @@ router.delete('/cleanup-images', authMiddleware, async (req, res) => {
             return res.status(200).json({ message: 'No images to cleanup.', deleted: 0 });
         }
         
-        // Get all messages for this user to find referenced images
+        // Get all message content that might contain image URLs
         const { data: messages, error: msgError } = await supabase
             .from('messages')
             .select('content')
-            .eq('user_id', req.user.id);
+            .eq('user_id', req.user.id)
+            .ilike('content', '%chat_images%'); // More efficient query
+
         if (msgError) {
             console.error('Error fetching user messages:', msgError);
             return res.status(500).json({ error: 'Failed to fetch user messages.' });

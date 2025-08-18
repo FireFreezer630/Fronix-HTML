@@ -3,6 +3,8 @@ const router = express.Router();
 const axios = require('axios');
 const supabase = require('../config/supabaseClient'); // Import supabase client
 const authMiddleware = require('../middleware/authMiddleware');
+const fs = require('fs');
+const path = require('path');
 
 // Safe JSON stringification to handle circular references
 function safeStringify(obj, space = 2) {
@@ -23,96 +25,91 @@ function safeStringify(obj, space = 2) {
 // ====================================
 
 class ApiKeyPool {
-    constructor() {
-        // Load all valid V2 API keys from environment variables
-        this.keys = [
-            process.env.AI_API_KEY_V2,
-            process.env.AI_API_KEY_V2_3,
-            process.env.AI_API_KEY_V2_4,
-            process.env.AI_API_KEY_V2_5
-        ].filter(key => key && key.trim() !== ''); // Remove empty keys
-        
+    constructor(keys, name) {
+        this.keys = keys.filter(key => key && key.trim() !== ''); // Remove empty keys
+        this.name = name;
         this.currentIndex = 0;
         this.maxRetries = this.keys.length;
         
-        console.log(`🔑 API Key Pool initialized with ${this.keys.length} keys`);
+        console.log(`🔑 ${this.name} API Key Pool initialized with ${this.keys.length} keys`);
         if (this.keys.length === 0) {
-            console.error('❌ No valid V2 API keys found in environment variables!');
+            console.error(`❌ No valid ${this.name} API keys found in environment variables!`);
         }
     }
     
     getCurrentKey() {
         if (this.keys.length === 0) {
-            throw new Error('No API keys available');
+            throw new Error(`No API keys available for ${this.name}`);
         }
         return this.keys[this.currentIndex];
     }
     
     rotateToNextKey() {
         if (this.keys.length <= 1) {
-            console.warn('⚠️ Only one API key available, cannot rotate');
+            console.warn(`⚠️ Only one API key available in ${this.name}, cannot rotate`);
             return false;
         }
         
         const previousIndex = this.currentIndex;
         this.currentIndex = (this.currentIndex + 1) % this.keys.length;
         
-        console.log(`🔄 API Key rotated from index ${previousIndex} to ${this.currentIndex}`);
+        console.log(`🔄 ${this.name} API Key rotated from index ${previousIndex} to ${this.currentIndex}`);
         return true;
-    }
-    
-    getAllKeysExhausted() {
-        // If we've tried all keys, return true
-        return this.currentIndex === 0 && this.keys.length > 1;
     }
     
     resetToFirstKey() {
         this.currentIndex = 0;
-        console.log('🔄 API Key pool reset to first key');
+        console.log(`🔄 ${this.name} API Key pool reset to first key`);
     }
 }
 
-// Global API key pool instance
-const apiKeyPool = new ApiKeyPool();
+// Global API key pool instances
+const v1ApiKeys = [process.env.AI_API_KEY].filter(Boolean);
+const v2ApiKeys = [
+    process.env.AI_API_KEY_V2,
+    process.env.AI_API_KEY_V2_3,
+    process.env.AI_API_KEY_V2_4,
+    process.env.AI_API_KEY_V2_5
+].filter(Boolean);
 
-// Enhanced API request function with automatic key rotation for axios.post
-async function makeApiRequestWithRetry(url, requestBody, requestOptions, maxRetries = null, specificKey = null) {
-    const retryLimit = maxRetries || (specificKey ? 1 : apiKeyPool.maxRetries); // Only 1 retry for specificKey
+const v1ApiKeyPool = new ApiKeyPool(v1ApiKeys, 'V1');
+const v2ApiKeyPool = new ApiKeyPool(v2ApiKeys, 'V2');
+
+
+// Cached study mode prompt
+let studyModePrompt = '';
+try {
+    studyModePrompt = fs.readFileSync(path.join(__dirname, '../../study-mode.md'), 'utf8');
+    console.log('📚 Study mode prompt loaded and cached successfully.');
+} catch (fileError) {
+    console.error('Error reading study-mode.md:', fileError.message);
+    studyModePrompt = 'You are currently in study mode. Please provide academic and guiding responses.'; // Fallback prompt
+}
+
+
+// Enhanced API request function with automatic key rotation
+async function makeApiRequestWithRetry(url, requestBody, requestOptions, isV2) {
+    const pool = isV2 ? v2ApiKeyPool : v1ApiKeyPool;
+    const retryLimit = pool.maxRetries > 0 ? pool.maxRetries : 1;
     let attempt = 0;
     let lastError = null;
     
     while (attempt < retryLimit) {
         try {
-            let currentKey;
-            if (specificKey) {
-                currentKey = specificKey; // Use the provided specific key
-            } else {
-                currentKey = apiKeyPool.getCurrentKey(); // Use pooled key for rotation
-            }
+            const currentKey = pool.getCurrentKey();
             
-            // If no key is available (e.g., for V1 if specificKey is null and pool is empty),
-            // and the endpoint requires it, this will fail.
-            if (!currentKey && url.includes('pollinations.ai/openai')) { // Check for V1 endpoint
-                 throw new Error('API key for V1 Pollinations.ai endpoint is missing.');
-            }
-
-            // Update authorization header with current key if available
             const updatedOptions = { ...requestOptions };
-            if (currentKey) { // Only add Authorization header if a key is present
-                updatedOptions.headers = {
-                    ...requestOptions.headers,
-                    'Authorization': `Bearer ${currentKey}`
-                };
-            }
+            updatedOptions.headers = {
+                ...requestOptions.headers,
+                'Authorization': `Bearer ${currentKey}`
+            };
             
-            console.log(`🔑 Attempt ${attempt + 1}/${retryLimit} using API key: ${specificKey ? 'Specific Key' : `Pool Index ${apiKeyPool.currentIndex}`}`);
+            console.log(`🔑 Attempt ${attempt + 1}/${retryLimit} using ${pool.name} API key index: ${pool.currentIndex}`);
             
-            // Make the API request
             const response = await axios.post(url, requestBody, updatedOptions);
             
-            // Request successful - reset to first key for next time (only if using the pool)
-            if (attempt > 0 && !specificKey) {
-                apiKeyPool.resetToFirstKey();
+            if (attempt > 0) {
+                pool.resetToFirstKey();
             }
             
             return response;
@@ -120,22 +117,19 @@ async function makeApiRequestWithRetry(url, requestBody, requestOptions, maxRetr
         } catch (error) {
             lastError = error;
             
-            // Check if it's a rate limit error (429) and if we should retry
-            if (error.response && error.response.status === 429 && !specificKey) { // Only retry with rotation if not using a specific key
-                console.log(`⚠️ Rate limit hit on key ${apiKeyPool.currentIndex + 1}/${apiKeyPool.keys.length}`);
+            if (error.response && error.response.status === 429) {
+                console.log(`⚠️ Rate limit hit on key ${pool.currentIndex + 1}/${pool.keys.length} for ${pool.name}`);
                 
-                // Try to rotate to next key
-                const rotated = apiKeyPool.rotateToNextKey();
+                const rotated = pool.rotateToNextKey();
                 if (rotated) {
                     console.log(`🔄 Retrying with next API key...`);
                     attempt++;
                     continue;
                 } else {
-                    console.error('❌ No more API keys to try in pool');
+                    console.error(`❌ No more API keys to try in ${pool.name} pool`);
                     break;
                 }
             } else {
-                // For non-rate-limit errors or if using a specific key, don't retry
                 console.error(`❌ API request failed with non-retryable error:`, error.response?.status, error.message);
                 break;
             }
@@ -143,8 +137,7 @@ async function makeApiRequestWithRetry(url, requestBody, requestOptions, maxRetr
         attempt++;
     }
     
-    // All retries exhausted
-    console.error(`❌ All API key retries exhausted. Last error:`, lastError.message);
+    console.error(`❌ All API key retries exhausted for ${pool.name}. Last error:`, lastError.message);
     throw lastError;
 }
 
@@ -183,26 +176,19 @@ router.post('/chat', authMiddleware, async (req, res) => {
             console.log('⚠️ No chatId provided for study mode check');
         }
         
-        // Load study mode prompt content
-        let studyModePrompt = '';
-        if (isStudyMode) {
-            const fs = require('fs/promises'); // Import fs for file reading
-            const path = require('path'); // Import path for path manipulation
-            try {
-                studyModePrompt = await fs.readFile(path.join(__dirname, '../../study-mode.md'), 'utf8');
-                console.log('📚 Study mode prompt loaded successfully.');
-            } catch (fileError) {
-                console.error('Error reading study-mode.md:', fileError.message);
-                studyModePrompt = 'You are currently in study mode. Please provide academic and guiding responses.'; // Fallback prompt
-            }
-        }
-
         // Prepare messages for the AI model
-        let messagesForAI = [...messages]; // Create a copy to avoid modifying original req.body
-        if (isStudyMode) {
-            // Prepend the study mode prompt as a system message
-            messagesForAI.unshift({ role: 'system', content: studyModePrompt });
-            console.log('📚 Study mode prompt injected into AI messages.');
+        let messagesForAI = JSON.parse(JSON.stringify(messages)); // Deep copy
+        if (isStudyMode && studyModePrompt) {
+            const systemMessage = messagesForAI.find(m => m.role === 'system');
+            if (systemMessage) {
+                // Merge with existing system message
+                systemMessage.content = `${studyModePrompt}\n\n${systemMessage.content}`;
+                console.log('📚 Study mode prompt merged with existing system message.');
+            } else {
+                // Prepend as a new system message
+                messagesForAI.unshift({ role: 'system', content: studyModePrompt });
+                console.log('📚 Study mode prompt injected into AI messages.');
+            }
         }
 
         // Set proper SSE headers for streaming response
@@ -270,47 +256,23 @@ router.post('/chat', authMiddleware, async (req, res) => {
         console.log('🔄 Request model:', model);
         console.log('🔄 Mapped model ID:', modelId);
         console.log('🔄 Request messages count:', messages.length);
-        console.log('🔄 Using authentication:', isV2Model ? 'Bearer Token (V2)' : 'No Auth (V1)');
-        if (isV2Model) {
-            console.log('🔄 V2 API Key (first 20 chars):', process.env.AI_API_KEY_V2?.substring(0, 20) + '...');
-            console.log('🔄 V2 API Headers:', JSON.stringify(apiHeaders, null, 2));
-        }
-        // Log if any message contains images
+        console.log('🔄 Using authentication:', isV2Model ? 'Bearer Token (V2)' : 'Bearer Token (V1)');
+        
         const hasImages = messages.some(msg =>
             Array.isArray(msg.content) &&
             msg.content.some(item => item.type === 'image_url')
         );
         console.log('🔄 Request contains images:', hasImages);
-        if (hasImages) {
-            console.log('🔄 Image message structure:', JSON.stringify(messages.find(msg =>
-                Array.isArray(msg.content) &&
-                msg.content.some(item => item.type === 'image_url')
-            ), null, 2));
-        }
 
-        let aiResponse;
-        if (isV2Model) {
-            aiResponse = await makeApiRequestWithRetry(
-                apiEndpoint,
-                requestBody,
-                {
-                    headers: apiHeaders,
-                    responseType: 'stream'
-                }
-            );
-        } else {
-            // For V1 models, pass the specific AI_API_KEY
-            aiResponse = await makeApiRequestWithRetry(
-                apiEndpoint,
-                requestBody,
-                {
-                    headers: apiHeaders,
-                    responseType: 'stream'
-                },
-                null, // maxRetries (use default defined in function)
-                process.env.AI_API_KEY // Pass the specific V1 API key
-            );
-        }
+        const aiResponse = await makeApiRequestWithRetry(
+            apiEndpoint,
+            requestBody,
+            {
+                headers: apiHeaders,
+                responseType: 'stream'
+            },
+            isV2Model
+        );
 
         console.log('✅ API Response Status:', aiResponse.status);
         console.log('✅ API Response Headers:', JSON.stringify(aiResponse.headers, null, 2));

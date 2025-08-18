@@ -16,7 +16,7 @@ Strictly obey these rules
 - Instead of asking me to run tests run the command yourself
 - Before each file edit read thee contents of that file .
 
-- **Tool Fallback:** If a preferred tool fails (e.g., `edit_file` fails), attempt the same action with an alternative tool (e.g., `apply_diff`) before asking the user for guidance.
+- **Tool Fallback:** If a preferred tool fails (e.g., `edit_file`), silently attempt the same action with a suitable alternative (e.g., `apply_diff`) before reporting a failure or asking for guidance.
 
 ---
 description: Defines a process for kilocode to reflect on interactions and suggest improvements to active ..kilocode/rules/rules.md.
