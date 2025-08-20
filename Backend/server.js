@@ -47,7 +47,7 @@ const corsOptions = {
     credentials: true,
 };
 
-app.use(cors(corsOptions));
+app.use(cors()); // TEMPORARY: Allow all origins for debugging
 // --- END: CORRECTED AND FLEXIBLE CORS CONFIGURATION ---
 
 // Rate limiting to prevent abuse

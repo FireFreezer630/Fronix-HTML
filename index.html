@@ -301,7 +301,13 @@
     </main>
   </div>
 
-  <div id="settings-modal" class="modal-container"><div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 rounded-2xl shadow-xl w-full max-w-md border border-light-border dark:border-dark-border"><div class="flex justify-between items-center mb-6"><h3 class="text-xl font-semibold">Settings</h3><button id="close-settings-btn" class="p-1 rounded-full hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div><div class="space-y-6"><div class="space-y-2"><div><label class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">API Token</label><p class="text-xs text-light-text-subtle dark:text-dark-text-subtle">Your token is stored only in your browser's local storage.</p></div><input id="api-token-input" type="password" class="w-full p-2 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Enter your API token..."></div><div id="font-options"></div><div id="font-weight-options"></div><div><button id="reset-settings-btn" class="w-full px-4 py-2 rounded-md text-sm font-medium border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">Reset to Default</button></div></div></div></div>
+  <div id="settings-modal" class="modal-container"><div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 rounded-2xl shadow-xl w-full max-w-md border border-light-border dark:border-dark-border"><div class="flex justify-between items-center mb-6"><h3 class="text-xl font-semibold">Settings</h3><button id="close-settings-btn" class="p-1 rounded-full hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div><div class="space-y-6"><div class="space-y-2"><div><label class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">API Token</label><p class="text-xs text-light-text-subtle dark:text-dark-text-subtle">Your token is stored only in your browser's local storage.</p></div><input id="api-token-input" type="password" class="w-full p-2 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Enter your API token..."></div><div class="flex items-center justify-between">
+    <label for="pro-models-toggle" class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">Enable Pro Models</label>
+    <button id="pro-models-toggle" type="button" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 bg-gray-200 dark:bg-gray-700" role="switch" aria-checked="false">
+        <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+    </button>
+</div>
+<div id="font-options"></div><div id="font-weight-options"></div><div><button id="reset-settings-btn" class="w-full px-4 py-2 rounded-md text-sm font-medium border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">Reset to Default</button></div></div></div></div>
 <div id="rename-modal" class="modal-container"><div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 sm:pb-8 rounded-2xl shadow-xl w-full max-w-sm border border-light-border dark:border-dark-border"><h3 class="text-lg font-semibold mb-4">Rename Chat</h3><input id="rename-input" type="text" class="w-full p-2 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent mb-4"><div class="flex justify-end gap-2"><button id="rename-cancel" class="px-4 py-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover">Cancel</button><button id="rename-save" class="px-4 py-2 rounded-md bg-accent text-white">Save</button></div></div></div>
   <div id="delete-modal" class="modal-container"><div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 rounded-2xl shadow-xl w-full max-w-sm border border-light-border dark:border-dark-border"><h3 class="text-lg font-semibold mb-4">Delete Chat</h3><p id="delete-message" class="mb-4 text-light-text-subtle dark:text-dark-text-subtle"></p><div class="flex justify-end gap-2"><button id="delete-cancel" class="px-4 py-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover">Cancel</button><button id="delete-confirm" class="px-4 py-2 rounded-md bg-red-600 text-white">Delete</button></div></div></div>
   <div id="signin-modal" class="modal-container">
@@ -383,14 +389,47 @@
     }
     
     async function validateAndRefreshToken() {
-        const token = localStorage.getItem('authToken');
-        
-        if (!token || isTokenExpired(token)) {
-            console.log("Token is expired or invalid. Triggering re-authentication...");
-            localStorage.removeItem('authToken');
-            state.currentUser = null;
-            updateLoginStateUI();
+        let token = localStorage.getItem('authToken');
+        const refreshToken = localStorage.getItem('refreshToken');
+
+        if (!token) {
             return null;
+        }
+
+        if (isTokenExpired(token)) {
+            console.log("Access token expired. Attempting to refresh...");
+            if (!refreshToken) {
+                console.log("No refresh token available. Logging out.");
+                localStorage.removeItem('authToken');
+                state.currentUser = null;
+                updateLoginStateUI();
+                return null;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to refresh token');
+                }
+
+                const { session } = await response.json();
+                localStorage.setItem('authToken', session.access_token);
+                localStorage.setItem('refreshToken', session.refresh_token);
+                token = session.access_token;
+                console.log("Token refreshed successfully.");
+            } catch (error) {
+                console.error("Failed to refresh token:", error);
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('refreshToken');
+                state.currentUser = null;
+                updateLoginStateUI();
+                return null;
+            }
         }
         
         return token;
@@ -417,6 +456,7 @@ async function handleSignIn(email, password, retryCount = 0) {
         // The onAuthStateChange listener will detect the login and handle the rest.
         // We manually set the token to speed up the process.
         localStorage.setItem('authToken', data.session.access_token);
+        localStorage.setItem('refreshToken', data.session.refresh_token);
         loadDataFromServer();
         closeAllModals();
         alert('Sign in successful!');
@@ -597,7 +637,7 @@ async function loadDataFromServer(retryCount = 0) {
                     throw error;
                 }
                 const messages = await messagesResponse.json();
-                chat.messages = messages; // Store messages directly in the chat object
+                chat.messages = Array.isArray(messages.messages) ? messages.messages : []; // Ensure it's an array
             }
 
             // Set active chat based on persisted ID or default to the first chat
@@ -758,9 +798,15 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
       'elixposearch': { name: 'Elixpo Search', type: 'text' },
       'o4-mini-medium': { name: 'O4 Mini Medium', type: 'text' },
       'o4-mini-high': { name: 'O4 Mini High', type: 'text' },
-      'gemini-2.5-flash-thinking': { name: 'Gemini 2.5 Flash Thinking', type: 'text' },
+      // 'gemini-2.5-flash-thinking': { name: 'Gemini 2.5 Flash Thinking', type: 'text' },
       'provider-6/kimi-k2-instruct': { name: 'Kimi K2', type: 'text' },
       'deepseek-r1-uncensored': { name: 'DeepSeek R1 Uncensored', type: 'text' },
+
+      // Pro Models
+      'grok-4': { name: 'Grok 4', type: 'text', pro: true },
+      'gpt-5': { name: 'GPT-5', type: 'text', pro: true },
+      'gemini-2.5-pro': { name: 'Gemini 2.5 Pro', type: 'text', pro: true },
+      'gemini-2.5-flash': { name: 'Gemini 2.5 Flash', type: 'text', pro: true },
       
       // Image Generation Models
       // 'provider-4/imagen-4': { name: 'Imagen 4', type: 'image' }
@@ -784,13 +830,13 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
       scrollToBottomBtn: document.getElementById('scroll-to-bottom-btn'), // Added scroll to bottom button
       autocompleteSuggestions: document.getElementById('autocomplete-suggestions'), // Added for autocomplete
       studyCommandBtn: document.getElementById('study-command-btn'), // Added for study command autocomplete
-      settingsModal: { container: document.getElementById('settings-modal'), fontOptions: document.getElementById('font-options'), fontWeightOptions: document.getElementById('font-weight-options'), closeBtn: document.getElementById('close-settings-btn'), resetBtn: document.getElementById('reset-settings-btn'), apiTokenInput: document.getElementById('api-token-input') },
+      settingsModal: { container: document.getElementById('settings-modal'), fontOptions: document.getElementById('font-options'), fontWeightOptions: document.getElementById('font-weight-options'), closeBtn: document.getElementById('close-settings-btn'), resetBtn: document.getElementById('reset-settings-btn'), apiTokenInput: document.getElementById('api-token-input'), proModelsToggle: document.getElementById('pro-models-toggle') },
       renameModal: { container: document.getElementById('rename-modal'), input: document.getElementById('rename-input'), saveBtn: document.getElementById('rename-save'), cancelBtn: document.getElementById('rename-cancel') },
       deleteModal: { container: document.getElementById('delete-modal'), message: document.getElementById('delete-message'), confirmBtn: document.getElementById('delete-confirm'), cancelBtn: document.getElementById('delete-cancel') },
       signinModal: { container: document.getElementById('signin-modal'), closeBtn: document.getElementById('close-signin-btn') },
     };
 
-    let state = { chats: [], activeId: null, editingMessage: null, modalContext: {}, settings: { model: 'openai', font: 'inter', fontWeight: '400', apiToken: '' }, currentUser: null };
+    let state = { chats: [], activeId: null, editingMessage: null, modalContext: {}, settings: { model: 'openai', font: 'inter', fontWeight: '400', apiToken: '', proModelsEnabled: false }, currentUser: null };
     let currentController = null; // For aborting fetch requests
     let isStreaming = false; // Flag to indicate if streaming is active
     let isScrolledUp = false; // Flag to indicate if the user has scrolled up
@@ -1365,8 +1411,8 @@ async function sendMessage() {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    userMessage: lastUserMessage.content,
-                    assistantMessage: lastAssistantMessage.content
+                    userMessage: lastUserMessage,
+                    assistantMessage: lastAssistantMessage
                 })
             });
             const data = await saveResponse.json(); // Parse response to JSON here
@@ -1693,12 +1739,37 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
       console.log('🔄 Updated model selector display to:', displayName, `(${modelData.type})`);
     }
 
+    function updateProModelsToggleUI() {
+        const enabled = state.settings.proModelsEnabled;
+        const toggle = elements.settingsModal.proModelsToggle;
+        if (!toggle) return;
+        const knob = toggle.querySelector('span');
+
+        toggle.setAttribute('aria-checked', enabled);
+        toggle.classList.toggle('bg-accent', enabled);
+        toggle.classList.toggle('bg-gray-200', !enabled);
+        toggle.classList.toggle('dark:bg-gray-700', !enabled);
+        knob.classList.toggle('translate-x-5', enabled);
+        knob.classList.toggle('translate-x-0', !enabled);
+    }
+
     function renderModelDropdown() {
       elements.modelDropdown.innerHTML = '';
       
+      const isProUser = state.currentUser && state.currentUser.plan === 'pro';
+      const proModelsEnabled = state.settings.proModelsEnabled;
+
+      // Filter models based on pro status
+      const availableModels = Object.entries(MODELS).filter(([key, data]) => {
+          if (data.pro) {
+              return isProUser && proModelsEnabled;
+          }
+          return true;
+      });
+
       // Separate models by type
-      const textModels = Object.entries(MODELS).filter(([_, data]) => data.type === 'text');
-      const imageModels = Object.entries(MODELS).filter(([_, data]) => data.type === 'image');
+      const textModels = availableModels.filter(([_, data]) => data.type === 'text');
+      const imageModels = availableModels.filter(([_, data]) => data.type === 'image');
       
       // Add Text Models section
       const textHeader = document.createElement('div');
@@ -1709,8 +1780,14 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
       textModels.forEach(([key, data]) => {
         const btn = document.createElement('button');
         const isSelected = key === state.settings.model;
-        btn.className = `w-full text-left px-3 py-2 text-sm transition-colors ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`;
-        btn.textContent = data.name;
+        btn.className = `w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`;
+        
+        let proBadge = '';
+        if (data.pro) {
+            proBadge = '<span class="text-xs font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full">PRO</span>';
+        }
+
+        btn.innerHTML = `<span>${data.name}</span> ${proBadge}`;
         btn.onclick = () => {
           state.settings.model = key;
           const activeChat = state.chats.find(c => c.id === state.activeId);
@@ -1733,8 +1810,14 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
         imageModels.forEach(([key, data]) => {
           const btn = document.createElement('button');
           const isSelected = key === state.settings.model;
-          btn.className = `w-full text-left px-3 py-2 text-sm transition-colors ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`;
-          btn.textContent = data.name;
+          btn.className = `w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`;
+          
+          let proBadge = '';
+          if (data.pro) {
+              proBadge = '<span class="text-xs font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full">PRO</span>';
+          }
+
+          btn.innerHTML = `<span>${data.name}</span> ${proBadge}`;
           btn.onclick = () => {
             state.settings.model = key;
             const activeChat = state.chats.find(c => c.id === state.activeId);
@@ -1794,12 +1877,14 @@ function init() {
             // This block runs after any successful login, including the redirect from Google.
             console.log('User signed in. Session:', session);
             localStorage.setItem('authToken', session.access_token);
+            localStorage.setItem('refreshToken', session.refresh_token);
             loadDataFromServer(); // Fetch user's chats and info.
             closeAllModals();
         } else if (event === 'SIGNED_OUT') {
             // This block runs after supabase.auth.signOut() is called successfully.
             // It resets the entire application to the logged-out state.
             localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
             state.currentUser = null;
             state.chats = [];
             state.activeId = null;
@@ -1835,10 +1920,22 @@ function init() {
     applyFontWeight(state.settings.fontWeight);
     renderFontOptions();
     renderFontWeightOptions();
+    updateProModelsToggleUI();
     
     elements.settingsModal.apiTokenInput.addEventListener('change', (e) => {
         state.settings.apiToken = e.target.value;
         saveState();
+    });
+
+    elements.settingsModal.proModelsToggle.addEventListener('click', () => {
+        if (state.currentUser && state.currentUser.plan === 'pro') {
+            state.settings.proModelsEnabled = !state.settings.proModelsEnabled;
+            updateProModelsToggleUI();
+            saveState();
+            renderModelDropdown();
+        } else {
+            alert('You need a pro plan to use pro models. Contact @zshadowultra on Discord for access.');
+        }
     });
 
     // Initial state update for send button

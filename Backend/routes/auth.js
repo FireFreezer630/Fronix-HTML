@@ -59,6 +59,26 @@ router.get('/callback', async (req, res) => {
 });
 
 
+router.post('/refresh', async (req, res) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        return res.status(400).json({ error: 'Refresh token is required' });
+    }
+
+    try {
+        const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
+
+        if (error) {
+            return res.status(401).json({ error: 'Invalid refresh token' });
+        }
+
+        res.status(200).json({ user: data.user, session: data.session });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Sign out
 // Sign out is handled client-side via supabase.auth.signOut()
 // No server-side endpoint is required for this functionality.
