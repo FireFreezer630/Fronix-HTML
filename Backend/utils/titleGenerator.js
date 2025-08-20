@@ -22,16 +22,15 @@ async function generateChatTitle(chatId, messages) {
             return;
         }
 
-        const prompt = `You are a title generator for chat conversations.
-Your job is to create a short, factual title (3–6 words) that captures the main topic of the conversation.
+        const prompt = `You are a chat title generator. Your job is to create a short, factual title that captures the main topic of the conversation.
 
 Rules:
-1. Focus only on the main subject being discussed.
-2. Ignore greetings, small talk, and emotional tone.
-3. Be specific — include the most important keywords.
-4. Do not include pronouns like "you", "I", "we", or vague phrases like "venting" or "chatting".
-5. Output only the title, no explanation.
-6. Keep it between 3–6 words.
+- Summarize the conversation in 3 words or fewer.
+- Only include the main topic.
+- Ignore greetings, small talk, filler text, and emotional tone.
+- Be concise and specific, including the most important keywords.
+- Do not include pronouns like "you", "I", "we", or vague phrases like "venting" or "chatting".
+- Output only the title, nothing else.
 
 ---
 

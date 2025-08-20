@@ -43,6 +43,20 @@ router.post('/signin', async (req, res) => {
     }
 });
 
+// OAuth Callback (for Google redirect)
+router.get('/callback', async (req, res) => {
+  const code = req.query.code; // Google sends code
+  if (!code) return res.status(400).json({ error: 'No code provided' });
+  try {
+    const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) throw error;
+    // Redirect back to the frontend, which will handle the session from the URL hash
+    res.redirect('http://localhost:3000');
+  } catch (error) {
+    console.error('OAuth callback error:', error);
+    res.redirect('http://localhost:3000/auth-error');
+  }
+});
 
 
 // Sign out

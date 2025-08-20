@@ -467,13 +467,13 @@ async function handleSignUp(email, password) {
         try {
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
+                options: {
+                    redirectTo: `${API_BASE_URL}/api/auth/callback`
+                }
             });
             if (error) {
                 throw new Error('Supabase Google login failed: ' + error.message);
             }
-            // Supabase will handle the redirect. No further code is needed here.
-            // After login, the user will be redirected back, and the session
-            // will be handled by the onAuthStateChange listener (which we'll add).
         } catch (error) {
             console.error("Error during Google login:", error);
             alert(error.message);
