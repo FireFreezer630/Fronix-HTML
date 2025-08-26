@@ -8,17 +8,17 @@ const MODELS = {
     'deepseek-reasoning': { name: 'DeepSeek R1 0528 (Bedrock)', type: 'text', endpoint: `${process.env.AI_API_ENDPOINT_V2}/chat/completions`, modelId: 'provider-6/deepseek-r1-uncensored' },
     'openai-reasoning': { name: 'OpenAI o3 (api.navy)', type: 'text', endpoint: 'https://api.navy/v1/chat/completions' },
     'grok': { name: 'Grok', type: 'text', endpoint: process.env.AI_API_ENDPOINT },
-    'elixposearch': { name: 'Elixpo Search', type: 'text', endpoint: process.env.AI_API_ENDPOINT, free: true },
-    'o4-mini-medium': { name: 'O4 Mini Medium', type: 'text', endpoint: `${process.env.AI_API_ENDPOINT_V2}/chat/completions`, modelId: 'provider-6/o4-mini-medium' },
-    'o4-mini-high': { name: 'O4 Mini High', type: 'text', endpoint: `${process.env.AI_API_ENDPOINT_V2}/chat/completions`, modelId: 'provider-6/o4-mini-high' },
-    'provider-6/kimi-k2-instruct': { name: 'Kimi K2', type: 'text', endpoint: `${process.env.AI_API_ENDPOINT_V2}/chat/completions`, modelId: 'provider-6/kimi-k2' },
-    'deepseek-r1-uncensored': { name: 'DeepSeek R1 Uncensored', type: 'text', endpoint: `${process.env.AI_API_ENDPOINT_V2}/chat/completions`, modelId: 'provider-6/deepseek-r1-uncensored' },
+    'elixposearch': { name: 'Elixpo Search', type: 'text', endpoint: process.env.AI_API_ENDPOINT, free: true, speed: null, fast: false },
+    'o4-mini-medium': { name: 'O4 Mini Medium', type: 'text', endpoint: `${process.env.AI_API_ENDPOINT_V2}/chat/completions`, modelId: 'provider-6/o4-mini-medium', speed: null, fast: false },
+    'o4-mini-high': { name: 'O4 Mini High', type: 'text', endpoint: `${process.env.AI_API_ENDPOINT_V2}/chat/completions`, modelId: 'provider-6/o4-mini-high', speed: null, fast: false },
+    'provider-6/kimi-k2-instruct': { name: 'Kimi K2', type: 'text', endpoint: `${process.env.AI_API_ENDPOINT_V2}/chat/completions`, modelId: 'provider-6/kimi-k2', speed: null, fast: false },
+    'deepseek-r1-uncensored': { name: 'DeepSeek R1 Uncensored', type: 'text', endpoint: `${process.env.AI_API_ENDPOINT_V2}/chat/completions`, modelId: 'provider-6/deepseek-r1-uncensored', speed: null, fast: false },
 
     // Pro Models
-    'grok-4': { name: 'Grok 4', type: 'text', pro: true, endpoint: 'https://api.navy/v1/chat/completions' },
-    'gpt-5': { name: 'GPT-5', type: 'text', pro: true, endpoint: 'https://api.airforce/v1/chat/completions' },
-    'gemini-2.5-pro': { name: 'Gemini 2.5 Pro', type: 'text', pro: true, endpoint: 'https://api.airforce/v1/chat/completions' },
-    'gemini-2.5-flash': { name: 'Gemini 2.5 Flash', type: 'text', pro: true, endpoint: 'https://api.airforce/v1/chat/completions' },
+    'grok-4': { name: 'Grok 4', type: 'text', pro: true, endpoint: 'https://api.navy/v1/chat/completions', speed: null, fast: false },
+    'gpt-5': { name: 'GPT-5', type: 'text', pro: true, endpoint: 'https://api.airforce/v1/chat/completions', speed: null, fast: false },
+    'gemini-2.5-pro': { name: 'Gemini 2.5 Pro', type: 'text', pro: true, endpoint: 'https://api.airforce/v1/chat/completions', speed: null, fast: false },
+    'gemini-2.5-flash': { name: 'Gemini 2.5 Flash', type: 'text', pro: true, endpoint: 'https://api.airforce/v1/chat/completions', speed: null, fast: false },
       
     // Image Generation Models
     // 'provider-4/imagen-4': { name: 'Imagen 4', type: 'image' }

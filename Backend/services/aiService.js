@@ -112,10 +112,86 @@ async function makeApiRequestWithRetry(url, requestBody, requestOptions, pool) {
     throw lastError;
 }
 
+async function benchmarkModel(modelConfig, prompt, apiKeyPool) {
+    const { endpoint, modelId, type } = modelConfig;
+    if (type !== 'text') return null; // Only benchmark text models
+
+    const requestBody = {
+        model: modelId || modelConfig.name, // Use modelId if available, otherwise name
+        messages: [{ role: 'user', content: prompt }],
+        stream: true // Enable streaming for benchmarking
+    };
+
+    const requestOptions = {
+        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+        responseType: 'stream' // Ensure axios handles as stream
+    };
+
+    const startTime = process.hrtime.bigint();
+    try {
+        const aiResponse = await makeApiRequestWithRetry(endpoint, requestBody, requestOptions, apiKeyPool);
+        
+        return new Promise((resolve, reject) => {
+            let fullResponse = '';
+            let buffer = '';
+
+            aiResponse.data.on('data', (chunk) => {
+                buffer += chunk.toString();
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // Keep the last incomplete line
+
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine) continue;
+
+                    if (trimmedLine === 'data: [DONE]') {
+                        // Stream completed, resolve with duration
+                        const endTime = process.hrtime.bigint();
+                        const duration = Number(endTime - startTime) / 1_000_000; // nanoseconds to milliseconds
+                        console.log(`⏱️ Model ${modelConfig.name} benchmarked in ${duration.toFixed(2)} ms (streamed)`);
+                        aiResponse.data.destroy(); // End the stream early
+                        resolve(duration);
+                        return;
+                    }
+
+                    if (trimmedLine.startsWith('data: ')) {
+                        try {
+                            const jsonStr = trimmedLine.slice(6);
+                            const data = JSON.parse(jsonStr);
+                            if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                                fullResponse += data.choices[0].delta.content;
+                            }
+                        } catch (error) {
+                            console.warn('Failed to parse streaming chunk during benchmark:', trimmedLine, error.message);
+                        }
+                    }
+                }
+            });
+
+            aiResponse.data.on('end', () => {
+                // If stream ends without a [DONE] signal, treat as completion
+                const endTime = process.hrtime.bigint();
+                const duration = Number(endTime - startTime) / 1_000_000; // nanoseconds to milliseconds
+                console.warn(`⚠️ Model ${modelConfig.name} stream ended without [DONE] signal. Benchmarked in ${duration.toFixed(2)} ms.`);
+                resolve(duration);
+            });
+
+            aiResponse.data.on('error', (streamError) => {
+                console.error(`❌ Stream error during benchmarking for model ${modelConfig.name}:`, streamError.message);
+                reject(streamError);
+            });
+        });
+    } catch (error) {
+        console.error(`❌ Benchmarking failed for model ${modelConfig.name}:`, error.message);
+        return null;
+    }
+}
+
 module.exports = {
     v1ApiKeyPool,
     v2ApiKeyPool,
     airforceApiKeyPool,
     navyApiKeyPool,
-    makeApiRequestWithRetry
+    makeApiRequestWithRetry,
+    benchmarkModel
 };

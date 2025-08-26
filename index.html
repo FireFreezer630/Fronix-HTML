@@ -195,8 +195,8 @@
     <!-- ++ END: NEW PROFILE SECTION ++ -->
 
     <div class="p-4 border-t border-light-border dark:border-dark-border">
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3 text-sm mb-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 text-sm">
                 <button id="signin-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
                     Sign In
@@ -206,8 +206,6 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                     <span>Sign Out</span>
                 </button>
-            </div>
-            <div class="flex items-center">
                 <button id="settings-btn" class="p-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
@@ -381,7 +379,7 @@
   </div>
 
   <script>
-    const API_BASE_URL = 'http://localhost:3001'; // Your Node.js backend URL
+    const API_BASE_URL = 'https://fronix-html.onrender.com'; // Your Node.js backend URL
     const config = { API_ENDPOINT: 'https://text.pollinations.ai/openai' };
     const SUPABASE_URL = 'https://dfrlmrplshijbosawpms.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmcmxtcnBsc2hpamJvc2F3cG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzEzMDYsImV4cCI6MjA2ODg0NzMwNn0.BzsC5u2LGbq3QydQCAKnIiJvrRHTdjx3HzNGdCzf_ac';
@@ -477,13 +475,13 @@ async function handleSignIn(email, password, retryCount = 0) {
         if (!response.ok) {
             throw new Error(data.error || 'Unknown sign-in error');
         }
-        // The onAuthStateChange listener will detect the login and handle the rest.
-        // We manually set the token to speed up the process.
-        localStorage.setItem('authToken', data.session.access_token);
-        localStorage.setItem('refreshToken', data.session.refresh_token);
-        loadDataFromServer();
-        closeAllModals();
+        // Manually set session in Supabase client to trigger onAuthStateChange
+        await supabaseClient.auth.setSession(data.session);
+        console.log('handleSignIn: Supabase session set.');
+        // The onAuthStateChange listener will now detect the login and handle the rest (localStorage, loadDataFromServer, UI updates).
         openAlertModal('Success', 'You have successfully signed in.');
+        closeAllModals();
+
     } catch (error) {
         console.error("Sign-in failed:", error);
         // Retry logic for network/fetch errors
@@ -592,81 +590,106 @@ async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
 }
 
 async function loadDataFromServer(retryCount = 0) {
-    const maxRetries = 3;
-    const token = localStorage.getItem('authToken');
-    const isUserLoggedIn = !!state.currentUser; // Check if state.currentUser is populated
-
-    if (!isUserLoggedIn) {
-        // If not logged in, just update UI and return. Chats are loaded from localStorage in init.
-        updateLoginStateUI();
+    if (isLoading) {
+        console.warn('[loadDataFromServer] Already in progress. Aborting new call.');
         return;
     }
-
-    if (!token) {
-        // This case should ideally not be reached if isUserLoggedIn is true, but as a safeguard
-        updateLoginStateUI();
-        return;
-    }
+    isLoading = true;
+    console.log('[loadDataFromServer] Set isLoading = true');
 
     try {
+        const maxRetries = 3;
+        let token = localStorage.getItem('authToken');
+        let isUserLoggedIn = !!state.currentUser; // Check if state.currentUser is populated
+
+        console.log(`[loadDataFromServer] START - isUserLoggedIn: ${isUserLoggedIn}, token present: ${!!token}`);
+
+        if (!isUserLoggedIn) {
+            // If not logged in, just update UI and return. Chats are loaded from localStorage in init.
+            updateLoginStateUI();
+            console.log('[loadDataFromServer] Not logged in. Returning.');
+            return;
+        }
+
+        if (!token) {
+            // This case should ideally not be reached if isUserLoggedIn is true, but as a safeguard
+            updateLoginStateUI();
+            console.log('[loadDataFromServer] Logged in but no token. Returning.');
+            return;
+        }
+
         // Wrap the entire data loading process in retry mechanism
         await retryWithBackoff(async () => {
+            console.log('[loadDataFromServer] Fetching user data...');
             // Fetch user info first
             const userResponse = await fetch(`${API_BASE_URL}/api/user/me`, {
                 headers: { 'Authorization': `Bearer ${token}` },
                 cache: 'no-cache'
             });
-            
+
             if (userResponse.status === 401 || userResponse.status === 403) {
+                console.error('[loadDataFromServer] Auth error fetching user data.');
                 throw new Error('AUTH_ERROR'); // Special error for authentication issues
             }
             if (!userResponse.ok) {
                 const error = new Error(`Failed to fetch user data. Status: ${userResponse.status}`);
                 error.status = userResponse.status;
+                console.error('[loadDataFromServer] Non-OK response fetching user data:', userResponse.status, userResponse.statusText);
                 throw error;
             }
             state.currentUser = await userResponse.json();
+            console.log('[loadDataFromServer] User data fetched:', JSON.parse(JSON.stringify(state.currentUser)));
 
+            console.log('[loadDataFromServer] Fetching chats...');
             // Then fetch chats
             const chatsResponse = await fetch(`${API_BASE_URL}/api/chat`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            
+
             if (chatsResponse.status === 401 || chatsResponse.status === 403) {
+                console.error('[loadDataFromServer] Auth error fetching chats.');
                 throw new Error('AUTH_ERROR');
             }
             if (!chatsResponse.ok) {
                 const error = new Error(`Failed to fetch chats. Status: ${chatsResponse.status}`);
                 error.status = chatsResponse.status;
+                console.error('[loadDataFromServer] Non-OK response fetching chats:', chatsResponse.status, chatsResponse.statusText);
                 throw error;
             }
             const chats = await chatsResponse.json();
             state.chats = chats; // Store all chats
+            console.log('[loadDataFromServer] Chats fetched:', JSON.parse(JSON.stringify(state.chats)));
 
             // Fetch messages for each chat
             for (let i = 0; i < state.chats.length; i++) {
                 const chat = state.chats[i];
+                console.log(`[loadDataFromServer] Fetching messages for chat ${chat.id}...`);
                 const messagesResponse = await fetch(`${API_BASE_URL}/api/chat/${chat.id}/messages`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (messagesResponse.status === 401 || messagesResponse.status === 403) {
+                    console.error(`[loadDataFromServer] Auth error fetching messages for chat ${chat.id}.`);
                     throw new Error('AUTH_ERROR');
                 }
                 if (!messagesResponse.ok) {
                     const error = new Error(`Failed to fetch messages for chat ${chat.id}. Status: ${messagesResponse.status}`);
                     error.status = messagesResponse.status;
+                    console.error(`[loadDataFromServer] Non-OK response fetching messages for chat ${chat.id}:`, messagesResponse.status, messagesResponse.statusText);
                     throw error;
                 }
                 const messages = await messagesResponse.json();
                 chat.messages = Array.isArray(messages.messages) ? messages.messages : []; // Ensure it's an array
+                console.log(`[loadDataFromServer] Messages for chat ${chat.id} fetched:`, JSON.parse(JSON.stringify(chat.messages)));
             }
 
             // Set active chat to the newest chat or create a new one
             if (state.chats.length > 0) {
                 state.activeId = state.chats[0].id; // Always select the newest chat
+                console.log('[loadDataFromServer] Active chat set to newest:', state.activeId);
             } else {
                 // If no chats exist, create a new one
+                console.log('[loadDataFromServer] No chats found, creating new chat...');
                 await handleNewChat();
                 return; // handleNewChat will set activeId and render
             }
@@ -687,12 +710,16 @@ async function loadDataFromServer(retryCount = 0) {
             openAlertModal('Session Expired', 'Your session has expired. Please sign in again.');
             localStorage.removeItem('authToken');
             state.currentUser = null;
+            updateLoginStateUI(); // Ensure UI is updated on auth error
+            updateProfileUI();
         } else {
             // For network/server errors, just show a warning but keep user signed in
             console.warn('[loadDataFromServer] Temporary network issue:', error.message);
             // Don't alert for temporary issues, just log them
         }
     } finally {
+        isLoading = false;
+        console.log('[loadDataFromServer] Set isLoading = false in finally block.');
         updateLoginStateUI();
         updateProfileUI();
         console.log('[loadDataFromServer] Finished. Final state.activeId:', state.activeId);
@@ -712,7 +739,13 @@ async function handleNewChat() {
             return;
         }
         if (!FREE_MODELS.includes(state.settings.model)) {
-            openAlertModal('Model Restricted', `Only ${FREE_MODELS.join(' and ')} models are available for trial users. Please sign in to use other models.`);
+            openAlertModal('Model Restricted', `Only ${MODELS[FREE_MODELS[0]].name} and other free models are available for trial users. Please sign in to use other models. Switching to ${MODELS[FREE_MODELS[0]].name}.`);
+            // Switch to a free model if a restricted model was selected
+            const defaultFreeModel = FREE_MODELS[0];
+            state.settings.model = defaultFreeModel;
+            saveState();
+            updateModelSelectorDisplay();
+            renderModelDropdown();
             return;
         }
     } else if (!token) {
@@ -811,7 +844,7 @@ async function handleNewChat() {
     }
     let MODELS = {};
 
-    const SYSTEM_PROMPT_BASE = `You are Fronix, a large language model. This means most of the time your lines should be a sentence or two, unless the user\'s request requires reasoning or long-form outputs. Never use emojis, unless explicitly asked to. 
+    const SYSTEM_PROMPT_BASE = `You are Fronix, a large language model. This means most of the time your lines should be a sentence or two, unless the user's request requires reasoning or long-form outputs. Never use emojis, unless explicitly asked to. 
 Knowledge cutoff: 2024-06
 Current date: 2025-05-15
 
@@ -832,8 +865,8 @@ Over the course of the conversation, you adapt to the user's tone and preference
             console.error('Error loading available models:', error);
             // Fallback to a default model list if the API fails
             MODELS = {
-                'openai-large': { name: 'OpenAI GPT-4.1', type: 'text' }
-            };
+                'openai-large': { name: 'OpenAI GPT-4.1', type: 'text', free: true, speed: null, fast: false }
+            }; // Ensure default fallback model has speed and fast properties
             renderModelDropdown();
         }
     }
@@ -871,6 +904,7 @@ Over the course of the conversation, you adapt to the user's tone and preference
     let state = { chats: [], activeId: null, editingMessage: null, modalContext: {}, settings: { model: 'openai-large', font: 'inter', fontWeight: '400', apiToken: '', proModelsEnabled: false }, currentUser: null };
     let currentController = null; // For aborting fetch requests
     let isStreaming = false; // Flag to indicate if streaming is active
+    let isLoading = false; // Flag to prevent concurrent data loads
     let isScrolledUp = false; // Flag to indicate if the user has scrolled up
     let isGeneratingTitle = false; // Flag to indicate if title generation is in progress
     let attachedImageData = null; // To store { file, dataUrl }
@@ -1275,16 +1309,8 @@ ${studyModePrompt}`;
         const modelData = MODELS[currentModel] || { name: 'OpenAI (Default)', type: 'text', pro: false }; // Ensure default modelData
         const isImageModel = modelData.type === 'image';
 
-        // Check if the user is unauthenticated and trying to use a pro model
-        if (!isUserLoggedIn && modelData.pro) {
-            openAlertModal('Model Restricted', `The ${modelData.name} model is only available for authenticated users with a pro plan. Please sign in or select a free model.`);
-            // Revert optimistic UI update
-            activeChat.messages.pop(); // Remove AI placeholder
-            activeChat.messages.pop(); // Remove user message
-            renderChat();
-            saveState();
-            return;
-        }
+        // The backend now handles the `isUserLoggedIn` and `modelData.pro` check for streaming responses.
+        // If there's an error, it will be sent as `data: [ERROR]` in the stream.
         
         console.log('🔍 Current model for request:', currentModel);
         console.log('🔍 Model data:', modelData);
@@ -1416,6 +1442,26 @@ ${studyModePrompt}`;
                         } catch (error) {
                             console.warn('Failed to parse streaming chunk:', trimmedLine, error);
                         }
+                    }
+                     else if (trimmedLine.startsWith('data: [ERROR]')) {
+                        const errorMessage = trimmedLine.slice(13).trim(); // Remove 'data: [ERROR]' prefix
+                        console.error('Stream error from backend:', errorMessage);
+                        fullResponse += `\n\n⚠️ Error: ${errorMessage}`; // Append error to response
+                        assistantMsgDiv.innerHTML = renderContent(fullResponse);
+                        // Optionally, revert the model to a free one if it was a pro model restriction
+                        if (errorMessage.includes('Pro models are not enabled') || errorMessage.includes('need a pro plan')) {
+                            const defaultFreeModel = Object.keys(MODELS).find(key => MODELS[key].free && MODELS[key].type === 'text');
+                            if (defaultFreeModel) {
+                                state.settings.model = defaultFreeModel;
+                                const activeChat = state.chats.find(c => c.id === state.activeId);
+                                if (activeChat) activeChat.model = defaultFreeModel;
+                                saveState();
+                                updateModelSelectorDisplay();
+                                renderModelDropdown();
+                                openAlertModal('Model Changed', `Switched to ${MODELS[defaultFreeModel].name} as the previously selected model requires a pro plan or is disabled.`);
+                            }
+                        }
+                        break; // Stop processing further stream data
                     }
                 }
             }
@@ -1810,11 +1856,11 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
               console.log(`  - Falling back to 'openai-large'.`);
           } else {
               // If 'openai-large' is not available, try to find the first available model
-              const firstAvailableModelKey = Object.keys(MODELS)[0];
+              const firstAvailableModelKey = Object.keys(MODELS).find(key => MODELS[key].type === 'text'); // Find first text model
               if (firstAvailableModelKey) {
                   currentModelKey = firstAvailableModelKey;
                   modelData = MODELS[currentModelKey];
-                  console.log(`  - Falling back to first available model: '${currentModelKey}'.`);
+                  console.log(`  - Falling back to first available text model: '${currentModelKey}'.`);
               } else {
                   // No models available at all
                   console.error(`❌ No models are available. Displaying "No models available".`);
@@ -1858,7 +1904,7 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
       // Filter models based on pro status
       const availableModels = Object.entries(MODELS).filter(([key, data]) => {
           if (data.pro) {
-              return isProUser && proModelsEnabled;
+              return isProUser && proModelsEnabled; // Only show pro models if user is pro and feature is enabled
           }
           return true;
       });
@@ -1876,15 +1922,30 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
       textModels.forEach(([key, data]) => {
         const btn = document.createElement('button');
         const isSelected = key === state.settings.model;
-        btn.className = `w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`;
+        const isDisabled = data.pro && (!isProUser || !proModelsEnabled); // Disable pro models for non-pro users or if setting is off
+        btn.className = `w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`;
+        btn.disabled = isDisabled;
         
         let proBadge = '';
         if (data.pro) {
             proBadge = '<span class="text-xs font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full">PRO</span>';
         }
 
-        btn.innerHTML = `<span>${data.name}</span> ${proBadge}`;
+        let fastBadge = '';
+        if (data.fast) {
+            fastBadge = '<span class="ml-2 text-xs font-bold text-green-500">⚡</span>'; // Fast icon
+        }
+
+        btn.innerHTML = `<span>${data.name}${fastBadge}</span> ${proBadge}`;
         btn.onclick = () => {
+            if (isDisabled) {
+                if (!isProUser) {
+                    openAlertModal('Pro Plan Required', 'You need a pro plan to use this model. Please sign in or upgrade your plan.');
+                } else if (!proModelsEnabled) {
+                    openAlertModal('Pro Models Disabled', 'Enable Pro Models in settings to use this model.');
+                }
+                return; // Prevent selection if disabled
+            }
           state.settings.model = key;
           const activeChat = state.chats.find(c => c.id === state.activeId);
           if (activeChat) activeChat.model = key;
@@ -1906,7 +1967,9 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
         imageModels.forEach(([key, data]) => {
           const btn = document.createElement('button');
           const isSelected = key === state.settings.model;
-          btn.className = `w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`;
+          const isDisabled = data.pro && (!isProUser || !proModelsEnabled);
+          btn.className = `w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`;
+          btn.disabled = isDisabled;
           
           let proBadge = '';
           if (data.pro) {
@@ -1915,6 +1978,14 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
 
           btn.innerHTML = `<span>${data.name}</span> ${proBadge}`;
           btn.onclick = () => {
+            if (isDisabled) {
+                if (!isProUser) {
+                    openAlertModal('Pro Plan Required', 'You need a pro plan to use this model. Please sign in or upgrade your plan.');
+                } else if (!proModelsEnabled) {
+                    openAlertModal('Pro Models Disabled', 'Enable Pro Models in settings to use this model.');
+                }
+                return; // Prevent selection if disabled
+            }
             state.settings.model = key;
             const activeChat = state.chats.find(c => c.id === state.activeId);
             if (activeChat) activeChat.model = key;
@@ -1998,12 +2069,35 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
             localStorage.setItem('authToken', session.access_token);
             localStorage.setItem('refreshToken', session.refresh_token);
             
-            // Manually set user for immediate UI update
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            state.currentUser = user;
+            // Use session.user directly, no need for another fetch
+            state.currentUser = session.user;
+            console.log('[onAuthStateChange] SIGNED_IN - state.currentUser set:', JSON.parse(JSON.stringify(state.currentUser)));
             
-            await loadDataFromServer(); 
-            closeAllModals();
+            if (state.currentUser) { // Only load data if currentUser is actually set
+                await loadDataFromServer(); 
+                closeAllModals();
+            } else {
+                console.warn('[onAuthStateChange] SIGNED_IN - currentUser is null, skipping loadDataFromServer.');
+                updateLoginStateUI();
+            }
+
+        } else if (event === 'INITIAL_SESSION' && session) { // Handle INITIAL_SESSION explicitly
+            console.log('Initial session established. Session:', session);
+            localStorage.setItem('authToken', session.access_token);
+            localStorage.setItem('refreshToken', session.refresh_token);
+            
+            // Use session.user directly, no need for another fetch
+            state.currentUser = session.user;
+            console.log('[onAuthStateChange] INITIAL_SESSION - state.currentUser set:', JSON.parse(JSON.stringify(state.currentUser)));
+
+            if (state.currentUser) { // Only load data if currentUser is actually set
+                await loadDataFromServer();
+                updateLoginStateUI();
+                updateProfileUI();
+            } else {
+                console.warn('[onAuthStateChange] INITIAL_SESSION - currentUser is null, skipping loadDataFromServer.');
+                updateLoginStateUI();
+            }
 
         } else if (event === 'SIGNED_OUT') {
             console.log('User signed out.');
@@ -2024,10 +2118,10 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
     
     // 5. Check if a token already exists and fetch latest data from server
     const existingToken = localStorage.getItem('authToken');
-    if (existingToken) {
-        console.log('An existing auth token was found on page load. Loading user data from server.');
-        loadDataFromServer();
-    } else {
+    // Removed the direct call to loadDataFromServer here to avoid race conditions
+    // The onAuthStateChange listener will now be the sole trigger for data loading after authentication state is determined.
+    // If a session already exists from a previous login, the 'INITIAL_SESSION' event will handle the data loading.
+    if (!existingToken) {
         // If no token exists, ensure the UI is in the logged-out state.
         console.log('No existing auth token found. Ensuring logged-out state.');
         updateLoginStateUI();
@@ -2039,6 +2133,7 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
     renderFontOptions();
     renderFontWeightOptions();
     updateProModelsToggleUI();
+    updateLoginStateUI(); // Ensure model dropdown is re-rendered on login state change
     
     elements.settingsModal.apiTokenInput.addEventListener('change', (e) => {
         state.settings.apiToken = e.target.value;

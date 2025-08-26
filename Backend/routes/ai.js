@@ -2,16 +2,15 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../config/supabaseClient');
 const authMiddleware = require('../middleware/authMiddleware');
-const fs = require('fs');
-const path = require('path');
 const cache = require('../utils/cache');
-const MODELS = require('../config/models');
+let MODELS = require('../config/models'); // Use let to allow reassigning MODELS
 const {
     v1ApiKeyPool,
     v2ApiKeyPool,
     airforceApiKeyPool,
     navyApiKeyPool,
-    makeApiRequestWithRetry
+    makeApiRequestWithRetry,
+    benchmarkModel // Import benchmarkModel
 } = require('../services/aiService');
 
 // Safe JSON stringification to handle circular references
@@ -29,14 +28,7 @@ function safeStringify(obj, space = 2) {
 }
 
 // Cached study mode prompt
-let studyModePrompt = '';
-try {
-    studyModePrompt = fs.readFileSync(path.join(__dirname, '../../study-mode.md'), 'utf8');
-    console.log('📚 Study mode prompt loaded and cached successfully.');
-} catch (fileError) {
-    console.error('Error reading study-mode.md:', fileError.message);
-    studyModePrompt = 'You are currently in study mode. Please provide academic and guiding responses.'; // Fallback prompt
-}
+let studyModePrompt = 'You are currently in study mode. Please provide academic and guiding responses. Your general tone should be supportive and encouraging, like a tutor. When you provide explanations, try to simplify complex topics, break them down into smaller, digestible pieces, and offer analogies if appropriate. Always encourage the user to ask questions and explore further. Your goal is to foster understanding, not just provide answers.';
 
 const PRO_MODELS = ['grok-4', 'gpt-5', 'gemini-2.5-pro', 'gemini-2.5-flash'];
 
@@ -63,12 +55,15 @@ async function selectProProvider(userId) {
 
 router.post('/chat', authMiddleware, async (req, res) => {
     const { model, messages, chatId, proModelsEnabled } = req.body;
-    const FREE_MODELS = ['openai-large', 'gemini'];
+    const FREE_MODELS = Object.keys(MODELS).filter(key => MODELS[key].free);
 
     if (!req.user) {
         // Unauthenticated user
         if (!FREE_MODELS.includes(model)) {
-            return res.status(401).json({ error: 'You must be logged in to use this model.' });
+            // Send error through stream for client to handle
+            res.write('data: [ERROR] You must be logged in to use this model. Please log in or select a free model.\n\n');
+            res.end();
+            return;
         }
     }
 
@@ -109,7 +104,9 @@ router.post('/chat', authMiddleware, async (req, res) => {
             const { data: profile } = await supabase.from('profiles').select('plan').eq('user_id', req.user.id).single();
 
             if (!profile || profile.plan !== 'pro') {
-                return res.status(403).json({ error: 'You need a pro plan to use this model. Contact @zshadowultra on Discord for access.' });
+                res.write('data: [ERROR] You need a pro plan to use this model. Contact @zshadowultra on Discord for access.\n\n');
+                res.end();
+                return;
             }
 
             if (model === 'grok-4') {
@@ -160,7 +157,7 @@ router.post('/chat', authMiddleware, async (req, res) => {
             requestBody,
             {
                 headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
-                responseType: 'stream'
+                responseType: 'stream' // Ensure axios handles as stream
             },
             apiKeyPool
         );
@@ -168,21 +165,103 @@ router.post('/chat', authMiddleware, async (req, res) => {
         aiResponse.data.pipe(res);
 
     } catch (error) {
-        console.error('❌ Error calling AI service:', error.message);
-        res.status(500).json({ error: 'Internal server error occurred while contacting the AI service.' });
+        console.error('❌ Error calling AI service (streaming):', error.message);
+        // Send error through the stream if possible, otherwise close the response
+        if (!res.headersSent) {
+            res.write(`data: [ERROR] Internal server error occurred: ${error.message}\n\n`);
+        }
+        res.end();
     }
 });
 
-// ... (keep the existing /images/generations endpoint) ...
+// New endpoint for benchmarking models
+router.post('/benchmark', authMiddleware, async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') { // Assuming only admins can trigger benchmarks
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+    
+    try {
+        console.log('Starting model benchmarking...');
+        await benchmarkAllModels();
+        res.status(200).json({ message: 'Benchmarking initiated.' });
+    } catch (error) {
+        console.error('Error initiating benchmarking:', error);
+        res.status(500).json({ error: 'Failed to initiate benchmarking' });
+    }
+});
+
+// Function to run benchmarking for all models
+async function benchmarkAllModels() {
+    const benchmarkPrompt = 'Write a 500-word essay about the history of artificial intelligence.';
+    let fastestModel = null;
+    let minSpeed = Infinity;
+
+    for (const modelKey in MODELS) {
+        const modelConfig = MODELS[modelKey];
+        // Skip image models, and models without an endpoint/modelId for chat
+        if (modelConfig.type === 'image' || (!modelConfig.endpoint && !modelConfig.modelId)) {
+            console.log(`Skipping benchmark for non-text or non-chat model: ${modelConfig.name}`);
+            continue;
+        }
+        
+        let apiKeyPool;
+        // Determine which API key pool to use for benchmarking
+        if (PRO_MODELS.includes(modelKey)) {
+            // For pro models, we need a valid pro API key pool
+            // This logic might need refinement based on how pro API keys are managed and shared across providers.
+            // For simplicity, we'll assume airforce for pro models that are not grok-4
+            if (modelKey === 'grok-4') {
+                apiKeyPool = navyApiKeyPool;
+            } else {
+                apiKeyPool = airforceApiKeyPool;
+            }
+        } else if (['claude-opus-4', 'o4-mini-medium', 'o4-mini-high', 'gpt-4o-mini-search-preview', 'gemini-2.5-flash-thinking', 'kimi-k2', 'deepseek-r1-uncensored'].includes(modelKey)) {
+            apiKeyPool = v2ApiKeyPool;
+        } else {
+            apiKeyPool = v1ApiKeyPool;
+        }
+        
+        if (!apiKeyPool || apiKeyPool.keys.length === 0) {
+            console.warn(`No API keys available for model ${modelConfig.name}. Skipping benchmark.`);
+            continue;
+        }
+
+        const speed = await benchmarkModel(modelConfig, benchmarkPrompt, apiKeyPool);
+        if (speed !== null) {
+            MODELS[modelKey].speed = speed;
+            if (speed < minSpeed) {
+                minSpeed = speed;
+                fastestModel = modelKey;
+            }
+        }
+    }
+
+    // Reset all fast flags
+    for (const modelKey in MODELS) {
+        MODELS[modelKey].fast = false;
+    }
+
+    // Mark the fastest model
+    if (fastestModel) {
+        MODELS[fastestModel].fast = true;
+        console.log(`Fastest model identified: ${MODELS[fastestModel].name} (${minSpeed.toFixed(2)} ms)`);
+    } else {
+        console.warn('No fastest model could be determined from benchmarking.');
+    }
+
+    // Cache the updated models
+    cache.set('availableModels', MODELS);
+    console.log('Model benchmarking completed and cache updated.');
+}
 
 router.get('/models', (req, res) => {
     const availableModels = cache.get('availableModels');
     if (availableModels) {
         res.json(availableModels);
     } else {
-        // If the cache is not ready yet, return the full list of models
+        // If the cache is not ready yet, return the models directly
         res.json(MODELS);
     }
 });
 
-module.exports = router;
+module.exports = { router, benchmarkAllModels };
