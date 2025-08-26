@@ -195,8 +195,8 @@
     <!-- ++ END: NEW PROFILE SECTION ++ -->
 
     <div class="p-4 border-t border-light-border dark:border-dark-border">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3 text-sm">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3 text-sm mb-4">
                 <button id="signin-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
                     Sign In
@@ -333,7 +333,13 @@
                 </button>
             </div>
              <a href="#" class="text-xs text-accent hover:underline text-right block -mt-2">Forgot password?</a>
-            <button id="signin-email-btn" class="w-full px-4 py-3 rounded-md bg-accent text-white font-semibold hover:bg-accent-hover transition-colors">Sign In</button>
+                        <button id="signin-email-btn" class="w-full flex items-center justify-center px-4 py-3 rounded-md bg-accent text-white font-semibold hover:bg-accent-hover transition-colors">
+                <span class="button-text">Sign In</span>
+                <svg class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
             <div class="flex items-center text-xs text-light-text-subtle dark:text-dark-text-subtle">
                 <div class="flex-grow border-t border-light-border dark:border-dark-border"></div>
                 <span class="flex-shrink mx-4">OR</span>
@@ -364,8 +370,18 @@
 </div>
   <div id="chat-actions-dropdown" class="w-32 bg-light-sidebar dark:bg-dark-sidebar rounded-lg shadow-lg border border-light-border dark:border-dark-border"></div>
 
+  <div id="alert-modal" class="modal-container">
+    <div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 rounded-2xl shadow-xl w-full max-w-sm border border-light-border dark:border-dark-border">
+      <h3 id="alert-title" class="text-lg font-semibold mb-4"></h3>
+      <p id="alert-message" class="mb-4 text-light-text-subtle dark:text-dark-text-subtle"></p>
+      <div class="flex justify-end gap-2">
+        <button id="alert-ok-btn" class="px-4 py-2 rounded-md bg-accent text-white">OK</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const API_BASE_URL = 'https://fronix-html.onrender.com'; // Your Node.js backend URL
+    const API_BASE_URL = 'http://localhost:3001'; // Your Node.js backend URL
     const config = { API_ENDPOINT: 'https://text.pollinations.ai/openai' };
     const SUPABASE_URL = 'https://dfrlmrplshijbosawpms.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmcmxtcnBsc2hpamJvc2F3cG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzEzMDYsImV4cCI6MjA2ODg0NzMwNn0.BzsC5u2LGbq3QydQCAKnIiJvrRHTdjx3HzNGdCzf_ac';
@@ -442,6 +458,14 @@ async function handleSignIn(email, password, retryCount = 0) {
         return;
     }
     const maxRetries = 2;
+    const signinBtn = document.getElementById('signin-email-btn');
+    const buttonText = signinBtn.querySelector('.button-text');
+    const spinner = signinBtn.querySelector('svg');
+
+    signinBtn.disabled = true;
+    buttonText.classList.add('hidden');
+    spinner.classList.remove('hidden');
+
     try {
         // This function CORRECTLY calls your backend, not the client library.
         const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
@@ -459,7 +483,7 @@ async function handleSignIn(email, password, retryCount = 0) {
         localStorage.setItem('refreshToken', data.session.refresh_token);
         loadDataFromServer();
         closeAllModals();
-        alert('Sign in successful!');
+        openAlertModal('Success', 'You have successfully signed in.');
     } catch (error) {
         console.error("Sign-in failed:", error);
         // Retry logic for network/fetch errors
@@ -469,8 +493,12 @@ async function handleSignIn(email, password, retryCount = 0) {
                 handleSignIn(email, password, retryCount + 1);
             }, 1000 * (retryCount + 1)); // Exponential backoff: 1s, 2s
         } else {
-            alert('Error signing in: ' + error.message);
+            openAlertModal('Sign-in Error', error.message);
         }
+    } finally {
+        signinBtn.disabled = false;
+        buttonText.classList.remove('hidden');
+        spinner.classList.add('hidden');
     }
 }
 
@@ -495,11 +523,11 @@ async function handleSignUp(email, password) {
         if (!response.ok) {
             throw new Error(data.error || 'Unknown sign-up error');
         }
-        alert('Sign-up successful! Please check your email for verification.');
+        openAlertModal('Sign-up Successful', 'Please check your email for verification.');
         closeAllModals();
     } catch (error) {
         console.error("Sign-up failed:", error);
-        alert('Error signing up: ' + error.message);
+        openAlertModal('Sign-up Error', error.message);
     }
 }
 
@@ -516,26 +544,10 @@ async function handleSignUp(email, password) {
             }
         } catch (error) {
             console.error("Error during Google login:", error);
-            alert(error.message);
+            openAlertModal('Google Login Error', error.message);
         }
     }
-// --- REPLACE your handleLogout function with this final version ---
-async function handleLogout() {
-    try {
-        // Use the Supabase client to sign out.
-        // This will automatically trigger the 'SIGNED_OUT' event
-        // in your onAuthStateChange listener, which handles all the UI cleanup.
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-            throw new Error("Logout failed: " + error.message);
-        }
-    } catch (error) {
-        console.error(error);
-        // Alert the user even if the sign-out fails, as the local state
-        // will be cleared by the listener regardless.
-        alert(error.message);
-    }
-}
+
 function updateProfileUI() {
     if (state.currentUser) {
         elements.profileUsername.textContent = state.currentUser.username || 'User';
@@ -582,7 +594,16 @@ async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
 async function loadDataFromServer(retryCount = 0) {
     const maxRetries = 3;
     const token = localStorage.getItem('authToken');
+    const isUserLoggedIn = !!state.currentUser; // Check if state.currentUser is populated
+
+    if (!isUserLoggedIn) {
+        // If not logged in, just update UI and return. Chats are loaded from localStorage in init.
+        updateLoginStateUI();
+        return;
+    }
+
     if (!token) {
+        // This case should ideally not be reached if isUserLoggedIn is true, but as a safeguard
         updateLoginStateUI();
         return;
     }
@@ -592,7 +613,8 @@ async function loadDataFromServer(retryCount = 0) {
         await retryWithBackoff(async () => {
             // Fetch user info first
             const userResponse = await fetch(`${API_BASE_URL}/api/user/me`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${token}` },
+                cache: 'no-cache'
             });
             
             if (userResponse.status === 401 || userResponse.status === 403) {
@@ -640,27 +662,9 @@ async function loadDataFromServer(retryCount = 0) {
                 chat.messages = Array.isArray(messages.messages) ? messages.messages : []; // Ensure it's an array
             }
 
-            // Set active chat based on persisted ID or default to the first chat
-            const currentActiveIdBeforeLoad = state.activeId; // Store current activeId
-            const lastActiveChatIdFromLocalStorage = localStorage.getItem('lastActiveChatId');
-
-            let newActiveId = null;
-
-            // Priority 1: If current activeId exists and is in the newly fetched chats
-            if (currentActiveIdBeforeLoad && state.chats.some(chat => chat.id === currentActiveIdBeforeLoad)) {
-                newActiveId = currentActiveIdBeforeLoad;
-            }
-            // Priority 2: If no current activeId, or current activeId not found, try localStorage
-            else if (lastActiveChatIdFromLocalStorage && state.chats.some(chat => chat.id === lastActiveChatIdFromLocalStorage)) {
-                newActiveId = lastActiveChatIdFromLocalStorage;
-            }
-            // Priority 3: If neither, default to the first chat
-            else if (state.chats.length > 0) {
-                newActiveId = state.chats[0].id;
-            }
-
-            if (newActiveId !== null) {
-                state.activeId = newActiveId;
+            // Set active chat to the newest chat or create a new one
+            if (state.chats.length > 0) {
+                state.activeId = state.chats[0].id; // Always select the newest chat
             } else {
                 // If no chats exist, create a new one
                 await handleNewChat();
@@ -669,6 +673,7 @@ async function loadDataFromServer(retryCount = 0) {
         });
 
         // If we get here, everything succeeded
+        saveState(); // Cache the newly fetched data
         console.log('[loadDataFromServer] Data loaded successfully. Current state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
         console.log('[loadDataFromServer] Current state.activeId:', state.activeId);
         renderSidebar();
@@ -679,7 +684,7 @@ async function loadDataFromServer(retryCount = 0) {
         
         // Only clear token and sign out on authentication errors
         if (error.message === 'AUTH_ERROR') {
-            alert('Your session has expired. Please sign in again.');
+            openAlertModal('Session Expired', 'Your session has expired. Please sign in again.');
             localStorage.removeItem('authToken');
             state.currentUser = null;
         } else {
@@ -696,8 +701,23 @@ async function loadDataFromServer(retryCount = 0) {
 // ++ ADD THIS NEW FUNCTION TO YOUR SCRIPT ++
 async function handleNewChat() {
     const token = localStorage.getItem('authToken');
-    if (!token) {
-        alert("Please sign in to create a new chat.");
+    const isUserLoggedIn = !!state.currentUser; // Check if state.currentUser is populated
+    const FREE_MODELS = Object.keys(MODELS).filter(key => MODELS[key].free);
+    const MAX_LOCAL_CHATS = 5;
+
+    if (!isUserLoggedIn) {
+        // Unauthenticated user
+        if (state.chats.length >= MAX_LOCAL_CHATS) {
+            openAlertModal('Trial Limit Reached', `You can create up to ${MAX_LOCAL_CHATS} chats without logging in. Please sign in to create more.`);
+            return;
+        }
+        if (!FREE_MODELS.includes(state.settings.model)) {
+            openAlertModal('Model Restricted', `Only ${FREE_MODELS.join(' and ')} models are available for trial users. Please sign in to use other models.`);
+            return;
+        }
+    } else if (!token) {
+        // Logged in user but no token (shouldn't happen with proper flow, but as a safeguard)
+        openAlertModal('Authentication Required', 'Please sign in to create a new chat.');
         return;
     }
 
@@ -720,97 +740,103 @@ async function handleNewChat() {
     console.log('[handleNewChat] State after optimistic add. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
     console.log('[handleNewChat] State after optimistic add. state.activeId:', state.activeId);
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/chat`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ title: 'New Chat' })
-        });
+    if (isUserLoggedIn) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ title: 'New Chat' })
+            });
 
-        if (!response.ok) {
-            throw new Error('Failed to create chat on server');
-        }
-
-        const newChatFromServer = await response.json();
-        newChatFromServer.messages = []; // Initialize with an empty messages array
-
-        // Find the optimistically added chat and update its real ID
-        const index = state.chats.findIndex(chat => chat.id === tempChatId);
-        if (index !== -1) {
-            state.chats[index].id = newChatFromServer.id;
-            state.chats[index].created_at = newChatFromServer.created_at; // Update timestamp if needed
-            state.activeId = newChatFromServer.id; // Ensure activeId is the real one
-        } else {
-            // Fallback if optimistic chat not found (shouldn't happen)
-            state.chats.unshift(newChatFromServer);
-            state.activeId = newChatFromServer.id;
-        }
-        
-        console.log('[handleNewChat] New chat created on server:', newChatFromServer);
-        
-        renderSidebar(); // Re-render to update ID in sidebar
-        saveState(); // Save state with real ID
-        console.log('[handleNewChat] State after successful backend save. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
-        console.log('[handleNewChat] State after successful backend save. state.activeId:', state.activeId);
-
-    } catch (error) {
-        console.error("[handleNewChat] Error creating new chat:", error);
-        alert("Could not create a new chat. Please try again.");
-
-        // Revert optimistic update on error
-        const index = state.chats.findIndex(chat => chat.id === tempChatId);
-        if (index !== -1) {
-            state.chats.splice(index, 1); // Remove optimistic chat
-            // If the deleted chat was active, set a new active chat
-            if (state.activeId === tempChatId) {
-                state.activeId = state.chats.length > 0 ? state.chats[0].id : null;
+            if (!response.ok) {
+                throw new Error('Failed to create chat on server');
             }
-            renderSidebar(); // Re-render sidebar after removal
-            renderChat(); // Re-render chat area
-            saveState();
-            console.log('[handleNewChat] State after error rollback. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
-            console.log('[handleNewChat] State after error rollback. state.activeId:', state.activeId);
+
+            const newChatFromServer = await response.json();
+            newChatFromServer.messages = []; // Initialize with an empty messages array
+
+            // Find the optimistically added chat and update its real ID
+            const index = state.chats.findIndex(chat => chat.id === tempChatId);
+            if (index !== -1) {
+                state.chats[index].id = newChatFromServer.id;
+                state.chats[index].created_at = newChatFromServer.created_at; // Update timestamp if needed
+                state.activeId = newChatFromServer.id; // Ensure activeId is the real one
+            } else {
+                // Fallback if optimistic chat not found (shouldn't happen)
+                state.chats.unshift(newChatFromServer);
+                state.activeId = newChatFromServer.id;
+            }
+            
+            console.log('[handleNewChat] New chat created on server:', newChatFromServer);
+            
+            renderSidebar(); // Re-render to update ID in sidebar
+            saveState(); // Save state with real ID
+            console.log('[handleNewChat] State after successful backend save. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+            console.log('[handleNewChat] State after successful backend save. state.activeId:', state.activeId);
+
+        } catch (error) {
+            console.error("[handleNewChat] Error creating new chat:", error);
+            openAlertModal('Error', 'Could not create a new chat. Please try again.');
+
+            // Revert optimistic update on error
+            const index = state.chats.findIndex(chat => chat.id === tempChatId);
+            if (index !== -1) {
+                state.chats.splice(index, 1); // Remove optimistic chat
+                // If the deleted chat was active, set a new active chat
+                if (state.activeId === tempChatId) {
+                    state.activeId = state.chats.length > 0 ? state.chats[0].id : null;
+                }
+                renderSidebar(); // Re-render sidebar after removal
+                renderChat(); // Re-render chat area
+                saveState();
+                console.log('[handleNewChat] State after error rollback. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+                console.log('[handleNewChat] State after error rollback. state.activeId:', state.activeId);
+            }
         }
     }
 }
 
-    const SYSTEM_PROMPT = { role: 'system', content: `You are Fronix, a large language model. You are chatting with the user via the Fronix iOS app. This means most of the time your lines should be a sentence or two, unless the user's request requires reasoning or long-form outputs. Never use emojis, unless explicitly asked to. 
+    
+
+    function getDeviceType() {
+        const userAgent = navigator.userAgent;
+        if (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|rim)|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(userAgent) || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|az(w|x)|be(ck|qr|dc)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(is|eo)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(ad|in|u2)|er(ic|k0)|esl |ez([4-7]0|os|wa|ze)|fetc|fly(\-| _)|g1 u|g560|gene|gf\-5|g\-mo|go(\.(w|od))|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ts)|ice( ss|sh)|iq(mo|yr)|ir(ad|ie|v )|kodo|ko(pf|pn)|kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|mc)|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|ad|ll|tx|up|vl|wi)|mt(50|p1|v )|mwbp|nc(ar|et|wi)|ne(on|vl|im)|ng(01|02|ui|vm|ro)|nl(ec|xp|mw)|ol(o|ad)|owg1|ox(ad|ev)|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(78|12|21|32|60|\-[2-7]|i\-)|'s(at|ti|un)|rd(fr|lo)|re(ad|ie|zg)|rkt |rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|pn|si)|sch(01|mc)|sec(47|65)|send|serg|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|20)|t7(70|50)|tap(a|g)|'t(ap|ym)|tdg\-|tel(i|m)|tfw |tg(wt|lk)|ti(\-|v|ar)|tk(ad|pt)|tp(av|ow)|tr(ig|sy)|ts(70|m\-|p[ad])|twg1|u c9|u eg|u h(op|pk)|ul(ad|eg|em)|up(\.(b|ul1))|v(?:rgv|us)|w(?:a(?:tud|cd)|es(?:c[4-6]|s[89])|v(?:g[02]|sm)|bl)|wi(mp|ty)|wk(at|if)|xant|xtg1|z(?:pmo|qz)|zymo/i.test(userAgent.substr(0, 4))) {
+            return "mobile";
+        } else {
+            return "desktop";
+        }
+    }
+    let MODELS = {};
+
+    const SYSTEM_PROMPT_BASE = `You are Fronix, a large language model. This means most of the time your lines should be a sentence or two, unless the user\'s request requires reasoning or long-form outputs. Never use emojis, unless explicitly asked to. 
 Knowledge cutoff: 2024-06
 Current date: 2025-05-15
 
 Image input capabilities: Enabled
 Personality: v2
-Over the course of the conversation, you adapt to the user’s tone and preference. Try to match the user’s vibe, tone, and generally how they are speaking. You want the conversation to feel natural. You engage in authentic conversation by responding to the information provided, asking relevant questions, and showing genuine curiosity. If natural, continue the conversation with casual conversation.
-`};
-    const MODELS = {
-      // Text Models
-      'openai': { name: 'OpenAI GPT-4.1 Nano', type: 'text' },
-      'openai-large': { name: 'OpenAI GPT-4.1', type: 'text' },
-      'openai-fast': { name: 'OpenAI GPT-4.1 Nano', type: 'text' },
-      'gemini': { name: 'Gemini 2.5 Flash Lite', type: 'text' },
-      'gpt-5-nano': { name: 'OpenAI GPT-5 Nano', type: 'text' },
-      'deepseek-reasoning': { name: 'DeepSeek R1 0528 (Bedrock)', type: 'text' },
-      'openai-reasoning': { name: 'OpenAI o3 (api.navy)', type: 'text' },
-      'grok': { name: 'Grok', type: 'text' },
-      'elixposearch': { name: 'Elixpo Search', type: 'text' },
-      'o4-mini-medium': { name: 'O4 Mini Medium', type: 'text' },
-      'o4-mini-high': { name: 'O4 Mini High', type: 'text' },
-      // 'gemini-2.5-flash-thinking': { name: 'Gemini 2.5 Flash Thinking', type: 'text' },
-      'provider-6/kimi-k2-instruct': { name: 'Kimi K2', type: 'text' },
-      'deepseek-r1-uncensored': { name: 'DeepSeek R1 Uncensored', type: 'text' },
+Over the course of the conversation, you adapt to the user's tone and preference. Try to match the user's vibe, tone, and generally how they are speaking. You want the conversation to feel natural. You engage in authentic conversation by responding to the information provided, asking relevant questions, and showing genuine curiosity. If natural, continue the conversation with casual conversation.
+`
 
-      // Pro Models
-      'grok-4': { name: 'Grok 4', type: 'text', pro: true },
-      'gpt-5': { name: 'GPT-5', type: 'text', pro: true },
-      'gemini-2.5-pro': { name: 'Gemini 2.5 Pro', type: 'text', pro: true },
-      'gemini-2.5-flash': { name: 'Gemini 2.5 Flash', type: 'text', pro: true },
-      
-      // Image Generation Models
-      // 'provider-4/imagen-4': { name: 'Imagen 4', type: 'image' }
-    };
+    async function loadAvailableModels() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/ai/models`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch available models');
+            }
+            MODELS = await response.json();
+            renderModelDropdown();
+        } catch (error) {
+            console.error('Error loading available models:', error);
+            // Fallback to a default model list if the API fails
+            MODELS = {
+                'openai-large': { name: 'OpenAI GPT-4.1', type: 'text' }
+            };
+            renderModelDropdown();
+        }
+    }
 
     const elements = {
       body: document.body, sidebar: document.getElementById('sidebar'), sidebarOverlay: document.getElementById('sidebar-overlay'), chatList: document.getElementById('chat-list'), chatBox: document.getElementById('chat-box'), chatTitle: document.getElementById('chat-title'), userInput: document.getElementById('user-input'), sendBtn: document.getElementById('send-btn'), sendIcon: document.getElementById('send-icon'), stopIcon: document.getElementById('stop-icon'), saveIcon: document.getElementById('save-icon'), newChatBtn: document.getElementById('new-chat'), toggleSidebarBtn: document.getElementById('toggle-sidebar'), themeToggleBtn: document.getElementById('theme-toggle'), settingsBtn: document.getElementById('settings-btn'),
@@ -834,9 +860,15 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
       renameModal: { container: document.getElementById('rename-modal'), input: document.getElementById('rename-input'), saveBtn: document.getElementById('rename-save'), cancelBtn: document.getElementById('rename-cancel') },
       deleteModal: { container: document.getElementById('delete-modal'), message: document.getElementById('delete-message'), confirmBtn: document.getElementById('delete-confirm'), cancelBtn: document.getElementById('delete-cancel') },
       signinModal: { container: document.getElementById('signin-modal'), closeBtn: document.getElementById('close-signin-btn') },
+      alertModal: {
+        container: document.getElementById('alert-modal'),
+        title: document.getElementById('alert-title'),
+        message: document.getElementById('alert-message'),
+        okBtn: document.getElementById('alert-ok-btn')
+      },
     };
 
-    let state = { chats: [], activeId: null, editingMessage: null, modalContext: {}, settings: { model: 'openai', font: 'inter', fontWeight: '400', apiToken: '', proModelsEnabled: false }, currentUser: null };
+    let state = { chats: [], activeId: null, editingMessage: null, modalContext: {}, settings: { model: 'openai-large', font: 'inter', fontWeight: '400', apiToken: '', proModelsEnabled: false }, currentUser: null };
     let currentController = null; // For aborting fetch requests
     let isStreaming = false; // Flag to indicate if streaming is active
     let isScrolledUp = false; // Flag to indicate if the user has scrolled up
@@ -859,24 +891,11 @@ Over the course of the conversation, you adapt to the user’s tone and preferen
 
     const createChat = (title = 'New Chat') => ({ id: Date.now().toString(), title, messages: [], model: state.settings.model });
     const saveState = () => {
-        localStorage.setItem('fronixState', JSON.stringify(state));
+        localStorage.setItem('fronixState', JSON.stringify({ settings: state.settings, currentUser: state.currentUser }));
+        localStorage.setItem('fronixChats', JSON.stringify(state.chats));
         localStorage.setItem('lastActiveChatId', state.activeId); // Persist active chat ID
     };
-    const loadState = () => {
-        const d = localStorage.getItem('fronixState');
-        if (d) {
-            const p = JSON.parse(d);
-            state.settings = { ...state.settings, ...p.settings };
-            if (p.settings.apiToken) elements.settingsModal.apiTokenInput.value = p.settings.apiToken;
-        }
-        const lastActiveChatId = localStorage.getItem('lastActiveChatId'); // Load last active chat ID
-        if (lastActiveChatId) {
-            state.activeId = lastActiveChatId;
-        }
-        if (localStorage.getItem('authToken')) {
-            loadDataFromServer();
-        }
-    };
+    const loadState = () => {};
 
     marked.setOptions({
         highlight: function(code, lang) {
@@ -1110,15 +1129,21 @@ async function sendMessage() {
         return;
     }
 
-    // Validate token before proceeding
-    const token = await validateAndRefreshToken();
-    if (!token) {
-        alert("Your session has expired. Please sign in again.");
-        setTimeout(() => {
-            animateModalOpen(elements.signinModal.container);
-        }, 1000);
-        return;
+    const isUserLoggedIn = !!state.currentUser;
+    let token = null;
+    if (isUserLoggedIn) {
+        token = await validateAndRefreshToken();
+        if (!token) {
+            openAlertModal('Session Expired', 'Your session has expired. Please sign in again.');
+            setTimeout(() => {
+                animateModalOpen(elements.signinModal.container);
+            }, 1000);
+            return;
+        }
     }
+
+    const isStudyMode = activeChat.study_mode; // Declare isStudyMode
+    const studyModePrompt = `Your general tone should be supportive and encouraging, like a tutor. When you provide explanations, try to simplify complex topics, break them down into smaller, digestible pieces, and offer analogies if appropriate. Always encourage the user to ask questions and explore further. Your goal is to foster understanding, not just provide answers.`; // Define studyModePrompt
 
     // Handle /study command
     if (userInput.trim().startsWith('/study')) {
@@ -1154,7 +1179,7 @@ async function sendMessage() {
 
             } catch (error) {
                 console.error("Error toggling study mode:", error);
-                alert(`Failed to toggle study mode: ${error.message}`);
+                openAlertModal('Error', `Failed to toggle study mode: ${error.message}`);
 
                 // Revert optimistic UI update on error
                 activeChat.study_mode = originalStudyMode;
@@ -1173,8 +1198,23 @@ async function sendMessage() {
                 isStreaming = false;
             }
             return; // Exit sendMessage function after handling /study command
+        }
     }
-}
+
+    let messagesForAI = JSON.parse(JSON.stringify(activeChat.messages));
+    
+    let fullSystemPrompt = SYSTEM_PROMPT_BASE;
+    fullSystemPrompt += ` You are chatting with the user via the Fronix ${getDeviceType()} app.`;
+    if (state.settings.model) {
+        fullSystemPrompt += ` You are currently using the ${MODELS[state.settings.model]?.name || 'selected'} model.`;
+    }
+
+    if (isStudyMode && studyModePrompt) {
+        fullSystemPrompt += `
+
+${studyModePrompt}`;
+    }
+    messagesForAI.unshift({ role: 'system', content: fullSystemPrompt });
 
     // Call updateSendButtonState at the start of sendMessage (after /study handling)
     updateSendButtonState();
@@ -1231,9 +1271,20 @@ async function sendMessage() {
 
     try {
         // Detect model type and route accordingly
-        const currentModel = activeChat.model || state.settings.model || 'openai';
-        const modelData = MODELS[currentModel] || { name: 'OpenAI (Default)', type: 'text' };
+        const currentModel = activeChat.model || state.settings.model || 'openai-large'; // Ensure a default model
+        const modelData = MODELS[currentModel] || { name: 'OpenAI (Default)', type: 'text', pro: false }; // Ensure default modelData
         const isImageModel = modelData.type === 'image';
+
+        // Check if the user is unauthenticated and trying to use a pro model
+        if (!isUserLoggedIn && modelData.pro) {
+            openAlertModal('Model Restricted', `The ${modelData.name} model is only available for authenticated users with a pro plan. Please sign in or select a free model.`);
+            // Revert optimistic UI update
+            activeChat.messages.pop(); // Remove AI placeholder
+            activeChat.messages.pop(); // Remove user message
+            renderChat();
+            saveState();
+            return;
+        }
         
         console.log('🔍 Current model for request:', currentModel);
         console.log('🔍 Model data:', modelData);
@@ -1424,9 +1475,10 @@ async function sendMessage() {
             } else {
                 console.log("✅ Messages successfully saved to backend.");
                 // Check if a new title was generated and returned
-                if (data.generatedTitle) { // Now 'data' is defined
+                if (data.generatedTitle) {
                     activeChat.title = data.generatedTitle;
                     renderSidebar(); // Re-render sidebar to show the new title
+                    saveState(); // Save the new title to localStorage
                     console.log(`📝 Chat title updated to: "${data.generatedTitle}"`);
                 }
             }
@@ -1682,6 +1734,17 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
     }
     function openRenameModal(chatId) { state.modalContext.chatId = chatId; const chat = state.chats.find(c=>c.id === chatId); if(!chat) return; elements.renameModal.input.value = chat.title; animateModalOpen(elements.renameModal.container); }
     function openDeleteModal(chatId) { state.modalContext.chatId = chatId; const chat = state.chats.find(c=>c.id === chatId); if(!chat) return; elements.deleteModal.message.textContent = `Are you sure you want to delete "${chat.title}"?`; animateModalOpen(elements.deleteModal.container); }
+    
+    function openAlertModal(title, message) {
+        elements.alertModal.title.textContent = title;
+        elements.alertModal.message.textContent = message;
+        animateModalOpen(elements.alertModal.container);
+    }
+
+    function closeAlertModal() {
+        animateModalClose(elements.alertModal.container);
+    }
+
     function closeAllModals() { 
         document.querySelectorAll('.modal-container').forEach(m => { if (m.style.display === 'flex') animateModalClose(m); }); 
         elements.chatActionsDropdown.style.display = 'none';
@@ -1731,10 +1794,43 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
     
     // --- Model Selection ---
     function updateModelSelectorDisplay() {
-      const currentModel = state.settings.model || 'openai';
-      const modelData = MODELS[currentModel] || { name: 'Unknown Model', type: 'text' };
-      const displayName = modelData.name;
-      const modelType = modelData.type === 'image' ? ' 🎨' : ' 💬';
+      let currentModelKey = state.settings.model;
+      let modelData = MODELS[currentModelKey];
+      let displayName = 'No models available'; // Default message if no models are found
+      let modelType = '';
+
+      // If the currently selected model is not available, try to find a fallback
+      if (!modelData) {
+          console.warn(`⚠️ Currently selected model "${currentModelKey}" is not available. Attempting to find a fallback.`);
+          
+          // Try to default to 'openai-large' if it exists and is available
+          if (MODELS['openai-large']) {
+              currentModelKey = 'openai-large';
+              modelData = MODELS[currentModelKey];
+              console.log(`  - Falling back to 'openai-large'.`);
+          } else {
+              // If 'openai-large' is not available, try to find the first available model
+              const firstAvailableModelKey = Object.keys(MODELS)[0];
+              if (firstAvailableModelKey) {
+                  currentModelKey = firstAvailableModelKey;
+                  modelData = MODELS[currentModelKey];
+                  console.log(`  - Falling back to first available model: '${currentModelKey}'.`);
+              } else {
+                  // No models available at all
+                  console.error(`❌ No models are available. Displaying "No models available".`);
+                  state.settings.model = null; // Clear selected model
+                  elements.chatTitle.textContent = displayName;
+                  return;
+              }
+          }
+          state.settings.model = currentModelKey; // Update state with the new model
+          saveState(); // Persist the new default model
+      }
+
+      // Update display based on the selected or fallback model
+      displayName = modelData.name;
+      modelType = modelData.type === 'image' ? ' 🎨' : ' 💬';
+      
       elements.chatTitle.textContent = displayName + modelType;
       console.log('🔄 Updated model selector display to:', displayName, `(${modelData.type})`);
     }
@@ -1864,58 +1960,80 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
         });
     }
 
-    // --- REPLACE your entire old init() function with this ---
-function init() {
-    // 1. Apply the user's preferred theme on startup.
+    async function init() {
+    // 1. Load available models from the backend
+    await loadAvailableModels();
+
+    // 2. Apply the user's preferred theme on startup.
     const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     applyTheme(savedTheme);
+
+    // 3. Load cached data from localStorage for optimistic UI
+    const cachedState = localStorage.getItem('fronixState');
+    if (cachedState) {
+        const p = JSON.parse(cachedState);
+        state.settings = { ...state.settings, ...p.settings };
+        state.currentUser = p.currentUser;
+    }
+    const cachedChats = localStorage.getItem('fronixChats');
+    if (cachedChats) {
+        state.chats = JSON.parse(cachedChats);
+    }
+    const lastActiveChatId = localStorage.getItem('lastActiveChatId');
+    if (lastActiveChatId) {
+        state.activeId = lastActiveChatId;
+    }
+
+    // Render the UI immediately with cached data
+    renderSidebar();
+    renderChat();
+    updateLoginStateUI();
+    updateProfileUI();
     
-    // 2. Set up the master Supabase Authentication listener.
-    // This function is the single source of truth for the user's login state.
-    supabaseClient.auth.onAuthStateChange((event, session) => {
+    // 4. Set up the master Supabase Authentication listener.
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        console.log(`Supabase auth event: ${event}`);
         if (event === 'SIGNED_IN' && session) {
-            // This block runs after any successful login, including the redirect from Google.
             console.log('User signed in. Session:', session);
             localStorage.setItem('authToken', session.access_token);
             localStorage.setItem('refreshToken', session.refresh_token);
-            loadDataFromServer(); // Fetch user's chats and info.
+            
+            // Manually set user for immediate UI update
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            state.currentUser = user;
+            
+            await loadDataFromServer(); 
             closeAllModals();
+
         } else if (event === 'SIGNED_OUT') {
-            // This block runs after supabase.auth.signOut() is called successfully.
-            // It resets the entire application to the logged-out state.
+            console.log('User signed out.');
             localStorage.removeItem('authToken');
             localStorage.removeItem('refreshToken');
+            localStorage.removeItem('fronixChats');
+            localStorage.removeItem('lastActiveChatId');
+            
             state.currentUser = null;
             state.chats = [];
             state.activeId = null;
+            
             updateLoginStateUI();
             renderSidebar();
             renderChat();
-            console.log('User signed out.');
         }
     });
-
-    // 3. Load user settings (like fonts, API token) from previous sessions.
-    // Note: We no longer load chats from here; they come from the server.
-    const d = localStorage.getItem('fronixState');
-    if (d) {
-        const p = JSON.parse(d);
-        state.settings = { ...state.settings, ...p.settings };
-        if (p.settings.apiToken) elements.settingsModal.apiTokenInput.value = p.settings.apiToken;
-    }
     
-    // 4. Check if a token already exists when the page first loads (for returning users).
-    // This is important because onAuthStateChange might not fire immediately for an existing session.
+    // 5. Check if a token already exists and fetch latest data from server
     const existingToken = localStorage.getItem('authToken');
     if (existingToken) {
-        console.log('An existing auth token was found on page load. Loading user data.');
+        console.log('An existing auth token was found on page load. Loading user data from server.');
         loadDataFromServer();
     } else {
         // If no token exists, ensure the UI is in the logged-out state.
+        console.log('No existing auth token found. Ensuring logged-out state.');
         updateLoginStateUI();
     }
     
-    // 5. Apply UI settings and attach all event listeners.
+    // 6. Apply UI settings and attach all event listeners.
     applyFont(state.settings.font);
     applyFontWeight(state.settings.fontWeight);
     renderFontOptions();
@@ -1927,14 +2045,30 @@ function init() {
         saveState();
     });
 
+    elements.alertModal.okBtn.onclick = closeAlertModal;
+
     elements.settingsModal.proModelsToggle.addEventListener('click', () => {
         if (state.currentUser && state.currentUser.plan === 'pro') {
             state.settings.proModelsEnabled = !state.settings.proModelsEnabled;
             updateProModelsToggleUI();
             saveState();
             renderModelDropdown();
+
+            // After toggling pro models, ensure the currently selected model is still available
+            const currentModelData = MODELS[state.settings.model];
+            if (currentModelData && currentModelData.pro && !state.settings.proModelsEnabled) {
+                // If a pro model is selected and pro models are now disabled,
+                // fall back to a default non-pro model.
+                const defaultNonProModel = Object.keys(MODELS).find(key => !MODELS[key].pro);
+                if (defaultNonProModel) {
+                    state.settings.model = defaultNonProModel;
+                    saveState();
+                    updateModelSelectorDisplay(); // Update display with new model
+                    renderModelDropdown(); // Re-render dropdown with new selection
+                }
+            }
         } else {
-            alert('You need a pro plan to use pro models. Contact @zshadowultra on Discord for access.');
+            openAlertModal('Pro Plan Required', 'You need a pro plan to use pro models. Contact @zshadowultra on Discord for access.');
         }
     });
 
@@ -1968,8 +2102,10 @@ function init() {
         }
     });
 
-    // We no longer need to create a default chat here. If a user has no chats,
-    // loadDataFromServer will handle creating one.
+    // Ensure a chat is present by default
+    if (state.chats.length === 0) {
+        await handleNewChat(); // Create a new chat if none exist
+    }
     setActive(state.activeId);
 
     // Image attachment logic
@@ -1986,7 +2122,7 @@ function init() {
         // Check file size (50MB limit)
         const maxSize = 50 * 1024 * 1024; // 50MB in bytes
         if (file.size > maxSize) {
-            alert('File size must be less than 50MB.');
+            openAlertModal('File Size Exceeded', 'File size must be less than 50MB.');
             imageUpload.value = null;
             return;
         }
@@ -2019,7 +2155,7 @@ function init() {
     // --- Event Listeners ---
     document.addEventListener('DOMContentLoaded', init);
     elements.themeToggleBtn.onclick = toggleTheme;
-    // This was the instruction
+    
 elements.newChatBtn.onclick = handleNewChat;
     elements.toggleSidebarBtn.onclick = toggleSidebar; 
     elements.sidebarOverlay.onclick = toggleSidebar;
@@ -2195,7 +2331,13 @@ elements.newChatBtn.onclick = handleNewChat;
     updateSendButtonState(); // Call after exitEditMode
     console.log('[init] Initial button state update after exitEditMode listener setup.');
     elements.signinBtn.onclick = () => animateModalOpen(elements.signinModal.container);
-    elements.logoutBtn.onclick = handleLogout;
+    elements.logoutBtn.onclick = async () => {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) {
+        console.error('Error logging out:', error);
+        openAlertModal('Logout Error', 'An error occurred while logging out. Please try again.');
+    }
+};
     elements.profileBtn.onclick = () => {
         const isHidden = elements.profileDropdown.classList.contains('hidden');
         elements.profileDropdown.classList.toggle('hidden', !isHidden);

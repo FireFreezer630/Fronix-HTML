@@ -4,14 +4,18 @@ const authMiddleware = async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
-        return res.status(401).json({ error: 'No token provided' });
+        req.user = null;
+        return next();
     }
 
     try {
         const { data: { user }, error } = await supabase.auth.getUser(token);
 
         if (error || !user) {
-            return res.status(401).json({ error: 'Invalid or expired token' });
+            // If token is present but invalid, we can choose to either deny access
+            // or treat as unauthenticated. For now, let's treat as unauthenticated.
+            req.user = null;
+            return next();
         }
 
         req.user = user;

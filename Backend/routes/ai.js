@@ -1,11 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const axios = require('axios');
 const supabase = require('../config/supabaseClient');
 const authMiddleware = require('../middleware/authMiddleware');
 const fs = require('fs');
 const path = require('path');
 const cache = require('../utils/cache');
+const MODELS = require('../config/models');
+const {
+    v1ApiKeyPool,
+    v2ApiKeyPool,
+    airforceApiKeyPool,
+    navyApiKeyPool,
+    makeApiRequestWithRetry
+} = require('../services/aiService');
 
 // Safe JSON stringification to handle circular references
 function safeStringify(obj, space = 2) {
@@ -21,69 +28,6 @@ function safeStringify(obj, space = 2) {
     }, space);
 }
 
-// ====================================
-// API Key Pool Management System
-// ====================================
-
-class ApiKeyPool {
-    constructor(keys, name) {
-        this.keys = keys.filter(key => key && key.trim() !== '');
-        this.name = name;
-        this.currentIndex = 0;
-        this.maxRetries = this.keys.length;
-        
-        console.log(`🔑 ${this.name} API Key Pool initialized with ${this.keys.length} keys`);
-        if (this.keys.length === 0) {
-            console.error(`❌ No valid ${this.name} API keys found in environment variables!`);
-        }
-    }
-    
-    getCurrentKey() {
-        if (this.keys.length === 0) {
-            if (this.name === 'Airforce') {
-                return null; // airforce.ai can work without a key
-            }
-            throw new Error(`No API keys available for ${this.name}`);
-        }
-        return this.keys[this.currentIndex];
-    }
-    
-    rotateToNextKey() {
-        if (this.keys.length <= 1) {
-            console.warn(`⚠️ Only one API key available in ${this.name}, cannot rotate`);
-            return false;
-        }
-        
-        const previousIndex = this.currentIndex;
-        this.currentIndex = (this.currentIndex + 1) % this.keys.length;
-        
-        console.log(`🔄 ${this.name} API Key rotated from index ${previousIndex} to ${this.currentIndex}`);
-        return true;
-    }
-    
-    resetToFirstKey() {
-        this.currentIndex = 0;
-        console.log(`🔄 ${this.name} API Key pool reset to first key`);
-    }
-}
-
-// Global API key pool instances
-const v1ApiKeys = (process.env.AI_API_KEY || '').split(',').filter(Boolean);
-const v2ApiKeys = [
-    process.env.AI_API_KEY_V2,
-    process.env.AI_API_KEY_V2_3,
-    process.env.AI_API_KEY_V2_4,
-    process.env.AI_API_KEY_V2_5
-].filter(Boolean);
-const airforceApiKeys = (process.env.AIRFORCE_API_KEYS || '').split(',').filter(Boolean);
-const navyApiKeys = (process.env.NAVY_API_KEYS || '').split(',').filter(Boolean);
-
-const v1ApiKeyPool = new ApiKeyPool(v1ApiKeys, 'V1');
-const v2ApiKeyPool = new ApiKeyPool(v2ApiKeys, 'V2');
-const airforceApiKeyPool = new ApiKeyPool(airforceApiKeys, 'Airforce');
-const navyApiKeyPool = new ApiKeyPool(navyApiKeys, 'Navy');
-
-
 // Cached study mode prompt
 let studyModePrompt = '';
 try {
@@ -92,62 +36,6 @@ try {
 } catch (fileError) {
     console.error('Error reading study-mode.md:', fileError.message);
     studyModePrompt = 'You are currently in study mode. Please provide academic and guiding responses.'; // Fallback prompt
-}
-
-// Enhanced API request function with automatic key rotation
-async function makeApiRequestWithRetry(url, requestBody, requestOptions, pool) {
-    const retryLimit = pool.maxRetries > 0 ? pool.maxRetries : 1;
-    let attempt = 0;
-    let lastError = null;
-    
-    while (attempt < retryLimit) {
-        try {
-            const currentKey = pool.getCurrentKey();
-            
-            const updatedOptions = { ...requestOptions };
-            updatedOptions.headers = {
-                ...requestOptions.headers,
-            };
-
-            if (currentKey) {
-                updatedOptions.headers['Authorization'] = `Bearer ${currentKey}`;
-            }
-            
-            console.log(`🔑 Attempt ${attempt + 1}/${retryLimit} using ${pool.name} API key index: ${pool.currentIndex}`);
-            
-            const response = await axios.post(url, requestBody, updatedOptions);
-            
-            if (attempt > 0) {
-                pool.resetToFirstKey();
-            }
-            
-            return response;
-            
-        } catch (error) {
-            lastError = error;
-            
-            if (error.response && error.response.status === 429) {
-                console.log(`⚠️ Rate limit hit on key ${pool.currentIndex + 1}/${pool.keys.length} for ${pool.name}`);
-                
-                const rotated = pool.rotateToNextKey();
-                if (rotated) {
-                    console.log(`🔄 Retrying with next API key...`);
-                    attempt++;
-                    continue;
-                } else {
-                    console.error(`❌ No more API keys to try in ${pool.name} pool`);
-                    break;
-                }
-            } else {
-                console.error(`❌ API request failed with non-retryable error:`, error.response?.status, error.message);
-                break;
-            }
-        }
-        attempt++;
-    }
-    
-    console.error(`❌ All API key retries exhausted for ${pool.name}. Last error:`, lastError.message);
-    throw lastError;
 }
 
 const PRO_MODELS = ['grok-4', 'gpt-5', 'gemini-2.5-pro', 'gemini-2.5-flash'];
@@ -175,13 +63,21 @@ async function selectProProvider(userId) {
 
 router.post('/chat', authMiddleware, async (req, res) => {
     const { model, messages, chatId, proModelsEnabled } = req.body;
+    const FREE_MODELS = ['openai-large', 'gemini'];
+
+    if (!req.user) {
+        // Unauthenticated user
+        if (!FREE_MODELS.includes(model)) {
+            return res.status(401).json({ error: 'You must be logged in to use this model.' });
+        }
+    }
 
     if (!model || !messages || !Array.isArray(messages)) {
         return res.status(400).json({ error: 'Invalid request body. "model" and a "messages" array are required.' });
     }
 
     let isStudyMode = false;
-    if (chatId) {
+    if (chatId && req.user) { // study mode only for logged in users
         const { data: chatData } = await supabase.from('chats').select('study_mode').eq('id', chatId).eq('user_id', req.user.id).single();
         if (chatData) {
             isStudyMode = chatData.study_mode;
@@ -278,5 +174,15 @@ router.post('/chat', authMiddleware, async (req, res) => {
 });
 
 // ... (keep the existing /images/generations endpoint) ...
+
+router.get('/models', (req, res) => {
+    const availableModels = cache.get('availableModels');
+    if (availableModels) {
+        res.json(availableModels);
+    } else {
+        // If the cache is not ready yet, return the full list of models
+        res.json(MODELS);
+    }
+});
 
 module.exports = router;

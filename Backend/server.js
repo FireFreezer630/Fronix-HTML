@@ -21,6 +21,7 @@ const authRoutes = require('./routes/auth');
 const chatRoutes = require('./routes/chat');
 const userRoutes = require('./routes/user');
 const aiRoutes = require('./routes/ai');
+const { checkAllModels } = require('./utils/modelChecker');
 
 const app = express();
 const PORT = env.PORT;
@@ -47,7 +48,7 @@ const corsOptions = {
     credentials: true,
 };
 
-app.use(cors()); // TEMPORARY: Allow all origins for debugging
+app.use(cors(corsOptions));
 // --- END: CORRECTED AND FLEXIBLE CORS CONFIGURATION ---
 
 // Rate limiting to prevent abuse
@@ -56,6 +57,13 @@ const apiLimiter = rateLimit({
     max: 100, // Limit each IP to 100 requests per windowMs
     standardHeaders: true,
     legacyHeaders: false,
+    skip: (req) => {
+        // Skip rate limiting for unauthenticated trial requests to the chat endpoint
+        if (req.originalUrl === '/api/ai/chat' && !req.headers.authorization) {
+            return true;
+        }
+        return false;
+    }
 });
 
 app.use('/api/', apiLimiter);
@@ -82,4 +90,5 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    checkAllModels();
 });

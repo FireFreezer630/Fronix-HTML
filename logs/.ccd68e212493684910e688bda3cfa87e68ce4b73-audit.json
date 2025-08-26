@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "c:\\Users\\surya\\VS Code\\fronix-html\\logs\\.ccd68e212493684910e688bda3cfa87e68ce4b73-audit.json",
+    "files": [
+        {
+            "date": 1756212110513,
+            "name": "c:\\Users\\surya\\VS Code\\fronix-html\\logs\\mcp-puppeteer-2025-08-26.log",
+            "hash": "6a1fc04f801e86a915e6e0012583d64e831297ff7de716c2a6fc4c252be2db12"
+        }
+    ],
+    "hashType": "sha256"
+}

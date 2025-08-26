@@ -86,8 +86,8 @@ async function runTest() {
     } finally {
         // Optional: Clean up by deleting the chat
         if (chatId) {
-            // await axios.delete(`${API_BASE_URL}/chat/${chatId}`, { headers: { 'Authorization': `Bearer ${MOCK_AUTH_TOKEN}` } });
-            // console.log(`\nCleaned up chat ${chatId}`);
+            await axios.delete(`${API_BASE_URL}/chat/${chatId}`, { headers: { 'Authorization': `Bearer ${MOCK_AUTH_TOKEN}` } });
+            console.log(`\nCleaned up chat ${chatId}`);
         }
         console.log('\n--- Test Finished ---');
     }
