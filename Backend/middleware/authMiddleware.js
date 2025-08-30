@@ -4,13 +4,9 @@ const authMiddleware = async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
-<<<<<<< HEAD
-        // If no token is provided, proceed without a user
-=======
         req.user = null;
         return next();
     }
->>>>>>> origin/main
 
     try {
         const { data: { user }, error } = await supabase.auth.getUser(token);
