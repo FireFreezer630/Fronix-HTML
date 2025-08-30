@@ -1,0 +1,304 @@
+ │ ✔ ReadFile Backend/config/models.js                                   │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ Edit Backend/config/models.js:     'elixposearch': { name: 'E... =… │
+ │                                                                        │
+ │     9       'openai-reasoning': { name: 'OpenAI o3                     │
+ │         (api.navy)', type: 'text', endpoint:                           │
+ │         'https://api.navy/v1/chat/completions' },                      │
+ │    10       'grok': { name: 'Grok', type: 'text', endpoint:            │
+ │         process.env.AI_API_ENDPOINT },                                 │
+ │    11   <<<<<<< HEAD                                                   │
+ │    12 -     'elixposearch': { name: 'Elixpo Search', type:             │
+ │       'text', endpoint: process.env.AI_API_ENDPOINT },                 │
+ │    13 -     'o4-mini-medium': { name: 'O4 Mini Medium',                │
+ │       type: 'text', endpoint: `                                        │
+ │       ${process.env.AI_API_ENDPOINT_V2}/chat/completions`,             │
+ │       modelId: 'provider-6/o4-mini-medium' },                          │
+ │    14 -     'o4-mini-high': { name: 'O4 Mini High', type:              │
+ │       'text', endpoint: `${process.env.AI_API_ENDPOINT_V2}             │
+ │       /chat/completions`, modelId:                                     │
+ │       'provider-6/o4-mini-high' },                                     │
+ │    15 -     'provider-6/kimi-k2-instruct': { name: 'Kimi               │
+ │       K2', type: 'text', endpoint: `                                   │
+ │       ${process.env.AI_API_ENDPOINT_V2}/chat/completions`,             │
+ │       modelId: 'provider-6/kimi-k2' },                                 │
+ │    16 -     'deepseek-r1-uncensored': { name: 'DeepSeek R1             │
+ │       Uncensored', type: 'text', endpoint: `                           │
+ │       ${process.env.AI_API_ENDPOINT_V2}/chat/completions`,             │
+ │       modelId: 'provider-6/deepseek-r1-uncensored' },                  │
+ │    17 -                                                                │
+ │    18 -     // Pro Models                                              │
+ │    19 -     'grok-4': { name: 'Grok 4', type: 'text', pro:             │
+ │       true, endpoint:                                                  │
+ │       'https://api.navy/v1/chat/completions' },                        │
+ │    20 -     'gpt-5': { name: 'GPT-5', type: 'text', pro:               │
+ │       true, endpoint:                                                  │
+ │       'https://api.airforce/v1/chat/completions' },                    │
+ │    21 -     'gemini-2.5-pro': { name: 'Gemini 2.5 Pro',                │
+ │       type: 'text', pro: true, endpoint:                               │
+ │       'https://api.airforce/v1/chat/completions' },                    │
+ │    22 -     'gemini-2.5-flash': { name: 'Gemini 2.5 Flash',            │
+ │       type: 'text', pro: true, endpoint:                               │
+ │       'https://api.airforce/v1/chat/completions' },                    │
+ │    23 - =======                                                        │
+ │    12       'elixposearch': { name: 'Elixpo Search', type:             │
+ │         'text', endpoint: process.env.AI_API_ENDPOINT, free            │
+ │         : true, speed: null, fast: false },                            │
+ │    13       'o4-mini-medium': { name: 'O4 Mini Medium',                │
+ │         type: 'text', endpoint: `                                      │
+ │         ${process.env.AI_API_ENDPOINT_V2}/chat/completions`            │
+ │         , modelId: 'provider-6/o4-mini-medium', speed: null            │
+ │         , fast: false },                                               │
+ │    14       'o4-mini-high': { name: 'O4 Mini High', type:              │
+ │         'text', endpoint: `                                            │
+ │         ${process.env.AI_API_ENDPOINT_V2}/chat/completions`            │
+ │         , modelId: 'provider-6/o4-mini-high', speed: null,             │
+ │         fast: false },                                                 │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ Edit Backend/config/models.js: <<<<<<< HEAD... => module.exports =… │
+ │                                                                        │
+ │    26       // 'provider-4/imagen-4': { name: 'Imagen 4',              │
+ │         type: 'image' }                                                │
+ │    27   };                                                             │
+ │    28                                                                  │
+ │    29 - <<<<<<< HEAD                                                   │
+ │    29   module.exports = { MODELS };                                   │
+ │    31 - =======                                                        │
+ │    32 - module.exports = MODELS;                                       │
+ │    33 - >>>>>>> origin/main                                            │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ Shell git add /home/uncore/fronix-html/Backend/config/models.js (S… │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ ReadFile ...Backend/middleware/authMiddleware.js                    │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ Edit ...Backend/middleware/authMiddleware.js: <<<<<<< HEAD... =>  … │
+ │                                                                        │
+ │     4       const token = req.headers.authorization?.split(            │
+ │         ' ')[1];                                                       │
+ │     5                                                                  │
+ │     6       if (!token) {                                              │
+ │     7 - <<<<<<< HEAD                                                   │
+ │     8 -         // If no token is provided, proceed without            │
+ │       a user                                                           │
+ │     9 - =======                                                        │
+ │     7           req.user = null;                                       │
+ │    11 - >>>>>>> origin/main                                            │
+ │     8           return next();                                         │
+ │     9       }                                                          │
+ │    10                                                                  │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ Shell git add /home/uncore/fronix-html/Backend/middleware/authMidd… │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ ReadFile Backend/routes/ai.js                                       │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ Edit Backend/routes/ai.js: <<<<<<< HEAD... => const { checkModelAv… │
+ │                                                                        │
+ │     3   const supabase = require('../config/supabaseClient'            │
+ │         );                                                             │
+ │     4   const authMiddleware = require(                                │
+ │         '../middleware/authMiddleware');                               │
+ │     5   const cache = require('../utils/cache');                       │
+ │     6 - <<<<<<< HEAD                                                   │
+ │     6   const { checkModelAvailability } = require(                    │
+ │         '../services/aiService'); // New import                        │
+ │     8 - =======                                                        │
+ │     7   let MODELS = require('../config/models'); // Use               │
+ │         let to allow reassigning MODELS                                │
+ │     8   const {                                                        │
+ │     9       v1ApiKeyPool,                                              │
+ │    13       makeApiRequestWithRetry,                                   │
+ │    14       benchmarkModel // Import benchmarkModel                    │
+ │    15   } = require('../services/aiService');                          │
+ │    18 - >>>>>>> origin/main                                            │
+ │    16                                                                  │
+ │    17   // Safe JSON stringification to handle circular                │
+ │         references                                                     │
+ │    18   function safeStringify(obj, space = 2) {                       │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ Edit Backend/routes/ai.js: <<<<<<< HEAD... => router.get('/availab… │
+ │                                                                        │
+ │    205       }                                                         │
+ │    206   });                                                           │
+ │    207                                                                 │
+ │    208 - <<<<<<< HEAD                                                  │
+ │    208   router.get('/available-models', async (req, res)              │
+ │          => {                                                          │
+ │    209       const cachedModels = cache.get(                           │
+ │          'available_models');                                          │
+ │    210       if (cachedModels) {                                       │
+ │    ════════════════════════════════════════════════════════            │
+ │    223       }                                                         │
+ │    224   });                                                           │
+ │    225                                                                 │
+ │    227 - module.exports = router;                                      │
+ │    228 - =======                                                       │
+ │    226   // Function to run benchmarking for all models                │
+ │    227   async function benchmarkAllModels() {                         │
+ │    228       const benchmarkPrompt = 'Write a 500-word                 │
+ │          essay about the history of artificial                         │
+ │          intelligence.';                                               │
+ │    ════════════════════════════════════════════════════════            │
+ │    298   });                                                           │
+ │    299                                                                 │
+ │    300   module.exports = { router, benchmarkAllModels };              │
+ │    304 - >>>>>>> origin/main                                           │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ Shell git add /home/uncore/fronix-html/Backend/routes/ai.js (Stagi… │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ ReadFile Backend/server.js                                          │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ Edit Backend/server.js: <<<<<<< HEAD... =>     try {...             │
+ │                                                                        │
+ │     97                                                                 │
+ │     98   app.listen(PORT, async () => {                                │
+ │     99       console.log(`Server is running on port ${PORT}            │
+ │          `);                                                           │
+ │    100 - <<<<<<< HEAD                                                  │
+ │    100       try {                                                     │
+ │    101           console.log('Performing initial model                 │
+ │          availability check...');                                      │
+ │    102           const availableModels = await                         │
+ │          checkModelAvailability();                                     │
+ │    105       } catch (error) {                                         │
+ │    106           console.error('Error during initial model             │
+ │          availability check:', error);                                 │
+ │    107       }                                                         │
+ │    109 - =======                                                       │
+ │    108       benchmarkAllModels(); // Run benchmarking on              │
+ │          startup                                                       │
+ │    109       checkAllModels();                                         │
+ │    112 - >>>>>>> origin/main                                           │
+ │    110   });                                                           │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ Shell git add /home/uncore/fronix-html/Backend/server.js (Staging … │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ ReadFile Backend/services/aiService.js                              │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ x  Edit {"old_string":"<<<<<<< HEAD\nconst MODELS = require('../confi… │
+ │                                                                        │
+ │    Failed to edit, 0 occurrences found for old_string in               │
+ │    /home/uncore/fronix-html/Backend/services/aiService.js.             │
+ │    No edits made. The exact text in old_string was not                 │
+ │    found. Ensure you're not escaping content incorrectly               │
+ │    and check whitespace, indentation, and context. Use                 │
+ │    read_file tool to verify.                                           │
+ ╰────────────────────────────────────────────────────────────────────────╯
+
+
+
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ Edit Backend/services/aiService.js: <<<<<<< HEAD... => module.expo… │
+ │                                                                        │
+ │    260       airforceApiKeyPool,                                       │
+ │    261       navyApiKeyPool,                                           │
+ │    262       makeApiRequestWithRetry,                                  │
+ │    263 - <<<<<<< HEAD                                                  │
+ │    264 -     checkModelAvailability // Export the new                  │
+ │        function                                                        │
+ │    265 - =======                                                       │
+ │    263 + module.exports = {                                            │
+ │    264 +     v1ApiKeyPool,                                             │
+ │    265 +     v2ApiKeyPool,                                             │
+ │    266 +     airforceApiKeyPool,                                       │
+ │    267 +     navyApiKeyPool,                                           │
+ │    268 +     makeApiRequestWithRetry,                                  │
+ │    269 +     checkModelAvailability,                                   │
+ │    270       benchmarkModel                                            │
+ │    267 - >>>>>>> origin/main                                           │
+ │    271   };                                                            │
+ │    272 + };                                                            │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ Shell git add /home/uncore/fronix-html/Backend/services/aiService.… │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────╮
+ │ ✔ ReadFile Backend/services/aiService.js  │
+ ╰────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ x  Edit {"new_string":"const MODELS = require('../config/models').MOD… │
+ │                                                                        │
+ │    Failed to edit, 0 occurrences found for old_string in               │
+ │    /home/uncore/fronix-html/Backend/services/aiService.js.             │
+ │    No edits made. The exact text in old_string was not                 │
+ │    found. Ensure you're not escaping content incorrectly               │
+ │    and check whitespace, indentation, and context. Use                 │
+ │    read_file tool to verify.                                           │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────╮
+ │ ✔ ReadFile Backend/services/aiService.js  │
+ ╰────────────────────────────────────────────╯
+ ╭──────────────────────────────────────────────────────────────╮
+ │ ✔ WriteFile Writing to Backend/services/aiService.js        │
+ │                                                              │
+ │    112       throw lastError;                                │
+ │    113   }                                                   │
+ │    114                                                       │
+ │    115 - <<<<<<< HEAD                                        │
+ │    115   const MODELS = require('../config/models').MODELS;  │
+ │          // Import MODELS                                    │
+ │    116                                                       │
+ │    117   async function checkModelAvailability() {           │
+ │    ════════════════════════════════════════════════════════  │
+ │    176           }                                           │
+ │    177       }                                               │
+ │    178       return availableModels;                         │
+ │    180 - =======                                             │
+ │    179 + }                                                   │
+ │    180 +                                                     │
+ │    181   async function benchmarkModel(modelConfig, prompt,  │
+ │          apiKeyPool) {                                       │
+ │    182       const { endpoint, modelId, type } =             │
+ │          modelConfig;                                        │
+ │    183       if (type !== 'text') return null; // Only       │
+ │          benchmark text models                               │
+ │    ════════════════════════════════════════════════════════  │
+ │    251           console.error(`❌ Benchmarking failed for   │
+ │          model ${modelConfig.name}:`, error.message);        │
+ │    252           return null;                                │
+ │    253       }                                               │
+ │    254 - >>>>>>> origin/main                                 │
+ │    254   }                                                   │
+ │    255                                                       │
+ │    256   module.exports = {                                  │
+ │    259       airforceApiKeyPool,                             │
+ │    260       navyApiKeyPool,                                 │
+ │    261       makeApiRequestWithRetry,                        │
+ │    263 - module.exports = {                                  │
+ │    264 -     v1ApiKeyPool,                                   │
+ │    265 -     v2ApiKeyPool,                                   │
+ │    266 -     airforceApiKeyPool,                             │
+ │    267 -     navyApiKeyPool,                                 │
+ │    268 -     makeApiRequestWithRetry,                        │
+ │    262       checkModelAvailability,                         │
+ │    263       benchmarkModel                                  │
+ │    264   };                                                  │
+ │    ════════════════════════════════════════════════════════  │
+ │    272 - };                                                  │
+ ╰──────────────────────────────────────────────────────────────╯
+ ╭────────────────────────────────────────────────────────────────────────╮
+ │ ✔ Shell git add /home/uncore/fronix-html/Backend/services/aiService.… │
+ ╰────────────────────────────────────────────────────────────────────────╯
+ ╭──────────────────────────────────────────────────────────────╮
+ │ ✔ ReadFile index.html                                       │
+ │                                                              │
+ │    Read lines 1-2000 of 2527 from index.html                 │
+ ╰──────────────────────────────────────────────────────────────╯
+ ╭──────────────────────────────────────────────────────────────╮
+ │ ✔ ReadFile index.html                                       │
+ │                                                              │
+ │    Read lines 2001-2527 of 2527 from index.html  

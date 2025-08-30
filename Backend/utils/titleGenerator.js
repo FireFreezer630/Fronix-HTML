@@ -22,19 +22,18 @@ async function generateChatTitle(chatId, messages) {
             return;
         }
 
-        const prompt = `You are a chat title generator. Your job is to create a short, factual title that captures the main topic of the conversation.
+        const cleanedMessages = messages.map(m => {
+            let contentText = '';
+            if (Array.isArray(m.content)) {
+                // If content is an array (multimodal), extract only text parts
+                contentText = m.content.map(part => part.type === 'text' ? part.text : '').join(' ').trim();
+            } else if (typeof m.content === 'string') {
+                contentText = m.content;
+            }
+            return `${m.role}: ${contentText}`;
+        }).filter(m => m.trim() !== '').join('\n');
 
-Rules:
-- Summarize the conversation in 3 words or fewer.
-- Only include the main topic.
-- Ignore greetings, small talk, filler text, and emotional tone.
-- Be concise and specific, including the most important keywords.
-- Do not include pronouns like "you", "I", "we", or vague phrases like "venting" or "chatting".
-- Output only the title, nothing else.
-
----
-
-${messages.map(m => `${m.role}: ${m.content}`).join('\n')}`;
+        const prompt = `You are a chat title generator. Your job is to create a short, factual title that captures the main topic of the conversation.\n\nRules:\n- Summarize the conversation in 3 words or fewer.\n- Only include the main topic.\n- Ignore greetings, small talk, filler text, and emotional tone.\n- Be concise and specific, including the most important keywords.\n- Do not include pronouns like "you", "I", "we", or vague phrases like "venting" or "chatting".\n- Output only the title, nothing else.\n\n---\n\n${cleanedMessages}`;
         console.log('Generating title with prompt:', prompt);
 
         const response = await axios.post(process.env.AI_API_ENDPOINT, {
@@ -54,7 +53,9 @@ ${messages.map(m => `${m.role}: ${m.content}`).join('\n')}`;
                 .from('chats')
                 .update({ title: generatedTitle, title_generated: true })
                 .eq('id', chatId);
+            return generatedTitle;
         }
+        return null;
     } catch (error) {
         console.error('Error generating chat title:', error);
     }

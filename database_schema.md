@@ -20,7 +20,7 @@ CREATE TABLE public.messages (
   role text NOT NULL,
   content jsonb,
   CONSTRAINT messages_pkey PRIMARY KEY (id),
-  CONSTRAINT messages_chat_id_fkey FOREIGN KEY (chat_id) REFERENCES public.chats(id),
+  CONSTRAINT messages_chat_id_fkey FOREIGN KEY (chat_id) REFERENCES public.chats(id) ON DELETE CASCADE,
   CONSTRAINT messages_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
 CREATE TABLE public.profiles (
@@ -41,4 +41,4 @@ CREATE TABLE public.user_preferences (
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT user_preferences_pkey PRIMARY KEY (id),
   CONSTRAINT user_preferences_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
-); 
+);

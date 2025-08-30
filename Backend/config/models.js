@@ -18,7 +18,7 @@ const MODELS = {
     'grok-4': { name: 'Grok 4', type: 'text', pro: true, endpoint: 'https://api.navy/v1/chat/completions' },
     'gpt-5': { name: 'GPT-5', type: 'text', pro: true, endpoint: 'https://api.airforce/v1/chat/completions' },
     'gemini-2.5-pro': { name: 'Gemini 2.5 Pro', type: 'text', pro: true, endpoint: 'https://api.airforce/v1/chat/completions' },
-    'gemini-2.5-flash': { name: 'Gemini 2.5 Flash', type: 'text', pro: true, endpoint: 'https://api.airforce/v1/chat/completions' },
+    'gemini-2.5-flash': { name: 'Gemini 2.5 Flash', type: 'text', pro: true, endpoint: 'https://api.airforce/v1/chat/completions' }
       
     // Image Generation Models
     // 'provider-4/imagen-4': { name: 'Imagen 4', type: 'image' }

@@ -112,70 +112,81 @@ async function makeApiRequestWithRetry(url, requestBody, requestOptions, pool) {
     throw lastError;
 }
 
-const MODELS = require('../config/models').MODELS; // Import MODELS
 
-async function checkModelAvailability() {
-    const availableModels = [];
-    for (const modelId in MODELS) {
-        const model = MODELS[modelId];
-        const apiEndpoint = model.endpoint;
-        let apiKeyPool;
-        let requestBody;
 
-        if (!apiEndpoint) {
-            console.warn(`⚠️ Model ${model.name} (${modelId}) is missing an endpoint.`);
-            continue;
-        }
+async function benchmarkModel(modelConfig, prompt, apiKeyPool) {
+    const { endpoint, modelId, type } = modelConfig;
+    if (type !== 'text') return null; // Only benchmark text models
 
-        // Infer API key pool from endpoint
-        if (apiEndpoint.includes('api.navy')) {
-            apiKeyPool = navyApiKeyPool;
-        } else if (apiEndpoint.includes('api.airforce')) {
-            apiKeyPool = airforceApiKeyPool;
-        } else if (apiEndpoint.includes(process.env.AI_API_ENDPOINT_V2)) {
-            apiKeyPool = v2ApiKeyPool;
-        } else {
-            apiKeyPool = v1ApiKeyPool;
-        }
+    const requestBody = {
+        model: modelId || modelConfig.name, // Use modelId if available, otherwise name
+        messages: [{ role: 'user', content: prompt }],
+        stream: true // Enable streaming for benchmarking
+    };
 
-        if (model.type === 'image') {
-            requestBody = {
-                model: model.modelId || modelId,
-                prompt: "test",
-                n: 1,
-                size: "256x256",
-                response_format: "url"
-            };
-        } else { // Text models
-            requestBody = {
-                model: model.modelId || modelId,
-                messages: [{ role: "user", content: "ping" }],
-                stream: false
-            };
-        }
+    const requestOptions = {
+        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+        responseType: 'stream' // Ensure axios handles as stream
+    };
 
-        try {
-            const response = await makeApiRequestWithRetry(
-                apiEndpoint,
-                requestBody,
-                {
-                    headers: { 'Content-Type': 'application/json' },
-                    timeout: 3000 // 3 second timeout
-                },
-                apiKeyPool
-            );
+    const startTime = process.hrtime.bigint();
+    try {
+        const aiResponse = await makeApiRequestWithRetry(endpoint, requestBody, requestOptions, apiKeyPool);
+        
+        return new Promise((resolve, reject) => {
+            let fullResponse = '';
+            let buffer = '';
 
-            if (response.status === 200) {
-                availableModels.push({ id: modelId, name: model.name, type: model.type, pro: model.pro, free: model.free });
-                console.log(`✅ Model ${model.name} (${modelId}) is available.`);
-            } else {
-                console.warn(`⚠️ Model ${model.name} (${modelId}) returned status ${response.status}.`);
-            }
-        } catch (error) {
-            console.error(`❌ Model ${model.name} (${modelId}) is not available. Error: ${error.message}`);
-        }
+            aiResponse.data.on('data', (chunk) => {
+                buffer += chunk.toString();
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // Keep the last incomplete line
+
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine) continue;
+
+                    if (trimmedLine === 'data: [DONE]') {
+                        // Stream completed, resolve with duration
+                        const endTime = process.hrtime.bigint();
+                        const duration = Number(endTime - startTime) / 1_000_000; // nanoseconds to milliseconds
+                        console.log(`⏱️ Model ${modelConfig.name} benchmarked in ${duration.toFixed(2)} ms (streamed)`);
+                        aiResponse.data.destroy(); // End the stream early
+                        resolve(duration);
+                        return;
+                    }
+
+                    if (trimmedLine.startsWith('data: ')) {
+                        try {
+                            const jsonStr = trimmedLine.slice(6);
+                            const data = JSON.parse(jsonStr);
+                            if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                                fullResponse += data.choices[0].delta.content;
+                            }
+                        } catch (error) {
+                            console.warn('Failed to parse streaming chunk during benchmark:', trimmedLine, error.message);
+                        }
+                    }
+                }
+            });
+
+            aiResponse.data.on('end', () => {
+                // If stream ends without a [DONE] signal, treat as completion
+                const endTime = process.hrtime.bigint();
+                const duration = Number(endTime - startTime) / 1_000_000; // nanoseconds to milliseconds
+                console.warn(`⚠️ Model ${modelConfig.name} stream ended without [DONE] signal. Benchmarked in ${duration.toFixed(2)} ms.`);
+                resolve(duration);
+            });
+
+            aiResponse.data.on('error', (streamError) => {
+                console.error(`❌ Stream error during benchmarking for model ${modelConfig.name}:`, streamError.message);
+                reject(streamError);
+            });
+        });
+    } catch (error) {
+        console.error(`❌ Benchmarking failed for model ${modelConfig.name}:`, error.message);
+        return null;
     }
-    return availableModels;
 }
 
 module.exports = {
@@ -184,5 +195,5 @@ module.exports = {
     airforceApiKeyPool,
     navyApiKeyPool,
     makeApiRequestWithRetry,
-    checkModelAvailability // Export the new function
+    benchmarkModel
 };

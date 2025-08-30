@@ -20,7 +20,8 @@ const env = envalid.cleanEnv(process.env, {
 const authRoutes = require('./routes/auth');
 const chatRoutes = require('./routes/chat');
 const userRoutes = require('./routes/user');
-const aiRoutes = require('./routes/ai');
+const { router: aiRouter, benchmarkAllModels } = require('./routes/ai'); // Destructure aiRouter
+const { checkAllModels } = require('./utils/modelChecker');
 
 const app = express();
 const PORT = env.PORT;
@@ -30,10 +31,13 @@ const allowedOrigins = env.ALLOWED_ORIGINS.split(',');
 
 const corsOptions = {
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps, curl)
+        // Allow all origins for development (REMOVE FOR PRODUCTION)
+        return callback(null, true); // Temporarily allow all origins
+
+        // Original restrictive logic (uncomment for production)
+        /*
         if (!origin) return callback(null, true);
         
-        // Allow localhost with any port for development
         if (/^http:\/\/localhost:\d+$/.test(origin)) {
             return callback(null, true);
         }
@@ -43,11 +47,12 @@ const corsOptions = {
         } else {
             callback(new Error('The CORS policy for this site does not allow access from your Origin.'));
         }
+        */
     },
     credentials: true,
 };
 
-app.use(cors()); // TEMPORARY: Allow all origins for debugging
+app.use(cors(corsOptions));
 // --- END: CORRECTED AND FLEXIBLE CORS CONFIGURATION ---
 
 // Rate limiting to prevent abuse
@@ -56,6 +61,13 @@ const apiLimiter = rateLimit({
     max: 100, // Limit each IP to 100 requests per windowMs
     standardHeaders: true,
     legacyHeaders: false,
+    skip: (req) => {
+        // Skip rate limiting for unauthenticated trial requests to the chat endpoint
+        if (req.originalUrl === '/api/ai/chat' && !req.headers.authorization) {
+            return true;
+        }
+        return false;
+    }
 });
 
 app.use('/api/', apiLimiter);
@@ -68,7 +80,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 5000
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/ai', aiRoutes);
+app.use('/api/ai', aiRouter); // Use the destructured aiRouter
 
 // Global Error Handler
 app.use((err, req, res, next) => {

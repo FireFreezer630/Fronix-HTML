@@ -5,6 +5,9 @@ const supabase = require('../config/supabaseClient');
 
 // GET current user's details
 router.get('/me', authMiddleware, async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized: No user logged in.' });
+    }
     try {
         const { data: profile, error } = await supabase
             .from('profiles')

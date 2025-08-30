@@ -11,6 +11,9 @@ const { getFirstTwoNonTrivialMessages } = require('../utils/messageUtils');
 
 // GET all chats for the logged-in user
 router.get('/', authMiddleware, async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required to fetch chats.' });
+    }
     try {
         const { data, error } = await supabase
             .from('chats')
@@ -26,6 +29,9 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 // GET a single chat by ID
 router.get('/:chatId', authMiddleware, async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required to fetch chat.' });
+    }
     const { chatId } = req.params;
     try {
         const { data, error } = await supabase
@@ -48,6 +54,9 @@ router.get('/:chatId', authMiddleware, async (req, res) => {
 
 // POST to create a new chat
 router.post('/', authMiddleware, async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required to create a chat.' });
+    }
     const { title } = req.body;
     try {
         const { data, error } = await supabase
@@ -106,6 +115,12 @@ router.get('/:chatId/messages', authMiddleware, async (req, res) => {
 router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
     const { chatId } = req.params;
     const { userMessage, assistantMessage } = req.body;
+    
+    // If user is not authenticated, do not save to database. Frontend handles local storage.
+    if (!req.user) {
+        return res.status(200).json({ success: true, message: 'Messages not saved to database (unauthenticated user).' });
+    }
+
     const userId = req.user.id;
 
     console.log(`[Save Messages] Received request for chatId: ${chatId}`);
@@ -127,6 +142,8 @@ router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
         
         if (error) throw error;
 
+        let responsePayload = { success: true, message: 'Conversation saved.' };
+
         // Check if a title needs to be generated
         const { data: chat, error: chatError } = await supabase
             .from('chats')
@@ -141,28 +158,16 @@ router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
             if (messages.length >= 2) {
                 console.log('Triggering title generation...');
                 try {
-                    await generateChatTitle(chatId, messages);
+                    const newTitle = await generateChatTitle(chatId, messages);
+                    if (newTitle) {
+                        responsePayload.generatedTitle = newTitle;
+                    }
                 } catch (titleError) {
                     console.error('Error generating title, but continuing:', titleError);
                 }
             }
         }
         
-        let responsePayload = { success: true, message: 'Conversation saved.' };
-
-        // Fetch the possibly updated title to return
-        const { data: updatedChat, error: updatedChatError } = await supabase
-            .from('chats')
-            .select('title')
-            .eq('id', chatId)
-            .single();
-
-        if (updatedChatError) {
-            console.error('Error fetching updated chat title:', updatedChatError);
-        } else if (updatedChat) {
-            responsePayload.title = updatedChat.title;
-        }
-
         res.status(201).json(responsePayload);
     } catch (error) {
         console.error("Error saving conversation:", error);
@@ -172,6 +177,9 @@ router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
 
 // UPDATE a chat's title
 router.put('/:chatId', authMiddleware, async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required to update a chat.' });
+    }
     const { chatId } = req.params;
     const { title, title_generated } = req.body;
     const userId = req.user.id;
@@ -204,6 +212,9 @@ router.put('/:chatId', authMiddleware, async (req, res) => {
 
 // DELETE a chat and its messages
 router.delete('/:chatId', authMiddleware, async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required to delete a chat.' });
+    }
     const { chatId } = req.params;
     const userId = req.user.id;
 
@@ -231,6 +242,9 @@ router.delete('/:chatId', authMiddleware, async (req, res) => {
 
 // POST upload image to Supabase storage
 router.post('/upload-image', authMiddleware, async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required to upload images.' });
+    }
     try {
         const { imageData, fileName, mimeType } = req.body;
         
@@ -360,6 +374,9 @@ router.delete('/cleanup-images', authMiddleware, async (req, res) => {
 
 
 router.post('/:chatId/toggle-study-mode', authMiddleware, async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required to toggle study mode.' });
+    }
     const { chatId } = req.params;
     const userId = req.user.id;
 
@@ -414,6 +431,9 @@ router.post('/:chatId/toggle-study-mode', authMiddleware, async (req, res) => {
 });
 
 router.post('/generate-missing-titles', authMiddleware, async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required to generate missing titles.' });
+    }
     try {
         const { data: chats, error } = await supabase
             .from('chats')
