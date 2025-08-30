@@ -80,6 +80,17 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!');
 });
 
-app.listen(PORT, () => {
+const { checkModelAvailability } = require('./services/aiService');
+const cache = require('./utils/cache');
+
+app.listen(PORT, async () => {
     console.log(`Server is running on port ${PORT}`);
+    try {
+        console.log('Performing initial model availability check...');
+        const availableModels = await checkModelAvailability();
+        cache.set('available_models', availableModels, 3600); // Cache for 1 hour
+        console.log(`Cached ${availableModels.length} available models.`);
+    } catch (error) {
+        console.error('Error during initial model availability check:', error);
+    }
 });

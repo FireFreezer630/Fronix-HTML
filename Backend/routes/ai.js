@@ -6,6 +6,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const fs = require('fs');
 const path = require('path');
 const cache = require('../utils/cache');
+const { checkModelAvailability } = require('../services/aiService'); // New import
 
 // Safe JSON stringification to handle circular references
 function safeStringify(obj, space = 2) {
@@ -173,15 +174,25 @@ async function selectProProvider(userId) {
     return 'airforce';
 }
 
+const PUBLIC_MODELS = ['openai', 'gemini', 'elixposearch'];
+
 router.post('/chat', authMiddleware, async (req, res) => {
     const { model, messages, chatId, proModelsEnabled } = req.body;
+
+    // Allow public models for non-authenticated users
+    if (!req.user && PUBLIC_MODELS.includes(model)) {
+        // Proceed without authentication checks for public models
+    } else if (!req.user) {
+        // If no user and not a public model, require authentication
+        return res.status(401).json({ error: 'Authentication required to use this model.' });
+    }
 
     if (!model || !messages || !Array.isArray(messages)) {
         return res.status(400).json({ error: 'Invalid request body. "model" and a "messages" array are required.' });
     }
 
     let isStudyMode = false;
-    if (chatId) {
+    if (chatId && req.user) {
         const { data: chatData } = await supabase.from('chats').select('study_mode').eq('id', chatId).eq('user_id', req.user.id).single();
         if (chatData) {
             isStudyMode = chatData.study_mode;
@@ -278,5 +289,23 @@ router.post('/chat', authMiddleware, async (req, res) => {
 });
 
 // ... (keep the existing /images/generations endpoint) ...
+
+router.get('/available-models', async (req, res) => {
+    const cachedModels = cache.get('available_models');
+    if (cachedModels) {
+        console.log('Returning cached available models.');
+        return res.json(cachedModels);
+    }
+
+    try {
+        console.log('Cache miss. Fetching available models...');
+        const availableModels = await checkModelAvailability();
+        cache.set('available_models', availableModels, 3600); // Cache for 1 hour
+        res.json(availableModels);
+    } catch (error) {
+        console.error('Error fetching available models:', error.message);
+        res.status(500).json({ error: 'Failed to fetch available models.' });
+    }
+});
 
 module.exports = router;

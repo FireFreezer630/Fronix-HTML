@@ -37,6 +37,7 @@ CREATE TABLE public.user_preferences (
   theme text DEFAULT 'dark'::text,
   font_family text DEFAULT 'inter'::text,
   font_weight text DEFAULT '400'::text,
+  chat_background text DEFAULT 'default'::text,
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT user_preferences_pkey PRIMARY KEY (id),
   CONSTRAINT user_preferences_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
