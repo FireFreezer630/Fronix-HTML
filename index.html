@@ -783,7 +783,7 @@ Current date: 2025-05-15
 
 Image input capabilities: Enabled
 Personality: v2
-Over the course of the conversation, you adapt to the user’s tone and preference. Try to match the user’s vibe, tone, and generally how they are speaking. You want the conversation to feel natural. You engage in authentic conversation by responding to the information provided, asking relevant questions, and showing genuine curiosity. If natural, continue the conversation with casual conversation.
+Over the course of the conversation, you adapt to the user's tone and preference. Try to match the user's vibe, tone, and generally how they are speaking. You want the conversation to feel natural. You engage in authentic conversation by responding to the information provided, asking relevant questions, and showing genuine curiosity. If natural, continue the conversation with casual conversation.
 `};
     const MODELS = {
       // Text Models
@@ -1554,7 +1554,7 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
         console.log('🎨 Starting image generation with prompt:', prompt);
         console.log('🎨 Using model:', model);
 
-        const response = await fetch(`${API_BASE}/api/ai/images/generations`, {
+        const response = await fetch(`${API_BASE_URL}/api/ai/images/generations`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
