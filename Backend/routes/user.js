@@ -5,6 +5,9 @@ const supabase = require('../config/supabaseClient');
 
 // GET current user's details
 router.get('/me', authMiddleware, async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized: No user logged in.' });
+    }
     try {
         const { data: profile, error } = await supabase
             .from('profiles')
@@ -28,6 +31,35 @@ router.get('/me', authMiddleware, async (req, res) => {
         });
     } catch (error) {
         console.error('Error in /me route:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// PUT update user preferences
+router.put('/preferences', authMiddleware, async (req, res) => {
+    try {
+        const { theme, font_family, font_weight, chat_background } = req.body;
+        const user_id = req.user.id;
+
+        const { data, error } = await supabase
+            .from('user_preferences')
+            .upsert({
+                user_id: user_id,
+                theme: theme,
+                font_family: font_family,
+                font_weight: font_weight,
+                chat_background: chat_background,
+                updated_at: new Date().toISOString() // Ensure updated_at is current
+            }, { onConflict: 'user_id' }); // Upsert based on user_id
+
+        if (error) {
+            console.error('Error updating user preferences:', error.message);
+            return res.status(500).json({ error: 'Failed to update user preferences' });
+        }
+
+        res.status(200).json({ message: 'User preferences updated successfully', data });
+    } catch (error) {
+        console.error('Error in /preferences route:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

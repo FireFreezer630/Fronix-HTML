@@ -1,0 +1,25 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/uncore/fronix-html/logs/.a5978870419f1ab2e45425a9bc60f4f91dca3ef6-audit.json",
+    "files": [
+        {
+            "date": 1756383438874,
+            "name": "/home/uncore/fronix-html/logs/mcp-puppeteer-2025-08-28.log",
+            "hash": "21907b23f5973bce93ab6dbe77da7592fe2adb4c1c0bf77b4305c95ebb25ffe5"
+        },
+        {
+            "date": 1756470725196,
+            "name": "/home/uncore/fronix-html/logs/mcp-puppeteer-2025-08-29.log",
+            "hash": "57dda6067aa02297521c69d982fa72923e49593f6f153d2dc06cd49d69234c39"
+        },
+        {
+            "date": 1756553943061,
+            "name": "/home/uncore/fronix-html/logs/mcp-puppeteer-2025-08-30.log",
+            "hash": "8c55c243011995be64869cf1f5d75db453e916f00a7ac1bba967d2fed248bf90"
+        }
+    ],
+    "hashType": "sha256"
+}

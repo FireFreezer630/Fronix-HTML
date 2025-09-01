@@ -1,0 +1,2526 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Fronix.ai</title>
+  
+  <!-- Libraries -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Yu+Gothic&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
+    onload="renderMathInElement(document.body);"></script>
+
+  <!-- ADDED: highlight.js for Syntax Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { inter: ['Inter', 'sans-serif'], 'work-sans': ['Work Sans', 'sans-serif'], 'yu-gothic': ['Yu Gothic', 'sans-serif'], 'sans-serif': ['ui-sans-serif', 'system-ui', '-apple-system'] },
+          borderRadius: { '3xl': '24px' },
+          colors: {
+            light: { background: '#FFFFFF', sidebar: '#F7F7F8', 'user-bubble': '#F0F0F0', 'chat-surface': '#FFFFFF', border: '#E5E5E6', 'border-hover': '#ECECEC', 'border-active': '#E0E0E0', text: { DEFAULT: '#18181B', subtle: '#6B7280' } },
+            dark: { background: '#121212', sidebar: '#1C1C1C', 'user-bubble': '#2C2C2C', 'chat-surface': '#121212', border: '#3A3A3A', 'border-hover': '#2A2A2A', 'border-active': '#303030', text: { DEFAULT: '#EAEAEA', subtle: '#A1A1AA' } },
+            accent: { DEFAULT: '#4F46E5', hover: '#4338CA' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; line-height: 1.5; }
+    :not(.vt-enabled) * { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
+    @media (max-width: 767px) { #sidebar { position: fixed; z-index: 40; height: 100%; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); } #sidebar.open { transform: translateX(0); } #sidebar-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 30; opacity: 0; transition: opacity 0.3s ease-in-out; pointer-events: none; } #sidebar-overlay.open { opacity: 1; pointer-events: auto; } }
+    @media (min-width: 768px) { #sidebar { width: 260px; transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); } #sidebar.closed { margin-left: -260px; } }
+    .sidebar-item-actions { opacity: 0; transition: opacity 0.15s ease-in-out; }
+    .group:hover .sidebar-item-actions { opacity: 1; }
+    .modal-container { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; background-color: rgba(0,0,0,0.4); padding: 1rem; padding-bottom: 5rem; } /* Added padding for mobile */
+    .modal-content { transform: scale(0.95); opacity: 0; max-height: 90vh; overflow-y: auto; } /* Added max-height and overflow for scrolling */
+    #model-dropdown, #chat-actions-dropdown { display: none; position: absolute; z-index: 50; }
+    .loader-dot { animation: pendulum 1.2s infinite ease-in-out; }
+    .loader-dot:nth-child(2) { animation-delay: 0.15s; }
+.loader-dot:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes reveal {
+  from {
+    clip-path: circle(0 at var(--cx) var(--cy));
+  }
+  to {
+    clip-path: circle(150% at var(--cx) var(--cy));
+  }
+}
+
+::view-transition-old(root) {
+  animation: none;
+}
+
+::view-transition-new(root) {
+  animation: reveal 0.6s ease-in-out both;
+}
+    .blinking-cursor { display: inline-block; width: 8px; height: 8px; background-color: currentColor; border-radius: 50%; animation: blink 1s infinite; }
+    
+    /* --- ADDED: CUSTOM PROSE STYLING --- */
+    .prose {
+      line-height: 1.7;
+      color: var(--tw-prose-body); /* Fallback for browsers not supporting @apply */
+    }
+    .dark .prose {
+        color: var(--tw-prose-invert-body);
+    }
+    
+    .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 { 
+      margin-top: 1.5em; 
+      margin-bottom: 0.5em; 
+      font-weight: 600;
+      color: var(--tw-prose-headings);
+    }
+    .dark .prose h1, .dark .prose h2, .dark .prose h3, .dark .prose h4, .dark .prose h5, .dark .prose h6 { 
+        color: var(--tw-prose-invert-headings);
+    }
+    .prose h1 { font-size: 1.875rem; } /* text-3xl */
+    .prose h2 { font-size: 1.5rem; }    /* text-2xl */
+    .prose h3 { font-size: 1.25rem; }  /* text-xl */
+    .prose h4 { font-size: 1.125rem; } /* text-lg */
+
+    .prose a { color: #4F46E5; text-decoration: none; }
+    .prose a:hover { text-decoration: underline; }
+    .dark .prose a { color: #6D6AEC; }
+
+    .prose blockquote {
+        border-left: 4px solid #E5E5E6;
+        padding-left: 1rem;
+        font-style: italic;
+        color: #6B7280;
+    }
+    .dark .prose blockquote {
+        border-left-color: #3A3A3A;
+        color: #A1A1AA;
+    }
+
+    .prose code:not(pre > code) {
+        background-color: #F0F0F0;
+        color: #18181B;
+        border-radius: 0.375rem; /* rounded-md */
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875em;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    .dark .prose code:not(pre > code) {
+        background-color: #2C2C2C;
+        color: #EAEAEA;
+    }
+    
+    .prose pre {
+        background-color: #282c34; /* atom-one-dark background */
+        border-radius: 0.5rem; /* rounded-lg */
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        overflow: hidden;
+    }
+    .prose pre code {
+      background-color: transparent;
+      padding: 1rem;
+      display: block;
+      overflow-x: auto;
+      font-size: 0.875em;
+      color: #abb2bf; /* Default text color for atom-one-dark */
+    }
+
+    .prose ul { list-style-type: disc; padding-left: 1.75rem; }
+    .prose ol { list-style-type: decimal; padding-left: 1.75rem; }
+    .prose li { margin-top: 0.25rem; margin-bottom: 0.25rem; }
+
+    .prose table { width: 100%; border-collapse: collapse; }
+    .prose th, .prose td { border: 1px solid #E5E5E6; padding: 0.5rem 1rem; }
+    .dark .prose th, .dark .prose td { border-color: #3A3A3A; }
+    .prose th { background-color: #F7F7F8; font-weight: 600; }
+    .dark .prose th { background-color: #1C1C1C; }
+    .prose tr:nth-child(even) { background-color: #F7F7F8; }
+    .dark .prose tr:nth-child(even) { background-color: #1C1C1C; }
+
+    .prose hr { border-color: #E5E5E6; margin-top: 2rem; margin-bottom: 2rem; }
+    .dark .prose hr { border-color: #3A3A3A; }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    @keyframes pendulum { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  </style>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="h-full bg-light-background dark:bg-dark-background flex overflow-hidden text-light-text dark:text-dark-text font-inter font-normal">
+  
+  <div id="sidebar-overlay"></div>
+  
+  <aside id="sidebar" class="bg-light-sidebar dark:bg-dark-sidebar flex-shrink-0 flex flex-col w-[260px]">
+    <div class="p-4 flex items-center gap-3">
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+      <span class="text-xl font-bold">Fronix</span>
+    </div>
+    <div class="p-2"><button id="new-chat" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-hover text-white font-semibold rounded-lg shadow-sm transition-all duration-200 ease-in-out transform hover:scale-105"><svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M10 3.33331C9.53756 3.33331 9.16667 3.7042 9.16667 4.16665V9.16665H4.16667C3.70422 9.16665 3.33334 9.53754 3.33334 9.99998C3.33334 10.4624 3.70422 10.8333 4.16667 10.8333H9.16667V15.8333C9.16667 16.2958 9.53756 16.6666 10 16.6666C10.4624 16.6666 10.8333 16.2958 10.8333 15.8333V10.8333H15.8333C16.2958 10.8333 16.6667 10.4624 16.6667 9.99998C16.6667 9.53754 16.2958 9.16665 15.8333 9.16665H10.8333V4.16665C10.8333 3.7042 10.4624 3.33331 10 3.33331Z"></path></svg>New Chat</button></div>
+    <div class="mt-6 px-4 text-xs font-semibold text-light-text-subtle dark:text-dark-text-subtle tracking-wider">Chats</div>
+    <ul id="chat-list" class="flex-1 overflow-y-auto px-2 mt-2 space-y-1"></ul>
+    
+    <!-- ++ START: NEW PROFILE SECTION ++ -->
+    <div id="profile-section" class="relative hidden">
+        <!-- This is the dropdown panel that appears when the profile button is clicked -->
+        <div id="profile-dropdown" class="absolute bottom-full left-0 w-full p-4 mb-2 hidden">
+            <div class="bg-light-background dark:bg-dark-background p-4 rounded-lg shadow-lg border border-light-border dark:border-dark-border">
+                <div class="font-semibold text-light-text dark:text-dark-text" id="profile-username"></div>
+                <div class="text-sm text-light-text-subtle dark:text-dark-text-subtle" id="profile-email"></div>
+                <div class="mt-2 text-xs">
+                    <span class="font-medium">Plan:</span>
+                    <span class="bg-accent/10 text-accent font-semibold px-2 py-0.5 rounded-full" id="profile-plan"></span>
+                </div>
+            </div>
+        </div>
+        <!-- This is the main button visible at the bottom of the sidebar -->
+        <button id="profile-btn" class="w-full flex items-center justify-between p-3 hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white font-bold">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <span class="text-sm font-medium" id="profile-btn-username"></span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-light-text-subtle dark:text-dark-text-subtle"><path d="m18 15-6-6-6 6"></path></svg>
+        </button>
+    </div>
+    <!-- ++ END: NEW PROFILE SECTION ++ -->
+
+    <div class="p-4 border-t border-light-border dark:border-dark-border">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 text-sm">
+                <button id="signin-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                    Sign In
+                </button>
+                <!-- MODIFIED LOGOUT BUTTON -->
+                <button id="logout-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    <span>Sign Out</span>
+                </button>
+                <button id="settings-btn" class="p-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+                <button id="theme-toggle" class="p-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
+                    <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+  </aside>
+
+  <div id="main-container" class="flex-1 flex flex-col min-w-0">
+    <header class="bg-light-chat-surface dark:bg-dark-chat-surface px-4 py-3 flex items-center gap-4 relative">
+      <button id="toggle-sidebar" class="p-2 text-light-text-subtle dark:text-dark-text-subtle hover:text-light-text dark:hover:text-dark-text rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" /></svg></button>
+      <div id="model-selector" class="flex items-center gap-1 cursor-pointer">
+        <h1 id="chat-title" class="text-lg font-semibold truncate">Fronix</h1>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-light-text-subtle dark:text-dark-text-subtle"><path d="m6 9 6 6 6-6"></path></svg>
+      </div>
+      <div id="model-dropdown" class="absolute top-full left-4 mt-2 w-48 bg-light-sidebar dark:bg-dark-sidebar rounded-lg shadow-lg border border-light-border dark:border-dark-border z-10"></div>
+    </header>
+    <main class="flex-1 overflow-hidden flex flex-col bg-light-chat-surface dark:bg-dark-chat-surface">
+      <div id="chat-box-wrapper" class="flex-1 overflow-y-auto px-4 sm:px-8 md:px-12 lg:px-24">
+        <div id="chat-box" class="max-w-4xl mx-auto pb-20 space-y-6">
+          <div class="text-center text-light-text-subtle dark:text-dark-text-subtle py-8">
+            <h2 class="text-3xl font-bold mb-2">Fronix</h2>
+            <p>Start a new message to begin.</p>
+          </div>
+        </div>
+      </div>
+      <!-- START of the corrected input area -->
+      <div class="relative">
+
+        <!-- Scroll To Bottom Button -->
+        <button id="scroll-to-bottom-btn" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-4 p-2 rounded-full bg-light-sidebar dark:bg-dark-sidebar shadow-md border border-light-border dark:border-dark-border text-light-text-subtle dark:text-dark-text-subtle hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-opacity duration-300 opacity-0 pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="m19 12-7 7-7-7"></path></svg>
+        </button>
+        
+        <!-- Corrected Edit Indicator: Single element with corrected layout -->
+        <div id="edit-indicator" class="max-w-3xl mx-auto px-3 py-2 flex items-center justify-between bg-blue-100 dark:bg-blue-900/30 rounded-t-lg text-sm font-medium text-gray-800 dark:text-gray-100 hidden">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 text-blue-600 dark:text-blue-400">
+                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                </svg>
+                <span>Editing message</span>
+            </div>
+            <button id="cancel-edit-btn" class="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <!-- ADDED: Image Preview Container -->
+        <div id="image-preview-container" class="max-w-3xl mx-auto p-4 hidden">
+            <!-- Image preview will be dynamically inserted here by JavaScript -->
+        </div>
+
+        <!-- Input Bar -->
+        <div class="max-w-3xl mx-auto p-4 relative">
+          <div class="flex items-end space-x-2 p-2 rounded-2xl bg-light-sidebar dark:bg-dark-sidebar shadow-lg">
+            <input type="file" id="image-upload" class="hidden" accept="image/png, image/jpeg, image/webp, image/gif">
+            <button id="attach-btn" class="p-3 rounded-full hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors text-light-text-subtle dark:text-dark-text-subtle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.59a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                </svg>
+            </button>
+            <textarea id="user-input" rows="1" class="flex-1 bg-transparent py-3 px-4 resize-none focus:outline-none" placeholder="Type your message..." style="max-height: 200px"></textarea>
+            <button id="send-btn" class="p-3 rounded-full bg-accent hover:bg-accent-hover text-white disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
+              <svg id="send-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="19" x2="12" y2="5"></line>
+                <polyline points="5 12 12 5 19 12"></polyline>
+              </svg>
+              <svg id="stop-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+                <rect x="6" y="6" width="12" height="12" rx="1"></rect>
+              </svg>
+              <svg id="save-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+            </button>
+          </div>
+          <!-- Autocomplete Suggestions -->
+          <div id="autocomplete-suggestions" class="absolute bottom-full left-0 w-full mb-2 p-2 rounded-lg shadow-lg bg-light-sidebar dark:bg-dark-sidebar border border-light-border dark:border-dark-border hidden">
+            <button id="study-command-btn" class="w-full text-left px-3 py-2 text-sm text-light-text dark:text-dark-text hover:bg-light-border-hover dark:hover:bg-dark-border-hover rounded-md">
+                /study - Toggle study mode
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- END of the corrected input area -->
+    </main>
+  </div>
+
+  <div id="settings-modal" class="modal-container"><div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 rounded-2xl shadow-xl w-full max-w-md border border-light-border dark:border-dark-border"><div class="flex justify-between items-center mb-6"><h3 class="text-xl font-semibold">Settings</h3><button id="close-settings-btn" class="p-1 rounded-full hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div><div class="space-y-6"><div class="flex items-center justify-between">
+    <label for="pro-models-toggle" class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">Enable Pro Models</label>
+    <button id="pro-models-toggle" type="button" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 bg-gray-200 dark:bg-gray-700" role="switch" aria-checked="false">
+        <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+    </button>
+</div>
+<div id="font-options"></div><div id="font-weight-options"></div><div><button id="reset-settings-btn" class="w-full px-4 py-2 rounded-md text-sm font-medium border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">Reset to Default</button></div></div></div></div>
+<div id="rename-modal" class="modal-container"><div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 sm:pb-8 rounded-2xl shadow-xl w-full max-w-sm border border-light-border dark:border-dark-border"><h3 class="text-lg font-semibold mb-4">Rename Chat</h3><input id="rename-input" type="text" class="w-full p-2 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent mb-4"><div class="flex justify-end gap-2"><button id="rename-cancel" class="px-4 py-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover">Cancel</button><button id="rename-save" class="px-4 py-2 rounded-md bg-accent text-white">Save</button></div></div></div>
+  <div id="delete-modal" class="modal-container"><div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 rounded-2xl shadow-xl w-full max-w-sm border border-light-border dark:border-dark-border"><h3 class="text-lg font-semibold mb-4">Delete Chat</h3><p id="delete-message" class="mb-4 text-light-text-subtle dark:text-dark-text-subtle"></p><div class="flex justify-end gap-2"><button id="delete-cancel" class="px-4 py-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover">Cancel</button><button id="delete-confirm" class="px-4 py-2 rounded-md bg-red-600 text-white">Delete</button></div></div></div>
+  <div id="signin-modal" class="modal-container">
+    <div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-10 rounded-2xl shadow-xl w-full max-w-md border border-light-border dark:border-dark-border">
+        <div class="flex justify-between items-start mb-6">
+            <div class="flex border-b border-light-border dark:border-dark-border">
+                <button id="signin-tab-btn" class="px-4 py-2 text-lg font-semibold text-accent border-b-2 border-accent">Sign In</button>
+                <button id="signup-tab-btn" class="px-4 py-2 text-lg font-semibold text-light-text-subtle dark:text-dark-text-subtle border-b-2 border-transparent">Sign Up</button>
+            </div>
+            <button id="close-signin-btn" class="p-1 rounded-full hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <!-- Sign In View -->
+        <div id="signin-view" class="space-y-5">
+            <input id="signin-email" type="email" placeholder="Enter your email" class="w-full p-3 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent">
+            <div class="relative">
+                <input id="password-input" type="password" placeholder="Enter your password" class="w-full p-3 pr-10 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent">
+                <button id="password-toggle-btn" class="absolute inset-y-0 right-0 flex items-center px-3 text-light-text-subtle dark:text-dark-text-subtle">
+                    <svg id="eye-open-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    <svg id="eye-closed-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="M9.9 4.24A9 9 0 0 1 12 3c7 0 10 7 10 7a13.2 13.2 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line><path d="M14 14.25a3 3 0 0 1-4.3-4.3"></path></svg>
+                </button>
+            </div>
+             <a href="#" class="text-xs text-accent hover:underline text-right block -mt-2">Forgot password?</a>
+                        <button id="signin-email-btn" class="w-full flex items-center justify-center px-4 py-3 rounded-md bg-accent text-white font-semibold hover:bg-accent-hover transition-colors">
+                <span class="button-text">Sign In</span>
+                <svg class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+            <div class="flex items-center text-xs text-light-text-subtle dark:text-dark-text-subtle">
+                <div class="flex-grow border-t border-light-border dark:border-dark-border"></div>
+                <span class="flex-shrink mx-4">OR</span>
+                <div class="flex-grow border-t border-light-border dark:border-dark-border"></div>
+            </div>
+            <button id="signin-google-btn" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-md bg-white dark:bg-dark-user-bubble border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1h22v22H1z"/></svg>
+                Continue with Google
+            </button>
+        </div>
+
+        <!-- Sign Up View -->
+        <div id="signup-view" class="hidden space-y-5">
+            <input id="signup-email" type="email" placeholder="Enter your email" class="w-full p-3 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent">
+            <input id="signup-password" type="password" placeholder="Create a password" class="w-full p-3 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent">
+            <button id="signup-email-btn" class="w-full px-4 py-3 rounded-md bg-accent text-white font-semibold hover:bg-accent-hover transition-colors">Continue with Email</button>
+            <div class="flex items-center text-xs text-light-text-subtle dark:text-dark-text-subtle">
+                <div class="flex-grow border-t border-light-border dark:border-dark-border"></div>
+                <span class="flex-shrink mx-4">OR</span>
+                <div class="flex-grow border-t border-light-border dark:border-dark-border"></div>
+            </div>
+            <button id="signup-google-btn" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-md bg-white dark:bg-dark-user-bubble border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1h22v22H1z"/></svg>
+                Continue with Google
+            </button>
+        </div>
+    </div>
+</div>
+  <div id="chat-actions-dropdown" class="w-32 bg-light-sidebar dark:bg-dark-sidebar rounded-lg shadow-lg border border-light-border dark:border-dark-border"></div>
+
+<<<<<<< HEAD
+  <script src="public/js/config.js"></script>
+  <script src="public/js/auth.js"></script>
+  <script src="public/js/api.js"></script>
+  <script src="public/js/ui.js"></script>
+  <script src="public/js/app.js"></script>
+  <script>
+    lucide.createIcons();
+=======
+  <div id="alert-modal" class="modal-container">
+    <div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 rounded-2xl shadow-xl w-full max-w-sm border border-light-border dark:border-dark-border">
+      <h3 id="alert-title" class="text-lg font-semibold mb-4"></h3>
+      <p id="alert-message" class="mb-4 text-light-text-subtle dark:text-dark-text-subtle"></p>
+      <div class="flex justify-end gap-2">
+        <button id="alert-ok-btn" class="px-4 py-2 rounded-md bg-accent text-white">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'https://fronix-html.onrender.com'; // Your Node.js backend URL
+    const config = { API_ENDPOINT: 'https://text.pollinations.ai/openai' };
+    const SUPABASE_URL = 'https://dfrlmrplshijbosawpms.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmcmxtcnBsc2hpamJvc2F3cG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzEzMDYsImV4cCI6MjA2ODg0NzMwNn0.BzsC5u2LGbq3QydQCAKnIiJvrRHTdjx3HzNGdCzf_ac';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Token validation utility functions
+    function isTokenExpired(token) {
+        if (!token) return true;
+        
+        try {
+            // Parse JWT token to check expiration
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const currentTime = Math.floor(Date.now() / 1000);
+            
+            // Check if token is expired (with 30 second buffer)
+            return payload.exp && (payload.exp - 30) < currentTime;
+        } catch (error) {
+            console.warn("Invalid token format:", error);
+            return true; // Consider invalid tokens as expired
+        }
+    }
+    
+    async function validateAndRefreshToken() {
+        let token = localStorage.getItem('authToken');
+        const refreshToken = localStorage.getItem('refreshToken');
+
+        if (!token) {
+            return null;
+        }
+
+        if (isTokenExpired(token)) {
+            console.log("Access token expired. Attempting to refresh...");
+            if (!refreshToken) {
+                console.log("No refresh token available. Logging out.");
+                localStorage.removeItem('authToken');
+                state.currentUser = null;
+                updateLoginStateUI();
+                return null;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to refresh token');
+                }
+
+                const { session } = await response.json();
+                localStorage.setItem('authToken', session.access_token);
+                localStorage.setItem('refreshToken', session.refresh_token);
+                token = session.access_token;
+                console.log("Token refreshed successfully.");
+            } catch (error) {
+                console.error("Failed to refresh token:", error);
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('refreshToken');
+                state.currentUser = null;
+                updateLoginStateUI();
+                return null;
+            }
+        }
+        
+        return token;
+    }
+    
+    // --- CORRECTED Sign In Function ---
+async function handleSignIn(email, password, retryCount = 0) {
+    if (!email || !password) {
+        alert("Please enter both your email and password.");
+        return;
+    }
+    const maxRetries = 2;
+    const signinBtn = document.getElementById('signin-email-btn');
+    const buttonText = signinBtn.querySelector('.button-text');
+    const spinner = signinBtn.querySelector('svg');
+
+    signinBtn.disabled = true;
+    buttonText.classList.add('hidden');
+    spinner.classList.remove('hidden');
+
+    try {
+        // This function CORRECTLY calls your backend, not the client library.
+        const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Unknown sign-in error');
+        }
+        // Manually set session in Supabase client to trigger onAuthStateChange
+        await supabaseClient.auth.setSession(data.session);
+        console.log('handleSignIn: Supabase session set.');
+        // The onAuthStateChange listener will now detect the login and handle the rest (localStorage, loadDataFromServer, UI updates).
+        openAlertModal('Success', 'You have successfully signed in.');
+        closeAllModals();
+
+    } catch (error) {
+        console.error("Sign-in failed:", error);
+        // Retry logic for network/fetch errors
+        if (retryCount < maxRetries && (error.message.includes('fetch failed') || error.message.includes('network'))) {
+            console.log(`Retrying sign-in attempt ${retryCount + 1}/${maxRetries + 1}...`);
+            setTimeout(() => {
+                handleSignIn(email, password, retryCount + 1);
+            }, 1000 * (retryCount + 1)); // Exponential backoff: 1s, 2s
+        } else {
+            openAlertModal('Sign-in Error', error.message);
+        }
+    } finally {
+        signinBtn.disabled = false;
+        buttonText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+    }
+}
+
+    // --- CORRECTED Sign Up Function ---
+async function handleSignUp(email, password) {
+    if (!email || !password) {
+        alert("Please provide both an email and a password.");
+        return;
+    }
+    if (password.length < 6) {
+        alert("Password must be at least 6 characters long.");
+        return;
+    }
+    try {
+        // This function CORRECTLY calls your backend.
+        const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Unknown sign-up error');
+        }
+        openAlertModal('Sign-up Successful', 'Please check your email for verification.');
+        closeAllModals();
+    } catch (error) {
+        console.error("Sign-up failed:", error);
+        openAlertModal('Sign-up Error', error.message);
+    }
+}
+
+    async function handleGoogleLogin() {
+        try {
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${API_BASE_URL}/api/auth/callback`
+                }
+            });
+            if (error) {
+                throw new Error('Supabase Google login failed: ' + error.message);
+            }
+        } catch (error) {
+            console.error("Error during Google login:", error);
+            openAlertModal('Google Login Error', error.message);
+        }
+    }
+
+function updateProfileUI() {
+    if (state.currentUser) {
+        elements.profileUsername.textContent = state.currentUser.username || 'User';
+        elements.profileEmail.textContent = state.currentUser.email;
+        elements.profilePlan.textContent = state.currentUser.plan || 'basic';
+        elements.profileBtnUsername.textContent = state.currentUser.username || 'User';
+    }
+}
+
+async function updateLoginStateUI() {
+    if (state.currentUser) {
+        elements.signinBtn.classList.add('hidden');
+        elements.profileSection.classList.remove('hidden');
+        elements.logoutBtn.classList.remove('hidden');
+    } else {
+        elements.signinBtn.classList.remove('hidden');
+        elements.profileSection.classList.add('hidden');
+        elements.logoutBtn.classList.add('hidden');
+    }
+}
+
+// Utility function for retry mechanism with exponential backoff
+async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            const isLastAttempt = attempt === maxRetries;
+            const isNetworkError = error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch');
+            const isServerError = error.status >= 500;
+            const shouldRetry = !isLastAttempt && (isNetworkError || isServerError);
+            
+            if (shouldRetry) {
+                const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff
+                console.log(`Attempt ${attempt} failed, retrying in ${delay}ms...`, error.message);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            } else {
+                throw error;
+            }
+        }
+    }
+}
+
+async function loadDataFromServer(retryCount = 0) {
+    if (isLoading) {
+        console.warn('[loadDataFromServer] Already in progress. Aborting new call.');
+        return;
+    }
+    isLoading = true;
+    console.log('[loadDataFromServer] Set isLoading = true');
+
+    try {
+        const maxRetries = 3;
+        let token = localStorage.getItem('authToken');
+        let isUserLoggedIn = !!state.currentUser; // Check if state.currentUser is populated
+
+        console.log(`[loadDataFromServer] START - isUserLoggedIn: ${isUserLoggedIn}, token present: ${!!token}`);
+
+        if (!isUserLoggedIn) {
+            // If not logged in, just update UI and return. Chats are loaded from localStorage in init.
+            updateLoginStateUI();
+            console.log('[loadDataFromServer] Not logged in. Returning.');
+            return;
+        }
+
+        if (!token) {
+            // This case should ideally not be reached if isUserLoggedIn is true, but as a safeguard
+            updateLoginStateUI();
+            console.log('[loadDataFromServer] Logged in but no token. Returning.');
+            return;
+        }
+
+        // Wrap the entire data loading process in retry mechanism
+        await retryWithBackoff(async () => {
+            console.log('[loadDataFromServer] Fetching user data...');
+            // Fetch user info first
+            const userResponse = await fetch(`${API_BASE_URL}/api/user/me`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+                cache: 'no-cache'
+            });
+
+            if (userResponse.status === 401 || userResponse.status === 403) {
+                console.error('[loadDataFromServer] Auth error fetching user data.');
+                throw new Error('AUTH_ERROR'); // Special error for authentication issues
+            }
+            if (!userResponse.ok) {
+                const error = new Error(`Failed to fetch user data. Status: ${userResponse.status}`);
+                error.status = userResponse.status;
+                console.error('[loadDataFromServer] Non-OK response fetching user data:', userResponse.status, userResponse.statusText);
+                throw error;
+            }
+            state.currentUser = await userResponse.json();
+            console.log('[loadDataFromServer] User data fetched:', JSON.parse(JSON.stringify(state.currentUser)));
+
+            console.log('[loadDataFromServer] Fetching chats...');
+            // Then fetch chats
+            const chatsResponse = await fetch(`${API_BASE_URL}/api/chat`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (chatsResponse.status === 401 || chatsResponse.status === 403) {
+                console.error('[loadDataFromServer] Auth error fetching chats.');
+                throw new Error('AUTH_ERROR');
+            }
+            if (!chatsResponse.ok) {
+                const error = new Error(`Failed to fetch chats. Status: ${chatsResponse.status}`);
+                error.status = chatsResponse.status;
+                console.error('[loadDataFromServer] Non-OK response fetching chats:', chatsResponse.status, chatsResponse.statusText);
+                throw error;
+            }
+            const chats = await chatsResponse.json();
+            state.chats = chats; // Store all chats
+            console.log('[loadDataFromServer] Chats fetched:', JSON.parse(JSON.stringify(state.chats)));
+
+            // Fetch messages for each chat
+            for (let i = 0; i < state.chats.length; i++) {
+                const chat = state.chats[i];
+                console.log(`[loadDataFromServer] Fetching messages for chat ${chat.id}...`);
+                const messagesResponse = await fetch(`${API_BASE_URL}/api/chat/${chat.id}/messages`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (messagesResponse.status === 401 || messagesResponse.status === 403) {
+                    console.error(`[loadDataFromServer] Auth error fetching messages for chat ${chat.id}.`);
+                    throw new Error('AUTH_ERROR');
+                }
+                if (!messagesResponse.ok) {
+                    const error = new Error(`Failed to fetch messages for chat ${chat.id}. Status: ${messagesResponse.status}`);
+                    error.status = messagesResponse.status;
+                    console.error(`[loadDataFromServer] Non-OK response fetching messages for chat ${chat.id}:`, messagesResponse.status, messagesResponse.statusText);
+                    throw error;
+                }
+                const messages = await messagesResponse.json();
+                chat.messages = Array.isArray(messages.messages) ? messages.messages : []; // Ensure it's an array
+                console.log(`[loadDataFromServer] Messages for chat ${chat.id} fetched:`, JSON.parse(JSON.stringify(chat.messages)));
+            }
+
+            // Set active chat to the newest chat or create a new one
+            if (state.chats.length > 0) {
+                state.activeId = state.chats[0].id; // Always select the newest chat
+                console.log('[loadDataFromServer] Active chat set to newest:', state.activeId);
+            } else {
+                // If no chats exist, create a new one
+                console.log('[loadDataFromServer] No chats found, creating new chat...');
+                await handleNewChat();
+                return; // handleNewChat will set activeId and render
+            }
+        });
+
+        // If we get here, everything succeeded
+        saveState(); // Cache the newly fetched data
+        console.log('[loadDataFromServer] Data loaded successfully. Current state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+        console.log('[loadDataFromServer] Current state.activeId:', state.activeId);
+        renderSidebar();
+        renderChat();
+
+    } catch (error) {
+        console.error("[loadDataFromServer] Error loading data from server:", error);
+        
+        // Only clear token and sign out on authentication errors
+        if (error.message === 'AUTH_ERROR') {
+            openAlertModal('Session Expired', 'Your session has expired. Please sign in again.');
+            localStorage.removeItem('authToken');
+            state.currentUser = null;
+            updateLoginStateUI(); // Ensure UI is updated on auth error
+            updateProfileUI();
+        } else {
+            // For network/server errors, just show a warning but keep user signed in
+            console.warn('[loadDataFromServer] Temporary network issue:', error.message);
+            // Don't alert for temporary issues, just log them
+        }
+    } finally {
+        isLoading = false;
+        console.log('[loadDataFromServer] Set isLoading = false in finally block.');
+        updateLoginStateUI();
+        updateProfileUI();
+        console.log('[loadDataFromServer] Finished. Final state.activeId:', state.activeId);
+    }
+}
+// ++ ADD THIS NEW FUNCTION TO YOUR SCRIPT ++
+async function handleNewChat() {
+    const token = localStorage.getItem('authToken');
+    const isUserLoggedIn = !!state.currentUser; // Check if state.currentUser is populated
+    const FREE_MODELS = Object.keys(MODELS).filter(key => MODELS[key].free);
+    const MAX_LOCAL_CHATS = 5;
+
+    if (!isUserLoggedIn) {
+        // Unauthenticated user
+        if (state.chats.length >= MAX_LOCAL_CHATS) {
+            openAlertModal('Trial Limit Reached', `You can create up to ${MAX_LOCAL_CHATS} chats without logging in. Please sign in to create more.`);
+            return;
+        }
+        if (!FREE_MODELS.includes(state.settings.model)) {
+            openAlertModal('Model Restricted', `Only ${MODELS[FREE_MODELS[0]].name} and other free models are available for trial users. Please sign in to use other models. Switching to ${MODELS[FREE_MODELS[0]].name}.`);
+            // Switch to a free model if a restricted model was selected
+            const defaultFreeModel = FREE_MODELS[0];
+            state.settings.model = defaultFreeModel;
+            saveState();
+            updateModelSelectorDisplay();
+            renderModelDropdown();
+            return;
+        }
+    } else if (!token) {
+        // Logged in user but no token (shouldn't happen with proper flow, but as a safeguard)
+        openAlertModal('Authentication Required', 'Please sign in to create a new chat.');
+        return;
+    }
+
+    // Optimistically create a new chat object with a temporary ID
+    const tempChatId = `temp-${Date.now()}`;
+    const newChat = {
+        id: tempChatId,
+        title: 'New Chat',
+        messages: [],
+        model: state.settings.model // Default model
+    };
+
+    // Add the new chat to the state and set it as active
+    console.log('[handleNewChat] Optimistically adding new chat:', newChat);
+    state.chats.unshift(newChat);
+    setActive(tempChatId);
+    renderSidebar(); // Update sidebar immediately
+    renderChat(); // Render empty chat immediately
+    saveState();
+    console.log('[handleNewChat] State after optimistic add. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+    console.log('[handleNewChat] State after optimistic add. state.activeId:', state.activeId);
+
+    if (isUserLoggedIn) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/chat`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ title: 'New Chat' })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create chat on server');
+            }
+
+            const newChatFromServer = await response.json();
+            newChatFromServer.messages = []; // Initialize with an empty messages array
+
+            // Find the optimistically added chat and update its real ID
+            const index = state.chats.findIndex(chat => chat.id === tempChatId);
+            if (index !== -1) {
+                state.chats[index].id = newChatFromServer.id;
+                state.chats[index].created_at = newChatFromServer.created_at; // Update timestamp if needed
+                state.activeId = newChatFromServer.id; // Ensure activeId is the real one
+            } else {
+                // Fallback if optimistic chat not found (shouldn't happen)
+                state.chats.unshift(newChatFromServer);
+                state.activeId = newChatFromServer.id;
+            }
+            
+            console.log('[handleNewChat] New chat created on server:', newChatFromServer);
+            
+            renderSidebar(); // Re-render to update ID in sidebar
+            saveState(); // Save state with real ID
+            console.log('[handleNewChat] State after successful backend save. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+            console.log('[handleNewChat] State after successful backend save. state.activeId:', state.activeId);
+
+        } catch (error) {
+            console.error("[handleNewChat] Error creating new chat:", error);
+            openAlertModal('Error', 'Could not create a new chat. Please try again.');
+
+            // Revert optimistic update on error
+            const index = state.chats.findIndex(chat => chat.id === tempChatId);
+            if (index !== -1) {
+                state.chats.splice(index, 1); // Remove optimistic chat
+                // If the deleted chat was active, set a new active chat
+                if (state.activeId === tempChatId) {
+                    state.activeId = state.chats.length > 0 ? state.chats[0].id : null;
+                }
+                renderSidebar(); // Re-render sidebar after removal
+                renderChat(); // Re-render chat area
+                saveState();
+                console.log('[handleNewChat] State after error rollback. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+                console.log('[handleNewChat] State after error rollback. state.activeId:', state.activeId);
+            }
+        }
+    }
+}
+
+    
+
+    function getDeviceType() {
+        const userAgent = navigator.userAgent;
+        if (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|rim)|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(userAgent) || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|az(w|x)|be(ck|qr|dc)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(is|eo)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(ad|in|u2)|er(ic|k0)|esl |ez([4-7]0|os|wa|ze)|fetc|fly(\-| _)|g1 u|g560|gene|gf\-5|g\-mo|go(\.(w|od))|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ts)|ice( ss|sh)|iq(mo|yr)|ir(ad|ie|v )|kodo|ko(pf|pn)|kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|mc)|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|ad|ll|tx|up|vl|wi)|mt(50|p1|v )|mwbp|nc(ar|et|wi)|ne(on|vl|im)|ng(01|02|ui|vm|ro)|nl(ec|xp|mw)|ol(o|ad)|owg1|ox(ad|ev)|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(78|12|21|32|60|\-[2-7]|i\-)|'s(at|ti|un)|rd(fr|lo)|re(ad|ie|zg)|rkt |rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|pn|si)|sch(01|mc)|sec(47|65)|send|serg|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|20)|t7(70|50)|tap(a|g)|'t(ap|ym)|tdg\-|tel(i|m)|tfw |tg(wt|lk)|ti(\-|v|ar)|tk(ad|pt)|tp(av|ow)|tr(ig|sy)|ts(70|m\-|p[ad])|twg1|u c9|u eg|u h(op|pk)|ul(ad|eg|em)|up(\.(b|ul1))|v(?:rgv|us)|w(?:a(?:tud|cd)|es(?:c[4-6]|s[89])|v(?:g[02]|sm)|bl)|wi(mp|ty)|wk(at|if)|xant|xtg1|z(?:pmo|qz)|zymo/i.test(userAgent.substr(0, 4))) {
+            return "mobile";
+        } else {
+            return "desktop";
+        }
+    }
+    let MODELS = {};
+
+    const SYSTEM_PROMPT_BASE = `You are Fronix, a large language model. This means most of the time your lines should be a sentence or two, unless the user's request requires reasoning or long-form outputs. Never use emojis, unless explicitly asked to. 
+Knowledge cutoff: 2024-06
+Current date: 2025-05-15
+
+Image input capabilities: Enabled
+Personality: v2
+Over the course of the conversation, you adapt to the user's tone and preference. Try to match the user's vibe, tone, and generally how they are speaking. You want the conversation to feel natural. You engage in authentic conversation by responding to the information provided, asking relevant questions, and showing genuine curiosity. If natural, continue the conversation with casual conversation.
+`
+
+    async function loadAvailableModels() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/ai/models`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch available models');
+            }
+            MODELS = await response.json();
+            renderModelDropdown();
+        } catch (error) {
+            console.error('Error loading available models:', error);
+            // Fallback to a default model list if the API fails
+            MODELS = {
+                'openai-large': { name: 'OpenAI GPT-4.1', type: 'text', free: true, speed: null, fast: false }
+            }; // Ensure default fallback model has speed and fast properties
+            renderModelDropdown();
+        }
+    }
+
+    const elements = {
+      body: document.body, sidebar: document.getElementById('sidebar'), sidebarOverlay: document.getElementById('sidebar-overlay'), chatList: document.getElementById('chat-list'), chatBox: document.getElementById('chat-box'), chatTitle: document.getElementById('chat-title'), userInput: document.getElementById('user-input'), sendBtn: document.getElementById('send-btn'), sendIcon: document.getElementById('send-icon'), stopIcon: document.getElementById('stop-icon'), saveIcon: document.getElementById('save-icon'), newChatBtn: document.getElementById('new-chat'), toggleSidebarBtn: document.getElementById('toggle-sidebar'), themeToggleBtn: document.getElementById('theme-toggle'), settingsBtn: document.getElementById('settings-btn'),
+      signinBtn: document.getElementById('signin-btn'),
+      logoutBtn: document.getElementById('logout-btn'),
+      profileSection: document.getElementById('profile-section'),
+      profileBtn: document.getElementById('profile-btn'),
+      profileDropdown: document.getElementById('profile-dropdown'),
+      profileUsername: document.getElementById('profile-username'),
+      profileEmail: document.getElementById('profile-email'),
+      profilePlan: document.getElementById('profile-plan'),
+      profileBtnUsername: document.getElementById('profile-btn-username'),
+      modelSelector: document.getElementById('model-selector'), modelDropdown: document.getElementById('model-dropdown'),
+      chatActionsDropdown: document.getElementById('chat-actions-dropdown'),
+      editIndicator: document.getElementById('edit-indicator'),
+      cancelEditBtn: document.getElementById('cancel-edit-btn'),
+      scrollToBottomBtn: document.getElementById('scroll-to-bottom-btn'), // Added scroll to bottom button
+      autocompleteSuggestions: document.getElementById('autocomplete-suggestions'), // Added for autocomplete
+      studyCommandBtn: document.getElementById('study-command-btn'), // Added for study command autocomplete
+      settingsModal: { container: document.getElementById('settings-modal'), fontOptions: document.getElementById('font-options'), fontWeightOptions: document.getElementById('font-weight-options'), closeBtn: document.getElementById('close-settings-btn'), resetBtn: document.getElementById('reset-settings-btn'), apiTokenInput: document.getElementById('api-token-input'), proModelsToggle: document.getElementById('pro-models-toggle') },
+      renameModal: { container: document.getElementById('rename-modal'), input: document.getElementById('rename-input'), saveBtn: document.getElementById('rename-save'), cancelBtn: document.getElementById('rename-cancel') },
+      deleteModal: { container: document.getElementById('delete-modal'), message: document.getElementById('delete-message'), confirmBtn: document.getElementById('delete-confirm'), cancelBtn: document.getElementById('delete-cancel') },
+      signinModal: { container: document.getElementById('signin-modal'), closeBtn: document.getElementById('close-signin-btn') },
+      alertModal: {
+        container: document.getElementById('alert-modal'),
+        title: document.getElementById('alert-title'),
+        message: document.getElementById('alert-message'),
+        okBtn: document.getElementById('alert-ok-btn')
+      },
+    };
+
+    let state = { chats: [], activeId: null, editingMessage: null, modalContext: {}, settings: { model: 'openai-large', font: 'inter', fontWeight: '400', apiToken: '', proModelsEnabled: false }, currentUser: null };
+    let currentController = null; // For aborting fetch requests
+    let isStreaming = false; // Flag to indicate if streaming is active
+    let isLoading = false; // Flag to prevent concurrent data loads
+    let isScrolledUp = false; // Flag to indicate if the user has scrolled up
+    let isGeneratingTitle = false; // Flag to indicate if title generation is in progress
+    let attachedImageData = null; // To store { file, dataUrl }
+
+    // New function to update the state of the send button
+    function updateSendButtonState() {
+        const userInputEmpty = elements.userInput.value.trim() === '';
+        if (isStreaming) {
+            elements.sendBtn.disabled = false; // Always enabled as a stop button during streaming
+        } else {
+            // Button is disabled if input is empty OR title is generating.
+            // If AI response just finished, and input is empty, the button should still be enabled.
+            elements.sendBtn.disabled = isGeneratingTitle; // Only disabled if title is generating
+        }
+    }
+    const FONTS = { 'inter': 'Inter', 'sans-serif': 'Sans Serif', 'work-sans': 'Work Sans', 'yu-gothic': 'Yu Gothic' };
+    const FONT_WEIGHTS = { '300': 'Thin', '400': 'Regular', '500': 'Medium', '600': 'Semibold', '700': 'Bold' };
+
+    const createChat = (title = 'New Chat') => ({ id: Date.now().toString(), title, messages: [], model: state.settings.model });
+    const saveState = () => {
+        localStorage.setItem('fronixState', JSON.stringify({ settings: state.settings, currentUser: state.currentUser }));
+        localStorage.setItem('fronixChats', JSON.stringify(state.chats));
+        localStorage.setItem('lastActiveChatId', state.activeId); // Persist active chat ID
+    };
+    const loadState = () => {};
+
+    marked.setOptions({
+        highlight: function(code, lang) {
+            const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+            return hljs.highlight(code, { language }).value;
+        },
+        langPrefix: 'hljs language-'
+    });
+
+    function renderContent(text) { if (!text) return ''; let html = marked.parse(text, { breaks: true, gfm: true }); return html; }
+    function renderStreamingContent(text) { if (!text) return ''; let html = marked.parseInline(text, { breaks: true, gfm: true }); return html; }
+
+    function renderSidebar() {
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        elements.chatList.innerHTML = '';
+        state.chats.forEach(chat => {
+            const isActive = chat.id === state.activeId;
+            let li = document.createElement('li');
+            li.className = `group w-full flex items-center justify-between px-4 py-2 rounded-lg cursor-pointer transition-colors relative ${isActive ? 'bg-light-border-active dark:bg-dark-border-active' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`;
+            
+            let actionsHtml;
+            if (isTouchDevice) {
+                actionsHtml = `<button class="chat-actions-btn p-1 text-light-text-subtle hover:text-light-text dark:hover:text-dark-text rounded"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></button>`;
+            } else {
+                actionsHtml = `<div class="sidebar-item-actions flex-shrink-0 flex items-center gap-1">
+                    <button class="rename-btn p-1 text-light-text-subtle hover:text-light-text dark:hover:text-dark-text rounded"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button>
+                    <button class="delete-btn p-1 text-light-text-subtle hover:text-red-500 rounded"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
+                </div>`;
+            }
+
+            li.innerHTML = `<span class="truncate text-sm font-medium">${chat.title}</span>${actionsHtml}`;
+            
+            li.addEventListener('click', () => {
+                setActive(chat.id);
+                if (window.innerWidth < 768) {
+                    toggleSidebar();
+                }
+            });
+
+            const renameBtn = li.querySelector('.rename-btn');
+            if (renameBtn) {
+                renameBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openRenameModal(chat.id);
+                });
+            }
+
+            const deleteBtn = li.querySelector('.delete-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openDeleteModal(chat.id);
+                });
+            }
+
+            const actionsBtn = li.querySelector('.chat-actions-btn');
+            if (actionsBtn) {
+                actionsBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openChatActionsDropdown(chat.id, e.currentTarget);
+                });
+            }
+            elements.chatList.appendChild(li);
+        });
+    }
+
+    function setActive(id) {
+        console.log(`[setActive] Attempting to set active chat to ID: ${id}`);
+        if (state.editingMessage) {
+            console.log('[setActive] Exiting edit mode before changing chat.');
+            exitEditMode();
+        }
+        state.activeId = id;
+        const chat = state.chats.find(c => c.id === id);
+        if (chat) {
+            state.settings.model = chat.model || 'openai';
+            console.log(`[setActive] Chat found. Setting model to: ${state.settings.model}`);
+        } else {
+            state.activeId = null;
+            console.log(`[setActive] Chat with ID ${id} not found. Setting activeId to null.`);
+        }
+        updateModelSelectorDisplay();
+        renderModelDropdown();
+        console.log(`[setActive] Calling renderSidebar and renderChat for chat ID: ${state.activeId}`);
+        renderSidebar();
+        renderChat(); // This will now use the messages already loaded in state.chats
+        saveState();
+        console.log(`[setActive] Active chat set to: ${state.activeId}. State saved.`);
+    }
+    
+// Place this function where your current addMessage is.
+function addMessage(role, content, customId = null) {
+    const chat = state.chats.find(c => c.id === state.activeId);
+    if (!chat) return;
+    
+    // Initialize messages array if it doesn't exist
+    if (!chat.messages) {
+        chat.messages = [];
+    }
+    
+    const message = { role, content };
+    if (customId) {
+        message.id = customId; // Add the custom ID if provided
+    }
+    chat.messages.push(message);
+    console.log('[addMessage] Message added. Chat messages (after push):', JSON.parse(JSON.stringify(chat.messages))); // Deep copy for logging
+    renderChat(); // RenderChat will now correctly use the ID
+    saveState();
+    console.log('[addMessage] State saved after adding message. Current chat messages:', JSON.parse(JSON.stringify(chat.messages))); // Deep copy for logging
+};
+
+// Place this function where your current renderChat is.
+// ... inside your <script> tag ...
+
+// Place this function where your current renderChat is.
+function renderChat() {
+    const chat = state.chats.find(c => c.id === state.activeId);
+    elements.chatBox.innerHTML = '';
+
+    // CORRECTED CHECK: First, verify a chat exists. If not, show the welcome screen and exit.
+    // This prevents any further code from running with an undefined 'chat' object.
+    if (!chat) {
+        elements.chatBox.innerHTML = `<div class="text-center text-light-text-subtle dark:text-dark-text-subtle py-8"><h2 class="text-3xl font-bold mb-2">Fronix</h2><p>Start a new message to begin.</p></div>`;
+        return;
+    }
+    
+    // SECOND CHECK: If the chat exists but messages haven't been loaded yet, show welcome screen.
+    if (!chat.messages || chat.messages.length === 0) {
+        elements.chatBox.innerHTML = `<div class="text-center text-light-text-subtle dark:text-dark-text-subtle py-8"><h2 class="text-3xl font-bold mb-2">Fronix</h2><p>Start a new message to begin.</p></div>`;
+        return;
+    }
+
+    // The rest of the function remains the same, but is now safe to run.
+    chat.messages.forEach((msg, index) => {
+        const wrapper = document.createElement('div');
+        const msgDiv = document.createElement('div');
+        
+        if (msg.id) {
+            msgDiv.id = msg.id;
+        }
+
+        const isUser = msg.role === 'user';
+
+        if (isUser) {
+            msgDiv.className = 'ml-auto w-fit max-w-[90%]';
+            
+            // Parse content if it's a JSON string from database
+            let content = msg.content;
+            if (typeof content === 'string' && (content.startsWith('[') || content.startsWith('{'))) {
+                try {
+                    content = JSON.parse(content);
+                } catch (e) {
+                    // If parsing fails, treat as regular text
+                    content = msg.content;
+                }
+            }
+            
+            if (Array.isArray(content)) {
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'p-4 rounded-2xl bg-light-user-bubble dark:bg-dark-user-bubble flex flex-col gap-3';
+                content.forEach(part => {
+                    if (part.type === 'text' && part.text) {
+                        const p = document.createElement('p');
+                        p.className = 'whitespace-pre-wrap';
+                        p.textContent = part.text;
+                        contentWrapper.appendChild(p);
+                    } else if (part.type === 'image_url') {
+                        const img = document.createElement('img');
+                        img.src = part.image_url.url;
+                        img.className = 'w-48 h-auto rounded-lg cursor-pointer';
+                        img.onclick = () => window.open(part.image_url.url, '_blank');
+                        contentWrapper.appendChild(img);
+                    }
+                });
+                msgDiv.appendChild(contentWrapper);
+            } else {
+                msgDiv.classList.add('p-4', 'rounded-2xl', 'bg-light-user-bubble', 'dark:bg-dark-user-bubble');
+                const p = document.createElement('p');
+                p.className = 'whitespace-pre-wrap';
+                p.textContent = content;
+                msgDiv.appendChild(p);
+            }
+        } else {
+            msgDiv.className = 'prose prose-sm md:prose-base max-w-none text-light-text dark:text-dark-text';
+            if (msg.content === '...') {
+                msgDiv.innerHTML = `<div class="flex items-center space-x-1.5">${Array(3).fill().map(() => `<div class="loader-dot w-2 h-2 bg-gray-400 rounded-full"></div>`).join('')}</div>`;
+            } else {
+                msgDiv.innerHTML = renderContent(msg.content);
+            }
+            renderMathInElement(msgDiv, {
+                delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+            });
+        }
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = `flex gap-2 mt-2 items-center text-light-text-subtle dark:text-dark-text-subtle ${isUser ? 'justify-end' : 'justify-start'}`;
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors';
+        copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+        copyBtn.onclick = () => copyMessage(msg.content, copyBtn);
+        actionsDiv.appendChild(copyBtn);
+
+        if (isUser) {
+            const editBtn = document.createElement('button');
+            editBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors';
+            editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`;
+            editBtn.onclick = () => enterEditMode(chat.id, index);
+            actionsDiv.appendChild(editBtn);
+        }
+
+        wrapper.appendChild(msgDiv);
+        wrapper.appendChild(actionsDiv);
+        elements.chatBox.appendChild(wrapper);
+    });
+    elements.chatBox.parentElement.scrollTop = elements.chatBox.parentElement.scrollHeight;
+};
+// Function to scroll to the bottom of the chat
+function scrollToBottom() {
+    elements.chatBox.parentElement.scrollTo({
+        top: elements.chatBox.parentElement.scrollHeight,
+        behavior: 'smooth'
+    });
+}
+
+async function sendMessage() {
+    const userInput = elements.userInput.value.trim();
+    const activeChat = state.chats.find(c => c.id === state.activeId);
+    console.log(`[sendMessage] Start: isStreaming = ${isStreaming}, isGeneratingTitle = ${isGeneratingTitle}`);
+    if ((!userInput && !attachedImageData) || !activeChat || isStreaming || isGeneratingTitle) {
+        console.log(`[sendMessage] Aborting due to input/chat/streaming/title gen state. isStreaming = ${isStreaming}, isGeneratingTitle = ${isGeneratingTitle}`);
+        return;
+    }
+
+    const isUserLoggedIn = !!state.currentUser;
+    let token = null;
+    if (isUserLoggedIn) {
+        token = await validateAndRefreshToken();
+        if (!token) {
+            openAlertModal('Session Expired', 'Your session has expired. Please sign in again.');
+            setTimeout(() => {
+                animateModalOpen(elements.signinModal.container);
+            }, 1000);
+            return;
+        }
+    }
+
+    const isStudyMode = activeChat.study_mode; // Declare isStudyMode
+    const studyModePrompt = `Your general tone should be supportive and encouraging, like a tutor. When you provide explanations, try to simplify complex topics, break them down into smaller, digestible pieces, and offer analogies if appropriate. Always encourage the user to ask questions and explore further. Your goal is to foster understanding, not just provide answers.`; // Define studyModePrompt
+
+    // Handle /study command
+    if (userInput.trim().startsWith('/study')) {
+        const command = userInput.trim().split(' ')[0];
+        if (command === '/study') {
+            elements.userInput.value = '';
+            elements.userInput.style.height = 'auto';
+            addMessage('user', '/study'); // Add user's command to chat history
+
+            const originalStudyMode = activeChat.study_mode; // Store original for rollback
+            const newStudyModeStatus = !originalStudyMode;
+
+            // Optimistically update study_mode status
+            activeChat.study_mode = newStudyModeStatus;
+            saveState();
+            addMessage('assistant', `📚 Study mode ${newStudyModeStatus ? 'enabled' : 'disabled'}.`); // Optimistic system message
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/chat/${activeChat.id}/toggle-study-mode`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to toggle study mode.');
+                }
+                // No further UI updates needed for success, as it was handled optimistically
+                console.log(`Study mode toggled successfully to: ${data.study_mode}`);
+
+            } catch (error) {
+                console.error("Error toggling study mode:", error);
+                openAlertModal('Error', `Failed to toggle study mode: ${error.message}`);
+
+                // Revert optimistic UI update on error
+                activeChat.study_mode = originalStudyMode;
+                saveState();
+                // Optionally remove the optimistic system message, or add a new error message
+                // For simplicity, we'll add a new error message
+                addMessage('assistant', `⚠️ Failed to toggle study mode. Reverting to ${originalStudyMode ? 'enabled' : 'disabled'}.`);
+            } finally {
+                // Reset UI elements after command execution (ensure they are always re-enabled)
+                elements.sendIcon.classList.remove('hidden');
+                elements.stopIcon.classList.add('hidden');
+                elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
+                updateSendButtonState(); // Update button state
+                elements.userInput.disabled = false; // Ensure user input is re-enabled
+                isStreaming = false;
+            }
+            return; // Exit sendMessage function after handling /study command
+        }
+    }
+
+    let messagesForAI = JSON.parse(JSON.stringify(activeChat.messages));
+    
+    let fullSystemPrompt = SYSTEM_PROMPT_BASE;
+    fullSystemPrompt += ` You are chatting with the user via the Fronix ${getDeviceType()} app.`;
+    if (state.settings.model) {
+        fullSystemPrompt += ` You are currently using the ${MODELS[state.settings.model]?.name || 'selected'} model.`;
+    }
+
+    if (isStudyMode && studyModePrompt) {
+        fullSystemPrompt += `
+
+${studyModePrompt}`;
+    }
+    messagesForAI.unshift({ role: 'system', content: fullSystemPrompt });
+
+    // Call updateSendButtonState at the start of sendMessage (after /study handling)
+    updateSendButtonState();
+
+    elements.sendIcon.classList.add('hidden');
+    elements.stopIcon.classList.remove('hidden');
+    elements.sendBtn.classList.remove('bg-accent', 'hover:bg-accent-hover');
+    elements.sendBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+    // elements.sendBtn.disabled = true; // No longer disable here, managed by updateSendButtonState
+    // elements.userInput.disabled = true; // User input should not be disabled
+    elements.userInput.value = '';
+    elements.userInput.style.height = 'auto';
+    isStreaming = true; // Indicate that AI is streaming (moved here)
+    
+    // Format user message with image if attached
+    let userMessageContent;
+    if (attachedImageData) {
+        userMessageContent = [
+            { type: 'text', text: userInput },
+            {
+                type: 'image_url',
+                image_url: {
+                    url: attachedImageData.dataUrl
+                }
+            }
+        ];
+    } else {
+        userMessageContent = userInput;
+    }
+    
+    const userMessageObj = { role: 'user', content: userMessageContent };
+    const assistantMessageObj = { role: 'assistant', content: '...', id: 'assistant-msg-' + Date.now() }; // Temporary ID for placeholder
+
+    // Optimistically add user and assistant placeholder messages
+    activeChat.messages.push(userMessageObj);
+    activeChat.messages.push(assistantMessageObj);
+    console.log('[sendMessage] Messages optimistically added. activeChat.messages (after push):', JSON.parse(JSON.stringify(activeChat.messages))); // Deep copy for logging
+    renderChat(); // Render immediately with new messages
+    scrollToBottom();
+
+    // Clear attached image immediately after adding to chat history
+    if (attachedImageData) {
+        attachedImageData = null;
+        document.getElementById('image-upload').value = null;
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        imagePreviewContainer.innerHTML = '';
+        imagePreviewContainer.classList.add('hidden');
+    }
+    
+    const assistantMsgDiv = document.getElementById(assistantMessageObj.id); // Get the placeholder div
+    
+    currentController = new AbortController();
+    let fullResponse = "";
+
+    try {
+        // Detect model type and route accordingly
+        const currentModel = activeChat.model || state.settings.model || 'openai-large'; // Ensure a default model
+        const modelData = MODELS[currentModel] || { name: 'OpenAI (Default)', type: 'text', pro: false }; // Ensure default modelData
+        const isImageModel = modelData.type === 'image';
+
+        // The backend now handles the `isUserLoggedIn` and `modelData.pro` check for streaming responses.
+        // If there's an error, it will be sent as `data: [ERROR]` in the stream.
+        
+        console.log('🔍 Current model for request:', currentModel);
+        console.log('🔍 Model data:', modelData);
+        console.log('🔍 Is image model:', isImageModel);
+        
+        let response;
+        if (isImageModel) {
+            // Route to image generation API
+            console.log('🎨 Routing to image generation API for model:', currentModel);
+            response = await fetch(`${API_BASE_URL}/api/ai/images/generations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                signal: currentController.signal,
+                body: JSON.stringify({
+                    model: currentModel,
+                    prompt: userInput,
+                    n: 1,
+                    size: '1024x1024',
+                    quality: 'standard',
+                    response_format: 'url'
+                }),
+            });
+        } else {
+            // Route to text chat API
+            console.log('💬 Routing to text chat API for model:', currentModel);
+            response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                signal: currentController.signal,
+                body: JSON.stringify({
+                    model: currentModel,
+                    messages: activeChat.messages,
+                    chatId: activeChat.id // Pass chatId for study mode check
+                }),
+            });
+        }
+
+        if (!response.ok) {
+            if (!response.ok) {
+                let errorMessage = 'Failed to get response from AI service.';
+                // Enhanced error logging for failed requests
+                console.error("❌ FRONTEND HTTP Error Response:");
+                console.error("  - Status:", response.status);
+                console.error("  - Status Text:", response.statusText);
+                console.error("  - Headers:", Object.fromEntries(response.headers.entries()));
+                console.error("  - URL:", response.url);
+                // Try to read response body for detailed error
+                let responseBody = null;
+                try {
+                    const responseText = await response.text();
+                    console.error("  - Response Body (text):", responseText);
+                    // Try to parse as JSON
+                    try {
+                        responseBody = JSON.parse(responseText);
+                        console.error("  - Response Body (parsed):", responseBody);
+                    } catch (parseError) {
+                        console.error("  - Response Body (not JSON):", responseText);
+                    }
+                } catch (readError) {
+                    console.error("  - Could not read response body:", readError);
+                }
+                // Handle different HTTP status codes
+                if (response.status === 401 || response.status === 403) {
+                    errorMessage = 'Invalid or expired token';
+                } else {
+                    try {
+                        errorMessage = responseBody?.error || responseText || `HTTP ${response.status}: ${response.statusText}`;
+                    } catch (e) {
+                        // If we can't parse the error response, use default message
+                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                }
+                throw new Error(errorMessage);
+            }
+        }
+
+        if (isImageModel) {
+            // Handle image generation response (not streaming)
+            const imageData = await response.json();
+            console.log('🎨 Image generation response:', imageData);
+            if (imageData.data && imageData.data.length > 0) {
+                const imageUrl = imageData.data[0].url;
+                const revisedPrompt = imageData.data[0].revised_prompt;
+                fullResponse = `![Generated Image](${imageUrl})`;
+                if (revisedPrompt && revisedPrompt !== userInput) {
+                    fullResponse += `\n\n*Revised prompt: ${revisedPrompt}*`;
+                }
+                assistantMsgDiv.innerHTML = renderContent(fullResponse);
+            } else {
+                throw new Error('No image data received from API');
+            }
+        } else {
+            // Handle text streaming response
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                
+                // Keep the last incomplete line in the buffer
+                buffer = lines.pop() || '';
+                
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine) continue;
+                    
+                    if (trimmedLine === 'data: [DONE]') {
+                        // Stream completed
+                        break;
+                    }
+                    
+                    if (trimmedLine.startsWith('data: ')) {
+                        try {
+                            const jsonStr = trimmedLine.slice(6); // Remove 'data: ' prefix
+                            const data = JSON.parse(jsonStr);
+                            
+                            // Extract content from choices[0].delta.content
+                            if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                                const content = data.choices[0].delta.content;
+                                fullResponse += content;
+                                assistantMsgDiv.innerHTML = renderStreamingContent(fullResponse + '<span class="blinking-cursor"></span>');
+                                scrollToBottom();
+                            }
+                        } catch (error) {
+                            console.warn('Failed to parse streaming chunk:', trimmedLine, error);
+                        }
+                    }
+                     else if (trimmedLine.startsWith('data: [ERROR]')) {
+                        const errorMessage = trimmedLine.slice(13).trim(); // Remove 'data: [ERROR]' prefix
+                        console.error('Stream error from backend:', errorMessage);
+                        fullResponse += `\n\n⚠️ Error: ${errorMessage}`; // Append error to response
+                        assistantMsgDiv.innerHTML = renderContent(fullResponse);
+                        // Optionally, revert the model to a free one if it was a pro model restriction
+                        if (errorMessage.includes('Pro models are not enabled') || errorMessage.includes('need a pro plan')) {
+                            const defaultFreeModel = Object.keys(MODELS).find(key => MODELS[key].free && MODELS[key].type === 'text');
+                            if (defaultFreeModel) {
+                                state.settings.model = defaultFreeModel;
+                                const activeChat = state.chats.find(c => c.id === state.activeId);
+                                if (activeChat) activeChat.model = defaultFreeModel;
+                                saveState();
+                                updateModelSelectorDisplay();
+                                renderModelDropdown();
+                                openAlertModal('Model Changed', `Switched to ${MODELS[defaultFreeModel].name} as the previously selected model requires a pro plan or is disabled.`);
+                            }
+                        }
+                        break; // Stop processing further stream data
+                    }
+                }
+            }
+
+            // Update the content of the optimistic assistant message
+            assistantMessageObj.content = fullResponse;
+            // Update the actual message in state.chats after stream completes
+            const currentChat = state.chats.find(c => c.id === activeChat.id);
+            if (currentChat) {
+                const messageToUpdate = currentChat.messages.find(m => m.id === assistantMessageObj.id);
+                if (messageToUpdate) {
+                    messageToUpdate.content = fullResponse;
+                    delete messageToUpdate.id; // Remove temporary ID
+                }
+            }
+            saveState(); // Save state after content is fully received
+            console.log('[sendMessage] State updated after AI stream completion. activeChat.messages (after update):', JSON.parse(JSON.stringify(activeChat.messages))); // Deep copy for logging
+
+            assistantMsgDiv.innerHTML = renderContent(fullResponse);
+            renderMathInElement(assistantMsgDiv);
+        }
+
+        // Reset streaming state and button BEFORE title generation
+        isStreaming = false;
+        elements.stopIcon.classList.add('hidden');
+        elements.sendIcon.classList.remove('hidden');
+        elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+        elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
+        updateSendButtonState(); // Re-enable the button using the new function
+        elements.userInput.disabled = false; // Re-enable user input
+        currentController = null;
+
+        // Save messages to backend AFTER AI response is complete and processed
+        // This is now in its own try-catch block to prevent aggressive rollback on save failures.
+        try {
+            // Find the actual user and assistant messages that were just sent/received
+            const lastUserMessage = activeChat.messages.findLast(m => m.role === 'user');
+            const lastAssistantMessage = activeChat.messages.findLast(m => m.role === 'assistant');
+
+            const saveResponse = await fetch(`${API_BASE_URL}/api/chat/${activeChat.id}/save-messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    userMessage: lastUserMessage,
+                    assistantMessage: lastAssistantMessage
+                })
+            });
+            const data = await saveResponse.json(); // Parse response to JSON here
+
+            if (!saveResponse.ok) {
+                console.error("❌ FRONTEND: Failed to save messages to backend:", data);
+                // Do NOT throw error here, just log. UI should not revert.
+                // Optionally, display a subtle "failed to save" message to user.
+            } else {
+                console.log("✅ Messages successfully saved to backend.");
+                // Check if a new title was generated and returned
+                if (data.generatedTitle) {
+                    activeChat.title = data.generatedTitle;
+                    renderSidebar(); // Re-render sidebar to show the new title
+                    saveState(); // Save the new title to localStorage
+                    console.log(`📝 Chat title updated to: "${data.generatedTitle}"`);
+                }
+            }
+            } catch (saveError) {
+                console.error("❌ FRONTEND: Error calling save-messages API:", saveError);
+                // Do NOT perform UI rollback here.
+                // Optionally, display a subtle "failed to save" message to user.
+            }
+    
+            // Ensure UI is fully updated before potentially running title generation
+            requestAnimationFrame(() => {
+                console.log(`[sendMessage] After AI response & save (rAF): isStreaming = ${isStreaming}, sendBtn hidden: ${elements.sendIcon.classList.contains('hidden')}, stopBtn hidden: ${elements.stopIcon.classList.contains('hidden')}`);
+    
+                // After the second message, check for title generation
+                if (activeChat.messages.length >= 2 && activeChat.title === 'New Chat') {
+                    // The backend will handle the title generation asynchronously.
+                    // For now, we will rely on a full page reload or subsequent data fetch
+                    // to pick up the new title. This avoids a race condition with loadDataFromServer.
+                    console.log("📝 Chat title generation triggered on backend. Title will update on next data load, or has been updated by response.");
+                }
+            });
+    } catch (error) {
+        // This catch block now primarily handles errors during AI response generation/streaming
+        // or authentication errors, without affecting message persistence errors.
+        if (error.name === 'AbortError') {
+            if (activeChat) {
+                activeChat.messages.pop(); // Remove only AI placeholder
+                renderChat(); // Re-render to reflect reverted state
+                saveState();
+            }
+            assistantMsgDiv.innerHTML = renderContent(fullResponse + '\n\n*Stream stopped by user.*');
+            isStreaming = false;
+            elements.stopIcon.classList.add('hidden');
+            elements.sendIcon.classList.remove('hidden');
+            elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
+            updateSendButtonState();
+        } else {
+            if (activeChat) {
+                // For other errors, remove both user message and AI placeholder
+                activeChat.messages.pop(); // Remove AI placeholder
+                activeChat.messages.pop(); // Remove user message
+                console.log('[sendMessage] Other Error: Messages reverted. activeChat.messages:', activeChat.messages);
+                renderChat(); // Re-render to reflect reverted state
+                saveState();
+                console.log('[sendMessage] Other Error: State saved after rollback.');
+            }
+            console.error("❌ FRONTEND sendMessage Error:", error);
+            console.error("❌ FRONTEND Error message:", error.message);
+            console.error("❌ FRONTEND Error stack:", error.stack);
+            
+            if (error.response) {
+                console.error("❌ FRONTEND Error response status:", error.response.status);
+                console.error("❌ FRONTEND Error response data:", error.response.data);
+            }
+            
+            if (typeof error.text === 'function') {
+                try {
+                    const errorText = await error.text();
+                    console.error("❌ FRONTEND Error response text:", errorText);
+                } catch (e) {
+                    console.error("❌ FRONTEND Could not read error text:", e);
+                }
+            }
+            
+            const isAuthError = error.message.includes('Invalid or expired token') ||
+                               error.message.includes('401') ||
+                               error.message.includes('403') ||
+                               error.message.includes('Unauthorized') ||
+                               error.message.includes('Authentication failed');
+            
+            if (isAuthError) {
+                assistantMsgDiv.innerHTML = renderContent('⚠️ Your session has expired. Please sign in again.');
+                localStorage.removeItem('authToken');
+                state.currentUser = null;
+                updateLoginStateUI();
+                window.sendMessageRetryCount = 0;
+                setTimeout(() => {
+                    animateModalOpen(elements.signinModal.container);
+                }, 1500);
+                return;
+            }
+            
+            const isNetworkError = error.message.includes('fetch') || error.message.includes('Failed to get response') || error.message.includes('network');
+            const isServerError = error.message.includes('500') || error.message.includes('502') || error.message.includes('503');
+            const shouldRetry = isNetworkError || isServerError;
+            
+            console.error("❌ FRONTEND Error classification:");
+            console.error("  - Is Network Error:", isNetworkError);
+            console.error("  - Is Server Error:", isServerError);
+            console.error("  - Should Retry:", shouldRetry);
+            console.error("  - Current Retry Count:", window.sendMessageRetryCount || 0);
+            
+            if (shouldRetry && (!window.sendMessageRetryCount || window.sendMessageRetryCount < 2)) {
+                window.sendMessageRetryCount = (window.sendMessageRetryCount || 0) + 1;
+                
+                assistantMsgDiv.innerHTML = renderContent(`🔄 Connection issue detected. Retrying... (${window.sendMessageRetryCount}/2)`);
+                
+                setTimeout(async () => {
+                    elements.userInput.value = userInput;
+                    await sendMessage();
+                }, 1500 * window.sendMessageRetryCount);
+                
+                return;
+            } else {
+                window.sendMessageRetryCount = 0;
+                if (shouldRetry) {
+                    assistantMsgDiv.innerHTML = renderContent(`⚠️ Connection failed after multiple attempts. Please check your internet connection and try again.`);
+                } else {
+                    assistantMsgDiv.innerHTML = renderContent(`⚠️ An error occurred: ${error.message}`);
+                }
+            }
+        }
+    }
+}
+
+// --- Image Generation Function ---
+async function generateImage(prompt, model = 'provider-4/imagen-4') {
+    if (!prompt?.trim()) {
+        console.error('❌ Image generation requires a prompt');
+        return null;
+    }
+
+    try {
+        console.log('🎨 Starting image generation with prompt:', prompt);
+        console.log('🎨 Using model:', model);
+
+        const response = await fetch(`${API_BASE}/api/ai/images/generations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                model: model,
+                prompt: prompt,
+                n: 1,
+                size: '1024x1024',
+                quality: 'standard',
+                response_format: 'url'
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Image generation failed:', response.status, errorText);
+            throw new Error(`Image generation failed: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ Image generated successfully:', data);
+
+        if (data.data && data.data.length > 0) {
+            return {
+                url: data.data[0].url,
+                revised_prompt: data.data[0].revised_prompt
+            };
+        } else {
+            throw new Error('No image data received from API');
+        }
+
+    } catch (error) {
+        console.error('❌ Image generation error:', error);
+        throw error;
+    }
+}
+
+    function copyMessage(text, btn) { navigator.clipboard.writeText(text).then(() => { const originalIcon = btn.innerHTML; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`; setTimeout(() => btn.innerHTML = originalIcon, 1500); }); };
+    function enterEditMode(chatId, messageIndex) {
+    const chat = state.chats.find(c => c.id === chatId);
+    if (!chat) return;
+
+    const message = chat.messages[messageIndex];
+    if (!message) return;
+    
+    // Clear any previous image preview first
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    imagePreviewContainer.innerHTML = '';
+    imagePreviewContainer.classList.add('hidden');
+    attachedImageData = null;
+    document.getElementById('image-upload').value = null;
+
+    // Check if the message content is an array (multimodal) or a string
+    if (Array.isArray(message.content)) {
+        const textPart = message.content.find(p => p.type === 'text');
+        const imagePart = message.content.find(p => p.type === 'image_url');
+
+        // Set the text input
+        elements.userInput.value = textPart ? textPart.text : '';
+
+        // If an image part exists, display it and set the state
+        if (imagePart && imagePart.image_url.url) {
+            attachedImageData = { dataUrl: imagePart.image_url.url }; // Set the state for resending
+            
+            // Re-use the preview logic to display the image
+            imagePreviewContainer.innerHTML = `
+                <div class="relative inline-block">
+                    <img src="${imagePart.image_url.url}" class="h-20 w-20 object-cover rounded-lg">
+                    <button id="remove-image-btn" class="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 leading-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            `;
+            imagePreviewContainer.classList.remove('hidden');
+
+            document.getElementById('remove-image-btn').onclick = () => {
+                attachedImageData = null;
+                document.getElementById('image-upload').value = null;
+                imagePreviewContainer.innerHTML = '';
+                imagePreviewContainer.classList.add('hidden');
+            };
+        }
+    } else {
+        // Handle legacy/text-only messages
+        elements.userInput.value = message.content;
+    }
+
+    // --- The rest of the function remains the same ---
+    state.editingMessage = { chatId, messageIndex };
+    elements.userInput.focus();
+    elements.sendIcon.classList.add('hidden');
+    elements.saveIcon.classList.remove('hidden');
+    elements.editIndicator.classList.remove('hidden');
+}
+    function exitEditMode() {
+        state.editingMessage = null;
+        elements.userInput.value = '';
+        elements.sendIcon.classList.remove('hidden');
+        elements.saveIcon.classList.add('hidden');
+        elements.editIndicator.classList.add('hidden');
+        elements.editIndicator.classList.remove('flex');
+
+        // Clear image preview
+        attachedImageData = null;
+        document.getElementById('image-upload').value = null;
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        imagePreviewContainer.innerHTML = '';
+        imagePreviewContainer.classList.add('hidden');
+
+        renderChat();
+    };
+    function toggleSidebar() { const isMobile = window.innerWidth < 768; elements.sidebar.classList.toggle(isMobile ? 'open' : 'closed'); if (isMobile) elements.sidebarOverlay.classList.toggle('open'); };
+    
+    // --- Modal Control with Anime.js ---
+    function animateModalOpen(modalContainer) {
+        modalContainer.style.display = 'flex';
+        const modalContent = modalContainer.querySelector('.modal-content');
+        anime({ targets: modalContent, scale: [0.92, 1], opacity: [0, 1], duration: 250, easing: 'easeOutCubic' });
+    }
+    function animateModalClose(modalContainer, onComplete = () => {}) {
+        const modalContent = modalContainer.querySelector('.modal-content');
+        anime({ targets: modalContent, scale: 0.95, opacity: 0, duration: 100, easing: 'easeInCubic', complete: () => { modalContainer.style.display = 'none'; onComplete(); } });
+    }
+    function openRenameModal(chatId) { state.modalContext.chatId = chatId; const chat = state.chats.find(c=>c.id === chatId); if(!chat) return; elements.renameModal.input.value = chat.title; animateModalOpen(elements.renameModal.container); }
+    function openDeleteModal(chatId) { state.modalContext.chatId = chatId; const chat = state.chats.find(c=>c.id === chatId); if(!chat) return; elements.deleteModal.message.textContent = `Are you sure you want to delete "${chat.title}"?`; animateModalOpen(elements.deleteModal.container); }
+    
+    function openAlertModal(title, message) {
+        elements.alertModal.title.textContent = title;
+        elements.alertModal.message.textContent = message;
+        animateModalOpen(elements.alertModal.container);
+    }
+
+    function closeAlertModal() {
+        animateModalClose(elements.alertModal.container);
+    }
+
+    function closeAllModals() { 
+        document.querySelectorAll('.modal-container').forEach(m => { if (m.style.display === 'flex') animateModalClose(m); }); 
+        elements.chatActionsDropdown.style.display = 'none';
+    }
+
+    function openChatActionsDropdown(chatId, target) {
+        const rect = target.getBoundingClientRect();
+        const dropdown = elements.chatActionsDropdown;
+        dropdown.innerHTML = `
+            <button class="rename-action w-full text-left px-3 py-2 text-sm hover:bg-light-border-hover dark:hover:bg-dark-border-hover flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                Rename
+            </button>
+            <button class="delete-action w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-light-border-hover dark:hover:bg-dark-border-hover flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                Delete
+            </button>
+        `;
+        dropdown.querySelector('.rename-action').onclick = () => {
+    openRenameModal(chatId);
+    dropdown.style.display = 'none'; // Correct: Only hide the dropdown
+};
+
+        dropdown.querySelector('.delete-action').onclick = () => {
+    openDeleteModal(chatId);
+    dropdown.style.display = 'none'; // Correct: Only hide the dropdown
+};        
+        dropdown.style.top = `${rect.bottom + 4}px`;
+        dropdown.style.left = `${rect.left - dropdown.offsetWidth + rect.width}px`;
+        dropdown.style.display = 'block';
+
+        setTimeout(() => {
+            document.addEventListener('click', function hide(e) {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                    document.removeEventListener('click', hide);
+                }
+            });
+        }, 0);
+    }
+    
+    // --- Font Settings ---
+    function applyFont(font) { Object.keys(FONTS).forEach(f => elements.body.classList.remove(`font-${f}`)); elements.body.classList.add(`font-${font}`); state.settings.font = font; saveState(); renderFontOptions(); }
+    function applyFontWeight(weight) { elements.body.style.fontWeight = weight; state.settings.fontWeight = weight; saveState(); renderFontWeightOptions(); }
+    function renderFontOptions() { const currentFont = state.settings.font; elements.settingsModal.fontOptions.innerHTML = '<div><label class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">Font Family</label></div>'; Object.entries(FONTS).forEach(([key, name]) => { const btn = document.createElement('button'); btn.className = `w-full text-left px-3 py-2 rounded-md transition-colors text-sm ${currentFont === key ? 'bg-accent text-white font-semibold' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`; btn.textContent = name; btn.onclick = () => { applyFont(key); }; elements.settingsModal.fontOptions.appendChild(btn); }); }
+    function renderFontWeightOptions() { const currentWeight = state.settings.fontWeight; elements.settingsModal.fontWeightOptions.innerHTML = `<div class="flex justify-between items-center"><label class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">Font Weight</label><span id="font-weight-label" class="text-sm text-light-text-subtle dark:text-dark-text-subtle">${FONT_WEIGHTS[currentWeight]}</span></div><input type="range" id="font-weight-slider" class="w-full h-2 bg-light-border dark:bg-dark-border rounded-lg appearance-none cursor-pointer accent-accent" min="0" max="${Object.keys(FONT_WEIGHTS).length - 1}" step="1" value="${Object.keys(FONT_WEIGHTS).indexOf(currentWeight)}">`; document.getElementById('font-weight-slider').addEventListener('input', (e) => { const weight = Object.keys(FONT_WEIGHTS)[e.target.value]; applyFontWeight(weight); document.getElementById('font-weight-label').textContent = FONT_WEIGHTS[weight]; }); }
+    
+    // --- Model Selection ---
+    function updateModelSelectorDisplay() {
+      let currentModelKey = state.settings.model;
+      let modelData = MODELS[currentModelKey];
+      let displayName = 'No models available'; // Default message if no models are found
+      let modelType = '';
+
+      // If the currently selected model is not available, try to find a fallback
+      if (!modelData) {
+          console.warn(`⚠️ Currently selected model "${currentModelKey}" is not available. Attempting to find a fallback.`);
+          
+          // Try to default to 'openai-large' if it exists and is available
+          if (MODELS['openai-large']) {
+              currentModelKey = 'openai-large';
+              modelData = MODELS[currentModelKey];
+              console.log(`  - Falling back to 'openai-large'.`);
+          } else {
+              // If 'openai-large' is not available, try to find the first available model
+              const firstAvailableModelKey = Object.keys(MODELS).find(key => MODELS[key].type === 'text'); // Find first text model
+              if (firstAvailableModelKey) {
+                  currentModelKey = firstAvailableModelKey;
+                  modelData = MODELS[currentModelKey];
+                  console.log(`  - Falling back to first available text model: '${currentModelKey}'.`);
+              } else {
+                  // No models available at all
+                  console.error(`❌ No models are available. Displaying "No models available".`);
+                  state.settings.model = null; // Clear selected model
+                  elements.chatTitle.textContent = displayName;
+                  return;
+              }
+          }
+          state.settings.model = currentModelKey; // Update state with the new model
+          saveState(); // Persist the new default model
+      }
+
+      // Update display based on the selected or fallback model
+      displayName = modelData.name;
+      modelType = modelData.type === 'image' ? ' 🎨' : ' 💬';
+      
+      elements.chatTitle.textContent = displayName + modelType;
+      console.log('🔄 Updated model selector display to:', displayName, `(${modelData.type})`);
+    }
+
+    function updateProModelsToggleUI() {
+        const enabled = state.settings.proModelsEnabled;
+        const toggle = elements.settingsModal.proModelsToggle;
+        if (!toggle) return;
+        const knob = toggle.querySelector('span');
+
+        toggle.setAttribute('aria-checked', enabled);
+        toggle.classList.toggle('bg-accent', enabled);
+        toggle.classList.toggle('bg-gray-200', !enabled);
+        toggle.classList.toggle('dark:bg-gray-700', !enabled);
+        knob.classList.toggle('translate-x-5', enabled);
+        knob.classList.toggle('translate-x-0', !enabled);
+    }
+
+    function renderModelDropdown() {
+      elements.modelDropdown.innerHTML = '';
+      
+      const isProUser = state.currentUser && state.currentUser.plan === 'pro';
+      const proModelsEnabled = state.settings.proModelsEnabled;
+
+      // Filter models based on pro status
+      const availableModels = Object.entries(MODELS).filter(([key, data]) => {
+          if (data.pro) {
+              return isProUser && proModelsEnabled; // Only show pro models if user is pro and feature is enabled
+          }
+          return true;
+      });
+
+      // Separate models by type
+      const textModels = availableModels.filter(([_, data]) => data.type === 'text');
+      const imageModels = availableModels.filter(([_, data]) => data.type === 'image');
+      
+      // Add Text Models section
+      const textHeader = document.createElement('div');
+      textHeader.className = 'px-3 py-2 text-xs font-medium text-light-text-subtle dark:text-dark-text-subtle uppercase tracking-wider border-b border-light-border dark:border-dark-border';
+      textHeader.textContent = '💬 Text Models';
+      elements.modelDropdown.appendChild(textHeader);
+      
+      textModels.forEach(([key, data]) => {
+        const btn = document.createElement('button');
+        const isSelected = key === state.settings.model;
+        const isDisabled = data.pro && (!isProUser || !proModelsEnabled); // Disable pro models for non-pro users or if setting is off
+        btn.className = `w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`;
+        btn.disabled = isDisabled;
+        
+        let proBadge = '';
+        if (data.pro) {
+            proBadge = '<span class="text-xs font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full">PRO</span>';
+        }
+
+        let fastBadge = '';
+        if (data.fast) {
+            fastBadge = '<span class="ml-2 text-xs font-bold text-green-500">⚡</span>'; // Fast icon
+        }
+
+        btn.innerHTML = `<span>${data.name}${fastBadge}</span> ${proBadge}`;
+        btn.onclick = () => {
+            if (isDisabled) {
+                if (!isProUser) {
+                    openAlertModal('Pro Plan Required', 'You need a pro plan to use this model. Please sign in or upgrade your plan.');
+                } else if (!proModelsEnabled) {
+                    openAlertModal('Pro Models Disabled', 'Enable Pro Models in settings to use this model.');
+                }
+                return; // Prevent selection if disabled
+            }
+          state.settings.model = key;
+          const activeChat = state.chats.find(c => c.id === state.activeId);
+          if (activeChat) activeChat.model = key;
+          saveState();
+          updateModelSelectorDisplay();
+          renderModelDropdown();
+          elements.modelDropdown.style.display = 'none';
+        };
+        elements.modelDropdown.appendChild(btn);
+      });
+      
+      // Add Image Generation section
+      if (imageModels.length > 0) {
+        const imgHeader = document.createElement('div');
+        imgHeader.className = 'px-3 py-2 text-xs font-medium text-light-text-subtle dark:text-dark-text-subtle uppercase tracking-wider border-b border-light-border dark:border-dark-border mt-2';
+        imgHeader.textContent = '🎨 Image Generation';
+        elements.modelDropdown.appendChild(imgHeader);
+        
+        imageModels.forEach(([key, data]) => {
+          const btn = document.createElement('button');
+          const isSelected = key === state.settings.model;
+          const isDisabled = data.pro && (!isProUser || !proModelsEnabled);
+          btn.className = `w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`;
+          btn.disabled = isDisabled;
+          
+          let proBadge = '';
+          if (data.pro) {
+              proBadge = '<span class="text-xs font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full">PRO</span>';
+          }
+
+          btn.innerHTML = `<span>${data.name}</span> ${proBadge}`;
+          btn.onclick = () => {
+            if (isDisabled) {
+                if (!isProUser) {
+                    openAlertModal('Pro Plan Required', 'You need a pro plan to use this model. Please sign in or upgrade your plan.');
+                } else if (!proModelsEnabled) {
+                    openAlertModal('Pro Models Disabled', 'Enable Pro Models in settings to use this model.');
+                }
+                return; // Prevent selection if disabled
+            }
+            state.settings.model = key;
+            const activeChat = state.chats.find(c => c.id === state.activeId);
+            if (activeChat) activeChat.model = key;
+            saveState();
+            updateModelSelectorDisplay();
+            renderModelDropdown();
+            elements.modelDropdown.style.display = 'none';
+            console.log('🖼️ Selected image model:', key);
+          };
+          elements.modelDropdown.appendChild(btn);
+        });
+      }
+    }
+
+    // --- Theme & Initialization ---
+    function applyTheme(theme) {
+        const isDark = theme === 'dark';
+        document.documentElement.classList.toggle('dark', isDark);
+        document.getElementById('theme-icon-light').classList.toggle('hidden', isDark);
+        document.getElementById('theme-icon-dark').classList.toggle('hidden', !isDark);
+        localStorage.setItem('theme', theme);
+    }
+
+    function toggleTheme(event) {
+        const isDark = document.documentElement.classList.contains('dark');
+        const newTheme = isDark ? 'light' : 'dark';
+
+        if (!document.startViewTransition) {
+            applyTheme(newTheme);
+            return;
+        }
+        
+        const btn = elements.themeToggleBtn;
+        const rect = btn.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        document.documentElement.style.setProperty('--cx', cx + 'px');
+        document.documentElement.style.setProperty('--cy', cy + 'px');
+
+        document.startViewTransition(() => {
+            applyTheme(newTheme);
+        });
+    }
+
+    async function init() {
+    // 1. Load available models from the backend
+    await loadAvailableModels();
+
+    // 2. Apply the user's preferred theme on startup.
+    const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(savedTheme);
+
+    // 3. Load cached data from localStorage for optimistic UI
+    const cachedState = localStorage.getItem('fronixState');
+    if (cachedState) {
+        const p = JSON.parse(cachedState);
+        state.settings = { ...state.settings, ...p.settings };
+        state.currentUser = p.currentUser;
+    }
+    const cachedChats = localStorage.getItem('fronixChats');
+    if (cachedChats) {
+        state.chats = JSON.parse(cachedChats);
+    }
+    const lastActiveChatId = localStorage.getItem('lastActiveChatId');
+    if (lastActiveChatId) {
+        state.activeId = lastActiveChatId;
+    }
+
+    // Render the UI immediately with cached data
+    renderSidebar();
+    renderChat();
+    updateLoginStateUI();
+    updateProfileUI();
+    
+    // 4. Set up the master Supabase Authentication listener.
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        console.log(`Supabase auth event: ${event}`);
+        if (event === 'SIGNED_IN' && session) {
+            console.log('User signed in. Session:', session);
+            localStorage.setItem('authToken', session.access_token);
+            localStorage.setItem('refreshToken', session.refresh_token);
+            
+            // Use session.user directly, no need for another fetch
+            state.currentUser = session.user;
+            console.log('[onAuthStateChange] SIGNED_IN - state.currentUser set:', JSON.parse(JSON.stringify(state.currentUser)));
+            
+            if (state.currentUser) { // Only load data if currentUser is actually set
+                await loadDataFromServer(); 
+                closeAllModals();
+            } else {
+                console.warn('[onAuthStateChange] SIGNED_IN - currentUser is null, skipping loadDataFromServer.');
+                updateLoginStateUI();
+            }
+
+        } else if (event === 'INITIAL_SESSION' && session) { // Handle INITIAL_SESSION explicitly
+            console.log('Initial session established. Session:', session);
+            localStorage.setItem('authToken', session.access_token);
+            localStorage.setItem('refreshToken', session.refresh_token);
+            
+            // Use session.user directly, no need for another fetch
+            state.currentUser = session.user;
+            console.log('[onAuthStateChange] INITIAL_SESSION - state.currentUser set:', JSON.parse(JSON.stringify(state.currentUser)));
+
+            if (state.currentUser) { // Only load data if currentUser is actually set
+                await loadDataFromServer();
+                updateLoginStateUI();
+                updateProfileUI();
+            } else {
+                console.warn('[onAuthStateChange] INITIAL_SESSION - currentUser is null, skipping loadDataFromServer.');
+                updateLoginStateUI();
+            }
+
+        } else if (event === 'SIGNED_OUT') {
+            console.log('User signed out.');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('fronixChats');
+            localStorage.removeItem('lastActiveChatId');
+            
+            state.currentUser = null;
+            state.chats = [];
+            state.activeId = null;
+            
+            updateLoginStateUI();
+            renderSidebar();
+            renderChat();
+        }
+    });
+    
+    // 5. Check if a token already exists and fetch latest data from server
+    const existingToken = localStorage.getItem('authToken');
+    // Removed the direct call to loadDataFromServer here to avoid race conditions
+    // The onAuthStateChange listener will now be the sole trigger for data loading after authentication state is determined.
+    // If a session already exists from a previous login, the 'INITIAL_SESSION' event will handle the data loading.
+    if (!existingToken) {
+        // If no token exists, ensure the UI is in the logged-out state.
+        console.log('No existing auth token found. Ensuring logged-out state.');
+        updateLoginStateUI();
+    }
+    
+    // 6. Apply UI settings and attach all event listeners.
+    applyFont(state.settings.font);
+    applyFontWeight(state.settings.fontWeight);
+    renderFontOptions();
+    renderFontWeightOptions();
+    updateProModelsToggleUI();
+    updateLoginStateUI(); // Ensure model dropdown is re-rendered on login state change
+    
+    elements.settingsModal.apiTokenInput.addEventListener('change', (e) => {
+        state.settings.apiToken = e.target.value;
+        saveState();
+    });
+
+    elements.alertModal.okBtn.onclick = closeAlertModal;
+
+    elements.settingsModal.proModelsToggle.addEventListener('click', () => {
+        if (state.currentUser && state.currentUser.plan === 'pro') {
+            state.settings.proModelsEnabled = !state.settings.proModelsEnabled;
+            updateProModelsToggleUI();
+            saveState();
+            renderModelDropdown();
+
+            // After toggling pro models, ensure the currently selected model is still available
+            const currentModelData = MODELS[state.settings.model];
+            if (currentModelData && currentModelData.pro && !state.settings.proModelsEnabled) {
+                // If a pro model is selected and pro models are now disabled,
+                // fall back to a default non-pro model.
+                const defaultNonProModel = Object.keys(MODELS).find(key => !MODELS[key].pro);
+                if (defaultNonProModel) {
+                    state.settings.model = defaultNonProModel;
+                    saveState();
+                    updateModelSelectorDisplay(); // Update display with new model
+                    renderModelDropdown(); // Re-render dropdown with new selection
+                }
+            }
+        } else {
+            openAlertModal('Pro Plan Required', 'You need a pro plan to use pro models. Contact @zshadowultra on Discord for access.');
+        }
+    });
+
+    // Initial state update for send button
+    updateSendButtonState();
+
+    // Dynamic click handler for send/stop button
+    elements.sendBtn.onclick = () => {
+        if (isStreaming) {
+            // Button is in stop state - abort the stream
+            if (currentController) currentController.abort();
+        } else {
+            // Button is in send state - send message
+            sendMessage();
+        }
+    };
+
+    elements.scrollToBottomBtn.onclick = scrollToBottom;
+
+    elements.chatBox.parentElement.addEventListener('scroll', () => {
+        const { scrollTop, scrollHeight, clientHeight } = elements.chatBox.parentElement;
+        const atBottom = scrollHeight - scrollTop - clientHeight < 50;
+        isScrolledUp = !atBottom;
+
+        if (isScrolledUp && isStreaming) {
+            elements.scrollToBottomBtn.classList.add('opacity-100');
+            elements.scrollToBottomBtn.classList.remove('opacity-0', 'pointer-events-none');
+        } else {
+            elements.scrollToBottomBtn.classList.remove('opacity-100');
+            elements.scrollToBottomBtn.classList.add('opacity-0', 'pointer-events-none');
+        }
+    });
+
+    // Ensure a chat is present by default
+    if (state.chats.length === 0) {
+        await handleNewChat(); // Create a new chat if none exist
+    }
+    setActive(state.activeId);
+
+    // Image attachment logic
+    const attachBtn = document.getElementById('attach-btn');
+    const imageUpload = document.getElementById('image-upload');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+
+    attachBtn.onclick = () => imageUpload.click();
+
+    imageUpload.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        // Check file size (50MB limit)
+        const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+        if (file.size > maxSize) {
+            openAlertModal('File Size Exceeded', 'File size must be less than 50MB.');
+            imageUpload.value = null;
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            attachedImageData = { file: file, dataUrl: e.target.result };
+
+            imagePreviewContainer.innerHTML = `
+                <div class="relative inline-block">
+                    <img src="${e.target.result}" class="h-20 w-20 object-cover rounded-lg">
+                    <button id="remove-image-btn" class="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 leading-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            `;
+            imagePreviewContainer.classList.remove('hidden');
+
+            document.getElementById('remove-image-btn').onclick = () => {
+                attachedImageData = null;
+                imageUpload.value = null;
+                imagePreviewContainer.innerHTML = '';
+                imagePreviewContainer.classList.add('hidden');
+            };
+        };
+        reader.readAsDataURL(file);
+    });
+}
+    
+    // --- Event Listeners ---
+    document.addEventListener('DOMContentLoaded', init);
+    elements.themeToggleBtn.onclick = toggleTheme;
+    
+elements.newChatBtn.onclick = handleNewChat;
+    elements.toggleSidebarBtn.onclick = toggleSidebar; 
+    elements.sidebarOverlay.onclick = toggleSidebar;
+    elements.userInput.addEventListener('input', () => {
+        elements.userInput.style.height = 'auto';
+        elements.userInput.style.height = (elements.userInput.scrollHeight) + 'px';
+        updateSendButtonState(); // Update button state on input change
+
+        const inputValue = elements.userInput.value;
+        if (inputValue.startsWith('/')) {
+            elements.autocompleteSuggestions.classList.remove('hidden');
+        } else {
+            elements.autocompleteSuggestions.classList.add('hidden');
+        }
+    });
+
+    elements.userInput.addEventListener('keydown', e => {
+        const isMobile = window.innerWidth < 768;
+        if (e.key === 'Enter' && !e.shiftKey) {
+            if (!isMobile) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+    });
+
+    elements.studyCommandBtn.addEventListener('click', () => {
+        elements.userInput.value = '/study';
+        elements.autocompleteSuggestions.classList.add('hidden');
+        elements.userInput.focus();
+    });
+    elements.settingsBtn.onclick = () => animateModalOpen(elements.settingsModal.container);
+    elements.settingsModal.closeBtn.onclick = () => animateModalClose(elements.settingsModal.container);
+    elements.settingsModal.resetBtn.onclick = () => {
+      localStorage.clear();
+      window.location.reload();
+    };
+    elements.renameModal.saveBtn.onclick = async () => {
+        const { chatId } = state.modalContext;
+        const newName = elements.renameModal.input.value.trim();
+        if (!newName) return;
+
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            alert("Authentication error. Please sign in again.");
+            return;
+        }
+
+        const chatToRename = state.chats.find(c => c.id === chatId);
+        if (!chatToRename) {
+            closeAllModals();
+            return;
+        }
+        const originalTitle = chatToRename.title; // Store original title for rollback
+
+        // Optimistic UI update
+        chatToRename.title = newName;
+        if (chatId === state.activeId) {
+            elements.chatTitle.textContent = newName;
+        }
+        console.log('[renameModal.saveBtn.onclick] State after optimistic update. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+        console.log('[renameModal.saveBtn.onclick] State after optimistic update. state.activeId:', state.activeId);
+        renderSidebar(); // Update sidebar immediately
+        saveState();
+
+        closeAllModals(); // Close modal immediately after optimistic update
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/chat/${chatId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ title: newName })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update chat title on server.');
+            }
+
+            // Backend confirmed, no further UI changes needed for success beyond optimistic update
+            console.log(`Chat ${chatId} renamed successfully to "${newName}"`);
+
+        } catch (error) {
+            console.error("Error renaming chat:", error);
+            alert(`Failed to rename chat: ${error.message}`);
+            
+            // Revert optimistic UI update on error
+            chatToRename.title = originalTitle;
+            if (chatId === state.activeId) {
+                elements.chatTitle.textContent = originalTitle;
+            }
+            console.log('[renameModal.saveBtn.onclick] Error rollback. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+            console.log('[renameModal.saveBtn.onclick] Error rollback. state.activeId:', state.activeId);
+            renderSidebar(); // Re-render sidebar to show original title
+            saveState();
+        } finally { // Ensure button state is updated
+            updateSendButtonState();
+            console.log('[renameModal.saveBtn.onclick] Finally block executed. Button state updated.');
+        }
+    };
+    elements.deleteModal.confirmBtn.onclick = async () => {
+        const { chatId } = state.modalContext;
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            alert("Authentication error. Please sign in again.");
+            return;
+        }
+
+        const chatToDeleteIndex = state.chats.findIndex(c => c.id === chatId);
+        if (chatToDeleteIndex === -1) {
+            closeAllModals();
+            return;
+        }
+        const chatToDelete = state.chats[chatToDeleteIndex]; // Store chat for rollback
+
+        // Optimistic UI update: Remove chat from state and re-render
+        state.chats.splice(chatToDeleteIndex, 1);
+        
+        let oldActiveId = state.activeId; // Store current activeId for potential rollback
+
+        if (state.chats.length === 0) {
+            state.activeId = null; // No chats left, clear activeId
+        } else if (chatId === oldActiveId) {
+            // If the deleted chat was the active one, activate the nearest chat
+            state.activeId = state.chats[Math.max(0, chatToDeleteIndex - 1)]?.id || state.chats[0]?.id;
+        }
+        
+        renderSidebar(); // Update sidebar immediately
+        renderChat(); // Update chat area immediately
+        saveState();
+        closeAllModals(); // Close modal immediately after optimistic update
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/chat/${chatId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete chat on server.');
+            }
+
+            // Backend confirmed, no further UI changes needed for success beyond optimistic update
+            console.log(`Chat ${chatId} deleted successfully.`);
+            // If no chats left after deletion, ensure a new chat is created
+            if (state.chats.length === 0) {
+                await handleNewChat();
+            }
+
+        } catch (error) {
+            console.error("Error deleting chat:", error);
+            alert(`Failed to delete chat: ${error.message}`);
+            
+            // Revert optimistic UI update on error
+            state.chats.splice(chatToDeleteIndex, 0, chatToDelete); // Re-add chat
+            state.activeId = oldActiveId; // Restore activeId
+            console.log('[deleteModal.confirmBtn.onclick] Error rollback. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
+            console.log('[deleteModal.confirmBtn.onclick] Error rollback. state.activeId:', state.activeId);
+            renderSidebar(); // Re-render sidebar
+            renderChat(); // Re-render chat area
+            saveState();
+        } finally { // Ensure button state is updated
+            updateSendButtonState();
+            console.log('[deleteModal.confirmBtn.onclick] Finally block executed. Button state updated.');
+        }
+    };
+    [elements.settingsModal.container, elements.renameModal.container, elements.deleteModal.container, elements.signinModal.container].forEach(el => el.onclick = (e) => { if (e.target === el) closeAllModals(); });
+    [elements.renameModal.cancelBtn, elements.deleteModal.cancelBtn, elements.signinModal.closeBtn].forEach(el => el.onclick = closeAllModals);
+    elements.cancelEditBtn.onclick = exitEditMode;
+    updateSendButtonState(); // Call after exitEditMode
+    console.log('[init] Initial button state update after exitEditMode listener setup.');
+    elements.signinBtn.onclick = () => animateModalOpen(elements.signinModal.container);
+    elements.logoutBtn.onclick = async () => {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) {
+        console.error('Error logging out:', error);
+        openAlertModal('Logout Error', 'An error occurred while logging out. Please try again.');
+    }
+};
+    elements.profileBtn.onclick = () => {
+        const isHidden = elements.profileDropdown.classList.contains('hidden');
+        elements.profileDropdown.classList.toggle('hidden', !isHidden);
+    };
+
+    // Close profile dropdown if clicked outside
+    document.addEventListener('click', (e) => {
+        if (!elements.profileSection.contains(e.target)) {
+            elements.profileDropdown.classList.add('hidden');
+        }
+    });
+    
+    // Sign In / Sign Up Toggle
+    const signinTabBtn = document.getElementById('signin-tab-btn');
+    const signupTabBtn = document.getElementById('signup-tab-btn');
+    const signinView = document.getElementById('signin-view');
+    const signupView = document.getElementById('signup-view');
+
+    signinTabBtn.addEventListener('click', () => {
+        signinView.classList.remove('hidden');
+        signupView.classList.add('hidden');
+        signinTabBtn.classList.add('text-accent', 'border-accent');
+        signinTabBtn.classList.remove('text-light-text-subtle', 'dark:text-dark-text-subtle', 'border-transparent');
+        signupTabBtn.classList.remove('text-accent', 'border-accent');
+        signupTabBtn.classList.add('text-light-text-subtle', 'dark:text-dark-text-subtle', 'border-transparent');
+    });
+
+    signupTabBtn.addEventListener('click', () => {
+        signupView.classList.remove('hidden');
+        signinView.classList.add('hidden');
+        signupTabBtn.classList.add('text-accent', 'border-accent');
+        signupTabBtn.classList.remove('text-light-text-subtle', 'dark:text-dark-text-subtle', 'border-transparent');
+        signinTabBtn.classList.remove('text-accent', 'border-accent');
+        signinTabBtn.classList.add('text-light-text-subtle', 'dark:text-dark-text-subtle', 'border-transparent');
+    });
+
+    // Password visibility toggle
+    const passwordInput = document.getElementById('password-input');
+    const passwordToggleBtn = document.getElementById('password-toggle-btn');
+    const eyeOpenIcon = document.getElementById('eye-open-icon');
+    const eyeClosedIcon = document.getElementById('eye-closed-icon');
+
+    passwordToggleBtn.addEventListener('click', () => {
+        const isPassword = passwordInput.type === 'password';
+        passwordInput.type = isPassword ? 'text' : 'password';
+        eyeOpenIcon.classList.toggle('hidden', isPassword);
+        eyeClosedIcon.classList.toggle('hidden', !isPassword);
+    });
+
+    // --- New Authentication Event Listeners ---
+    document.getElementById('signin-email-btn').onclick = () => {
+        const email = document.getElementById('signin-email').value;
+        const password = document.getElementById('password-input').value;
+        handleSignIn(email, password);
+    };
+
+    document.getElementById('signup-email-btn').onclick = () => {
+        const email = document.getElementById('signup-email').value;
+        const password = document.getElementById('signup-password').value;
+        handleSignUp(email, password);
+    };
+
+    document.getElementById('signin-google-btn').onclick = handleGoogleLogin;
+    document.getElementById('signup-google-btn').onclick = handleGoogleLogin;
+
+
+    elements.modelSelector.onclick = () => {
+      const isHidden = elements.modelDropdown.style.display === 'none' || elements.modelDropdown.style.display === '';
+      elements.modelDropdown.style.display = isHidden ? 'block' : 'none';
+    };
+    document.addEventListener('click', (e) => {
+      if (!elements.modelSelector.contains(e.target) && !elements.modelDropdown.contains(e.target)) {
+        elements.modelDropdown.style.display = 'none';
+      }
+    });
+
+
+>>>>>>> origin/main
+  </script>
+</body>
+</html>
