@@ -567,7 +567,7 @@
   <div id="chat-actions-dropdown" class="w-32 bg-light-sidebar dark:bg-dark-sidebar rounded-lg shadow-lg border border-light-border dark:border-dark-border"></div>
 
   <script>
-    const API_BASE_URL = 'http://localhost:3001'; // Your Node.js backend URL
+    const API_BASE_URL = 'https://fronix-backend.onrender.com'; // Official Render server URL
     const config = { API_ENDPOINT: 'https://text.pollinations.ai/openai' };
     const SUPABASE_URL = 'https://dfrlmrplshijbosawpms.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmcmxtcnBsc2hpamJvc2F3cG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzEzMDYsImV4cCI6MjA2ODg0NzMwNn0.BzsC5u2LGbq3QydQCAKnIiJvrRHTdjx3HzNGdCzf_ac';
@@ -2502,7 +2502,7 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
             badges += '<span class="flex items-center justify-center w-5 h-5 text-purple-600 ml-2" title="BETA Model"><i data-lucide="flask-conical" class="w-4 h-4"></i></span>';
         }
         if (isAnonymous && data.anonymous) {
-            badges += '<span class="flex items-center justify-center w-5 h-5 text-green-600 ml-2" title="Free Model"><i data-lucide="user-check" class="w-4 h-4"></i></span>';
+            badges += '<span class="flex items-center justify-center w-5 h-5 text-green-600 ml-2" title="Free Model"><i data-lucide="zap" class="w-4 h-4"></i></span>';
         }
         if (isUnavailable) {
             badges += '<span class="flex items-center justify-center w-5 h-5 text-red-600 ml-2" title="Model Unavailable"><i data-lucide="alert-triangle" class="w-4 h-4"></i></span>';
