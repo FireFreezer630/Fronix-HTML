@@ -7,12 +7,12 @@ const envalid = require('envalid');
 // Validate and clean environment variables
 const env = envalid.cleanEnv(process.env, {
     PORT: envalid.port({ default: 3001 }),
-    AI_API_KEY: envalid.str(),
-    AI_API_KEY_V2: envalid.str(),
-    AI_API_ENDPOINT: envalid.url(),
-    AI_API_ENDPOINT_V2: envalid.url(),
-    SUPABASE_URL: envalid.url(),
-    SUPABASE_SERVICE_KEY: envalid.str(),
+    AI_API_KEY: envalid.str({ default: 'placeholder_key' }),
+    AI_API_KEY_V2: envalid.str({ default: 'placeholder_key' }),
+    AI_API_ENDPOINT: envalid.url({ default: 'https://api.example.com' }),
+    AI_API_ENDPOINT_V2: envalid.url({ default: 'https://api.example.com' }),
+    SUPABASE_URL: envalid.url({ default: 'https://placeholder.supabase.co' }),
+    SUPABASE_SERVICE_KEY: envalid.str({ default: 'placeholder_service_key' }),
     ALLOWED_ORIGINS: envalid.str({ default: 'http://localhost:3000,http://127.0.0.1:5500' })
 });
 
@@ -20,7 +20,7 @@ const env = envalid.cleanEnv(process.env, {
 const authRoutes = require('./routes/auth');
 const chatRoutes = require('./routes/chat');
 const userRoutes = require('./routes/user');
-const aiRoutes = require('./routes/ai');
+const { router: aiRoutes, startModelAvailabilityChecker } = require('./routes/ai');
 
 const app = express();
 const PORT = env.PORT;
@@ -47,7 +47,7 @@ const corsOptions = {
     credentials: true,
 };
 
-app.use(cors()); // TEMPORARY: Allow all origins for debugging
+app.use(cors(corsOptions)); // Use proper CORS configuration
 // --- END: CORRECTED AND FLEXIBLE CORS CONFIGURATION ---
 
 // Rate limiting to prevent abuse
@@ -63,6 +63,19 @@ app.use('/api/', apiLimiter);
 // Increase JSON body size limit to 50MB for image support
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        environment: {
+            port: env.PORT,
+            supabaseConfigured: env.SUPABASE_URL !== 'https://placeholder.supabase.co',
+            aiApiConfigured: env.AI_API_KEY !== 'placeholder_key'
+        }
+    });
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -82,4 +95,7 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    
+    // Start the model availability checker
+    startModelAvailabilityChecker();
 });

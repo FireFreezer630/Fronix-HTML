@@ -77,11 +77,13 @@ const v2ApiKeys = [
 ].filter(Boolean);
 const airforceApiKeys = (process.env.AIRFORCE_API_KEYS || '').split(',').filter(Boolean);
 const navyApiKeys = (process.env.NAVY_API_KEYS || '').split(',').filter(Boolean);
+const mnnApiKeys = (process.env.MNN_API_KEY || '').split(',').filter(Boolean);
 
 const v1ApiKeyPool = new ApiKeyPool(v1ApiKeys, 'V1');
 const v2ApiKeyPool = new ApiKeyPool(v2ApiKeys, 'V2');
 const airforceApiKeyPool = new ApiKeyPool(airforceApiKeys, 'Airforce');
 const navyApiKeyPool = new ApiKeyPool(navyApiKeys, 'Navy');
+const mnnApiKeyPool = new ApiKeyPool(mnnApiKeys, 'MNN');
 
 
 // Cached study mode prompt
@@ -151,6 +153,7 @@ async function makeApiRequestWithRetry(url, requestBody, requestOptions, pool) {
 }
 
 const PRO_MODELS = ['grok-4', 'gpt-5', 'gemini-2.5-pro', 'gemini-2.5-flash'];
+const BETA_MODELS = ['gpt-4.1-mini', 'whisper-1', 'gpt-4-vision-preview']; // MNN AI beta models
 
 async function selectProProvider(userId) {
     const cacheKey = `last_pro_provider_${userId}`;
@@ -174,7 +177,7 @@ async function selectProProvider(userId) {
 }
 
 router.post('/chat', authMiddleware, async (req, res) => {
-    const { model, messages, chatId, proModelsEnabled } = req.body;
+    const { model, messages, chatId, proModelsEnabled, betaModelsEnabled } = req.body;
 
     if (!model || !messages || !Array.isArray(messages)) {
         return res.status(400).json({ error: 'Invalid request body. "model" and a "messages" array are required.' });
@@ -203,7 +206,7 @@ router.post('/chat', authMiddleware, async (req, res) => {
         let apiKeyPool;
         let modelId = model;
 
-        const V2_MODELS = ['claude-opus-4', 'o4-mini-medium', 'o4-mini-high', 'gpt-4o-mini-search-preview', 'gemini-2.5-flash-thinking', 'kimi-k2', 'deepseek-r1-uncensored'];
+        const V2_MODELS = ['claude-opus-4', 'o4-mini-medium', 'o4-mini-high', 'gpt-4o-mini-search-preview', 'kimi-k2', 'deepseek-r1-uncensored'];
 
         if (PRO_MODELS.includes(model)) {
             if (!proModelsEnabled) {
@@ -221,7 +224,15 @@ router.post('/chat', authMiddleware, async (req, res) => {
             } else {
                 provider = await selectProProvider(req.user.id);
             }
+        } else if (BETA_MODELS.includes(model)) {
+            if (!betaModelsEnabled) {
+                return res.status(403).json({ error: 'Beta models are not enabled in your settings.' });
+            }
+            provider = 'mnn';
         } else if (V2_MODELS.includes(model)) {
+            provider = 'v2';
+        } else {
+            // Default models use V2 with provider-3 prefix
             provider = 'v2';
         }
 
@@ -237,20 +248,44 @@ router.post('/chat', authMiddleware, async (req, res) => {
             case 'v2':
                 apiEndpoint = `${process.env.AI_API_ENDPOINT_V2}/chat/completions`;
                 const modelMapping = {
+                    // V2 models with provider-6 prefix
                     'claude-opus-4': 'provider-6/claude-opus-4-20250514',
                     'o4-mini-medium': 'provider-6/o4-mini-medium',
                     'o4-mini-high': 'provider-6/o4-mini-high',
                     'gpt-4o-mini-search-preview': 'provider-6/gpt-4o-mini-search-preview',
                     'gemini-2.5-flash-thinking': 'provider-6/gemini-2.5-flash-thinking',
                     'kimi-k2': 'provider-6/kimi-k2',
-                    'deepseek-r1-uncensored': 'provider-6/deepseek-r1-uncensored'
+                    'deepseek-r1-uncensored': 'provider-6/deepseek-r1-uncensored',
+                    
+                    // Default models with provider-3 prefix
+                    'gpt-4.1': 'provider-3/gpt-4.1-nano',
+                    'gpt-5-nano': 'provider-3/gpt-5-nano',
+                    'gpt-4.1-mini': 'provider-3/gpt-4.1-mini',
+                    'gpt-4o-mini': 'provider-3/gpt-4o-mini',
+                    'gemini-2.5-lite': 'provider-2/gemini-2.5-flash-lite',
+                    'gemini': 'provider-2/gemini-2.5-flash-lite'
                 };
-                modelId = modelMapping[model];
+                modelId = modelMapping[model] || model;
                 apiKeyPool = v2ApiKeyPool;
                 break;
+            case 'mnn':
+                apiEndpoint = 'https://api.mnnai.ru/v1/chat/completions';
+                apiKeyPool = mnnApiKeyPool;
+                break;
             default:
-                apiEndpoint = process.env.AI_API_ENDPOINT;
-                apiKeyPool = v1ApiKeyPool;
+                // Use V2 endpoint as fallback since V1 pollinations.ai is unreliable
+                apiEndpoint = `${process.env.AI_API_ENDPOINT_V2}/chat/completions`;
+                // Map default models with provider-3 prefix
+                const defaultModelMapping = {
+                    'gpt-4.1': 'provider-3/gpt-4.1-nano',
+                    'gpt-5-nano': 'provider-3/gpt-5-nano',
+                    'gpt-4.1-mini': 'provider-3/gpt-4.1-mini',
+                    'gpt-4o-mini': 'provider-3/gpt-4o-mini',
+                    'gemini-2.5-lite': 'provider-2/gemini-2.5-flash-lite',
+                    'gemini': 'provider-2/gemini-2.5-flash-lite'
+                };
+                modelId = defaultModelMapping[model] || model;
+                apiKeyPool = v2ApiKeyPool;
         }
 
         const requestBody = {
@@ -273,10 +308,387 @@ router.post('/chat', authMiddleware, async (req, res) => {
 
     } catch (error) {
         console.error('❌ Error calling AI service:', error.message);
-        res.status(500).json({ error: 'Internal server error occurred while contacting the AI service.' });
+        console.error('Full error details:', error.response ? safeStringify(error.response.data) : error.stack);
+        
+        // If headers weren't sent yet, try fallback
+        if (!res.headersSent) {
+            try {
+                // Try fallback to public API
+                console.log('🔄 Attempting fallback to public API');
+                const fallbackUrl = 'https://text.pollinations.ai/openai/chat/completions';
+                
+                const requestBody = {
+                    model: modelId,
+                    messages: messagesForAI,
+                    stream: true
+                };
+                
+                const fallbackResponse = await axios.post(fallbackUrl, requestBody, {
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Accept': 'text/event-stream',
+                        'User-Agent': 'Fronix-Chat/1.0'
+                    },
+                    responseType: 'stream',
+                    timeout: 15000
+                });
+                
+                console.log('✅ Fallback API successful');
+                fallbackResponse.data.pipe(res);
+                return;
+                
+            } catch (fallbackError) {
+                console.error('❌ Fallback also failed:', fallbackError.message);
+                
+                // Send error response
+                res.status(500).json({ 
+                    error: 'AI service temporarily unavailable',
+                    details: 'All AI endpoints are currently down. Please try again later.',
+                    model: modelId
+                });
+            }
+        } else {
+            // Connection already established, send error in stream format
+            res.write('data: {"error": {"message": "AI service interrupted", "type": "service_error"}}\n\n');
+            res.write('data: [DONE]\n\n');
+            res.end();
+        }
     }
 });
 
-// ... (keep the existing /images/generations endpoint) ...
+// Images generation endpoint
+router.post('/images/generations', authMiddleware, async (req, res) => {
+    const { model, prompt, n = 1, size = '1024x1024', quality = 'standard', response_format = 'url' } = req.body;
 
-module.exports = router;
+    if (!model || !prompt) {
+        return res.status(400).json({ error: 'Model and prompt are required.' });
+    }
+
+    try {
+        // For now, return a mock response since image generation endpoints vary
+        // This should be implemented based on your specific image generation API
+        const mockImageResponse = {
+            data: [{
+                url: 'https://via.placeholder.com/1024x1024/4F46E5/FFFFFF?text=Generated+Image',
+                revised_prompt: prompt
+            }]
+        };
+        
+        console.log('🎨 Mock image generation response for prompt:', prompt);
+        res.status(200).json(mockImageResponse);
+        
+    } catch (error) {
+        console.error('❌ Error in image generation:', error.message);
+        res.status(500).json({ error: 'Internal server error occurred during image generation.' });
+    }
+});
+
+// ====================================
+// Model Availability Checker
+// ====================================
+
+class ModelAvailabilityChecker {
+    constructor() {
+        this.modelStatus = new Map();
+        this.checkInterval = 10 * 60 * 1000; // 10 minutes
+        this.isRunning = false;
+        
+        // Models to check availability for
+        this.modelsToCheck = [
+            { id: 'gpt-4.1', provider: 'default' },
+            { id: 'gpt-5-nano', provider: 'default' },
+            { id: 'gemini-2.5-lite', provider: 'default' },
+            { id: 'claude-opus-4', provider: 'v2' },
+            { id: 'o4-mini-medium', provider: 'v2' },
+            { id: 'grok-4', provider: 'navy' },
+            { id: 'gpt-5', provider: 'airforce' },
+            { id: 'gemini-2.5-pro', provider: 'airforce' },
+            { id: 'gpt-4.1-mini', provider: 'mnn' },
+            { id: 'whisper-1', provider: 'mnn' },
+            { id: 'gpt-4-vision-preview', provider: 'mnn' }
+        ];
+    }
+    
+    async checkModelAvailability(modelId, provider) {
+        try {
+            let apiEndpoint, apiKeyPool;
+            
+            switch (provider) {
+                case 'navy':
+                    apiEndpoint = 'https://api.navy/v1/chat/completions';
+                    apiKeyPool = navyApiKeyPool;
+                    break;
+                case 'airforce':
+                    apiEndpoint = 'https://api.airforce/v1/chat/completions';
+                    apiKeyPool = airforceApiKeyPool;
+                    break;
+                case 'v2':
+                    apiEndpoint = `${process.env.AI_API_ENDPOINT_V2}/chat/completions`;
+                    apiKeyPool = v2ApiKeyPool;
+                    break;
+                case 'mnn':
+                    apiEndpoint = 'https://api.mnnai.ru/v1/chat/completions';
+                    apiKeyPool = mnnApiKeyPool;
+                    break;
+                default:
+                    // Use V2 endpoint as fallback since V1 pollinations.ai is unreliable
+                    apiEndpoint = `${process.env.AI_API_ENDPOINT_V2}/chat/completions`;
+                    apiKeyPool = v2ApiKeyPool;
+            }
+            
+            // Map model names to provider-prefixed versions
+            const modelMappingForAvailability = {
+                'gpt-4.1': 'provider-3/gpt-4.1-nano',
+                'gpt-5-nano': 'provider-3/gpt-5-nano',
+                'gemini-2.5-lite': 'provider-2/gemini-2.5-flash-lite',
+                'claude-opus-4': 'provider-6/claude-opus-4-20250514',
+                'o4-mini-medium': 'provider-6/o4-mini-medium',
+                'gpt-4.1-mini': 'provider-3/gpt-4.1-mini',
+                'gpt-4-vision-preview': 'gpt-4-vision-preview',
+                'whisper-1': 'whisper-1',
+                'grok-4': 'grok-4',
+                'gpt-5': 'gpt-5',
+                'gemini-2.5-pro': 'gemini-2.5-pro'
+            };
+            
+            const mappedModelId = modelMappingForAvailability[modelId] || modelId;
+            
+            // Simple ping request with minimal tokens
+            const requestBody = {
+                model: mappedModelId,
+                messages: [{ role: 'user', content: 'ping' }],
+                max_tokens: 1,
+                stream: false
+            };
+            
+            const currentKey = apiKeyPool.getCurrentKey();
+            const requestOptions = {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                timeout: 5000 // 5 second timeout
+            };
+            
+            if (currentKey) {
+                requestOptions.headers['Authorization'] = `Bearer ${currentKey}`;
+            }
+            
+            await axios.post(apiEndpoint, requestBody, requestOptions);
+            return true;
+            
+        } catch (error) {
+            // If it's just a timeout or connection error, mark as unavailable
+            if (error.code === 'ECONNABORTED' || error.code === 'ECONNREFUSED') {
+                console.log(`⚠️ Model ${modelId} unavailable: ${error.message}`);
+                return false;
+            }
+            
+            // If we get a proper HTTP response (even error), the model exists
+            if (error.response && error.response.status) {
+                return true;
+            }
+            
+            return false;
+        }
+    }
+    
+    async checkAllModels() {
+        console.log('🔍 Checking model availability...');
+        
+        const promises = this.modelsToCheck.map(async (model) => {
+            const isAvailable = await this.checkModelAvailability(model.id, model.provider);
+            this.modelStatus.set(model.id, isAvailable);
+            console.log(`📊 Model ${model.id}: ${isAvailable ? '✅ Available' : '❌ Unavailable'}`);
+        });
+        
+        await Promise.all(promises);
+        console.log('✅ Model availability check completed');
+    }
+    
+    start() {
+        if (this.isRunning) {
+            console.log('⚠️ Model availability checker is already running');
+            return;
+        }
+        
+        this.isRunning = true;
+        console.log('🚀 Starting model availability checker...');
+        
+        // Check immediately on startup
+        this.checkAllModels();
+        
+        // Set up periodic checks
+        this.intervalId = setInterval(() => {
+            this.checkAllModels();
+        }, this.checkInterval);
+    }
+    
+    stop() {
+        if (this.intervalId) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
+        this.isRunning = false;
+        console.log('⏹️ Model availability checker stopped');
+    }
+    
+    getModelStatus(modelId) {
+        return this.modelStatus.get(modelId) || false;
+    }
+    
+    getAllModelStatus() {
+        return Object.fromEntries(this.modelStatus);
+    }
+}
+
+// Global instance
+const modelChecker = new ModelAvailabilityChecker();
+
+// Export function to start the checker
+const startModelAvailabilityChecker = () => {
+    modelChecker.start();
+};
+
+// ====================================
+// Public Chat Endpoint (No Auth Required)
+// ====================================
+
+// Define which models are allowed for anonymous users
+const ANONYMOUS_ALLOWED_MODELS = ['gpt-4.1', 'gpt-5-nano', 'gemini'];
+
+router.post('/chat-public', async (req, res) => {
+    const { model, messages } = req.body;
+    
+    if (!model || !messages || !Array.isArray(messages)) {
+        return res.status(400).json({ error: 'Invalid request body. "model" and a "messages" array are required.' });
+    }
+    
+    // Check if the model is allowed for anonymous users
+    let actualModel = model;
+    if (model === 'gemini') {
+        actualModel = 'gemini-2.5-lite'; // Map gemini to gemini-2.5-lite
+    }
+    
+    // Map model names to provider-prefixed versions for the API
+    const publicModelMapping = {
+        'gpt-4.1': 'provider-3/gpt-4.1-nano',
+        'gpt-5-nano': 'provider-3/gpt-5-nano',
+        'gemini-2.5-lite': 'provider-2/gemini-2.5-flash-lite',
+        'gemini': 'provider-2/gemini-2.5-flash-lite'
+    };
+    
+    if (!ANONYMOUS_ALLOWED_MODELS.includes(model)) {
+        return res.status(403).json({ 
+            error: 'This model requires authentication. Please sign in to use this model.',
+            allowedModels: ANONYMOUS_ALLOWED_MODELS
+        });
+    }
+    
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    
+    try {
+        // Try multiple fallback endpoints for better reliability
+        const fallbackEndpoints = [
+            { 
+                url: `${process.env.AI_API_ENDPOINT_V2}/chat/completions`,
+                pool: v2ApiKeyPool,
+                name: 'V2 API'
+            },
+            { 
+                url: 'https://api.pollinations.ai/openai/chat/completions',
+                pool: null,
+                name: 'Pollinations API'
+            },
+            {
+                url: 'https://text.pollinations.ai/openai/chat/completions', 
+                pool: null,
+                name: 'Pollinations Text API'
+            }
+        ];
+        
+        let lastError = null;
+        
+        for (const endpoint of fallbackEndpoints) {
+            try {
+                console.log(`🔄 Trying ${endpoint.name} for model ${actualModel}`);
+                
+                const requestBody = {
+                    model: publicModelMapping[actualModel] || actualModel,
+                    messages: messages,
+                    stream: true
+                };
+                
+                let requestOptions = {
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Accept': 'text/event-stream',
+                        'User-Agent': 'Fronix-Chat/1.0'
+                    },
+                    responseType: 'stream',
+                    timeout: 15000
+                };
+                
+                let response;
+                
+                if (endpoint.pool && endpoint.pool.keys.length > 0) {
+                    // Use API key pool if available
+                    response = await makeApiRequestWithRetry(
+                        endpoint.url,
+                        requestBody,
+                        requestOptions,
+                        endpoint.pool
+                    );
+                } else {
+                    // Direct request without API key
+                    response = await axios.post(endpoint.url, requestBody, requestOptions);
+                }
+                
+                console.log(`✅ Successfully connected to ${endpoint.name}`);
+                response.data.pipe(res);
+                return; // Success, exit the function
+                
+            } catch (error) {
+                console.error(`❌ ${endpoint.name} failed:`, error.message);
+                lastError = error;
+                continue; // Try next endpoint
+            }
+        }
+        
+        // If all endpoints failed, send a fallback response
+        console.error('❌ All AI endpoints failed, sending fallback response');
+        res.write('data: {"choices":[{"delta":{"content":"I apologize, but I\'m currently experiencing technical difficulties. The AI service is temporarily unavailable. Please try again in a few moments or contact support if the issue persists."}}]}\n\n');
+        res.write('data: [DONE]\n\n');
+        res.end();
+        
+    } catch (error) {
+        console.error('❌ Critical error in chat-public:', error.message);
+        if (!res.headersSent) {
+            res.status(500).json({ 
+                error: 'AI service temporarily unavailable',
+                details: 'Please try again later or contact support'
+            });
+        }
+    }
+});
+
+// ====================================
+// Model Status Endpoint
+// ====================================
+
+router.get('/model-status', (req, res) => {
+    try {
+        const status = modelChecker.getAllModelStatus();
+        res.json({
+            status,
+            lastChecked: Date.now(),
+            anonymousModels: ANONYMOUS_ALLOWED_MODELS
+        });
+    } catch (error) {
+        console.error('❌ Error getting model status:', error.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+module.exports = { router, startModelAvailabilityChecker };

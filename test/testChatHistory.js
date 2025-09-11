@@ -5,8 +5,8 @@ const API_BASE_URL = 'http://localhost:3001';
 
 // !!! IMPORTANT: Replace with actual user ID and a valid auth token !!!
 // You'll need to obtain these from your running application after a user logs in.
-const MOCK_USER_ID = '7201deeb-5f21-41ff-86dc-94093a68ec1a'; 
-const MOCK_AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsImtpZCI6InFiVi9VbG44TWpCTE1PL3oiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2RmcmxtcnBsc2hpamJvc2F3cG1zLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI3MjAxZGVlYi01ZjIxLTQxZmYtODZkYy05NDA5M2E2OGVjMWEiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU0MzA4MjA0LCJpYXQiOjE3NTQzMDQ2MDQsImVtYWlsIjoieW95aXNpMjE5MEAwdGlyZXMuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6InlveWlzaTIxOTBAMHRpcmVzLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6IjcyMDFkZWViLTVmMjEtNDFmZi04NmRjLTk0MDkzYTY4ZWMxYSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU0MzA0NjA0fV0sInNlc3Npb25faWQiOiI0OTE0NDlhMy0xODcyLTQ0NjItYjRkMi0zM2M0MDAzYmY5MWEiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.qNQ00BQwbS7eobHYHyGKxitUi2MAAqiSIoeDwNK50kA';
+const MOCK_USER_ID = process.env.TEST_USER_ID || 'YOUR_MOCK_USER_ID'; 
+const MOCK_AUTH_TOKEN = process.env.TEST_AUTH_TOKEN || 'YOUR_MOCK_AUTH_TOKEN';
 
 const headers = {
     'Authorization': `Bearer ${MOCK_AUTH_TOKEN}`,

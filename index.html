@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&family=Yu+Gothic&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
@@ -153,6 +154,168 @@
 
     @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
     @keyframes pendulum { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    
+    /* Loading spinner animation */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-spinner {
+      border: 2px solid transparent;
+      border-top: 2px solid currentColor;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 8px;
+    }
+    
+    /* Custom scrollbar for model dropdown */
+    #model-dropdown::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    #model-dropdown::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    #model-dropdown::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    
+    .dark #model-dropdown::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+    
+    #model-dropdown::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    
+    .dark #model-dropdown::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    
+    /* Custom alert styles aligned with app design */
+    .custom-alert {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 9999;
+      min-width: 280px;
+      max-width: 420px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      transform: translateX(100%);
+      opacity: 0;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      border: 1px solid;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system;
+    }
+    
+    .custom-alert.show {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    
+    .custom-alert.success {
+      background-color: #ECFDF5;
+      color: #065F46;
+      border-color: #A7F3D0;
+    }
+    .dark .custom-alert.success {
+      background-color: rgba(16,185,129,0.12);
+      color: #D1FAE5;
+      border-color: rgba(16,185,129,0.35);
+    }
+    
+    .custom-alert.error {
+      background-color: #FEF2F2;
+      color: #991B1B;
+      border-color: #FECACA;
+    }
+    .dark .custom-alert.error {
+      background-color: rgba(239,68,68,0.12);
+      color: #FCA5A5;
+      border-color: rgba(239,68,68,0.35);
+    }
+    
+    .custom-alert.warning {
+      background-color: #FFFBEB;
+      color: #92400E;
+      border-color: #FDE68A;
+    }
+    .dark .custom-alert.warning {
+      background-color: rgba(245,158,11,0.12);
+      color: #FCD34D;
+      border-color: rgba(245,158,11,0.35);
+    }
+    
+    .custom-alert.info {
+      background-color: #EFF6FF;
+      color: #1E3A8A;
+      border-color: #BFDBFE;
+    }
+    .dark .custom-alert.info {
+      background-color: rgba(59,130,246,0.12);
+      color: #93C5FD;
+      border-color: rgba(59,130,246,0.35);
+    }
+    
+    .alert-content {
+      flex: 1;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    
+    .alert-close {
+      background: none;
+      border: none;
+      color: currentColor;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      opacity: 0.8;
+      padding: 2px;
+      line-height: 1;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+    
+    .alert-close:hover {
+      opacity: 1;
+      background-color: rgba(0,0,0,0.06);
+    }
+    .dark .alert-close:hover {
+      background-color: rgba(255,255,255,0.08);
+    }
+    
+    /* Loading spinner for sync indicator */
+    .loading-spinner {
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      border-left: 2px solid currentColor;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    .dark .loading-spinner {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-left: 2px solid currentColor;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body class="h-full bg-light-background dark:bg-dark-background flex overflow-hidden text-light-text dark:text-dark-text font-inter font-normal">
@@ -223,11 +386,18 @@
   <div id="main-container" class="flex-1 flex flex-col min-w-0">
     <header class="bg-light-chat-surface dark:bg-dark-chat-surface px-4 py-3 flex items-center gap-4 relative">
       <button id="toggle-sidebar" class="p-2 text-light-text-subtle dark:text-dark-text-subtle hover:text-light-text dark:hover:text-dark-text rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" /></svg></button>
-      <div id="model-selector" class="flex items-center gap-1 cursor-pointer">
+      <div id="model-selector" class="flex items-center gap-2 cursor-pointer hover:bg-light-border-hover dark:hover:bg-dark-border-hover rounded-lg px-3 py-2 transition-colors">
         <h1 id="chat-title" class="text-lg font-semibold truncate">Fronix</h1>
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-light-text-subtle dark:text-dark-text-subtle"><path d="m6 9 6 6 6-6"></path></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-light-text-subtle dark:text-dark-text-subtle flex-shrink-0 transition-transform" id="model-dropdown-arrow"><path d="m6 9 6 6 6-6"></path></svg>
       </div>
-      <div id="model-dropdown" class="absolute top-full left-4 mt-2 w-48 bg-light-sidebar dark:bg-dark-sidebar rounded-lg shadow-lg border border-light-border dark:border-dark-border z-10"></div>
+      
+      <!-- Syncing Indicator -->
+      <div id="sync-indicator" class="hidden flex items-center gap-2 ml-auto text-xs text-light-text-subtle dark:text-dark-text-subtle">
+        <div class="loading-spinner w-3 h-3"></div>
+        <span>Syncing...</span>
+      </div>
+      
+      <div id="model-dropdown" class="absolute top-full left-4 mt-2 w-72 bg-light-sidebar dark:bg-dark-sidebar rounded-lg shadow-lg border border-light-border dark:border-dark-border z-10 max-h-96 overflow-y-auto"></div>
     </header>
     <main class="flex-1 overflow-hidden flex flex-col bg-light-chat-surface dark:bg-dark-chat-surface">
       <div id="chat-box-wrapper" class="flex-1 overflow-y-auto px-4 sm:px-8 md:px-12 lg:px-24">
@@ -301,13 +471,45 @@
     </main>
   </div>
 
-  <div id="settings-modal" class="modal-container"><div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 rounded-2xl shadow-xl w-full max-w-md border border-light-border dark:border-dark-border"><div class="flex justify-between items-center mb-6"><h3 class="text-xl font-semibold">Settings</h3><button id="close-settings-btn" class="p-1 rounded-full hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div><div class="space-y-6"><div class="space-y-2"><div><label class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">API Token</label><p class="text-xs text-light-text-subtle dark:text-dark-text-subtle">Your token is stored only in your browser's local storage.</p></div><input id="api-token-input" type="password" class="w-full p-2 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Enter your API token..."></div><div class="flex items-center justify-between">
-    <label for="pro-models-toggle" class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">Enable Pro Models</label>
-    <button id="pro-models-toggle" type="button" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 bg-gray-200 dark:bg-gray-700" role="switch" aria-checked="false">
-        <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
-    </button>
-</div>
-<div id="font-options"></div><div id="font-weight-options"></div><div><button id="reset-settings-btn" class="w-full px-4 py-2 rounded-md text-sm font-medium border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">Reset to Default</button></div></div></div></div>
+  <div id="settings-modal" class="modal-container">
+    <div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 rounded-2xl shadow-xl w-full max-w-md border border-light-border dark:border-dark-border">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-semibold">Settings</h3>
+        <button id="close-settings-btn" class="p-1 rounded-full hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="space-y-6">
+        <div class="space-y-2">
+          <div>
+            <label class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">API Token</label>
+            <p class="text-xs text-light-text-subtle dark:text-dark-text-subtle">Your token is stored only in your browser's local storage.</p>
+          </div>
+          <input id="api-token-input" type="password" class="w-full p-2 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Enter your API token...">
+        </div>
+        <div class="flex items-center justify-between">
+          <label for="pro-models-toggle" class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">Enable Pro Models</label>
+          <button id="pro-models-toggle" type="button" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 bg-gray-200 dark:bg-gray-700" role="switch" aria-checked="false">
+            <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+          </button>
+        </div>
+        <div class="flex items-center justify-between">
+          <label for="beta-models-toggle" class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">Enable Beta Models</label>
+          <button id="beta-models-toggle" type="button" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 bg-gray-200 dark:bg-gray-700" role="switch" aria-checked="false">
+            <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+          </button>
+        </div>
+        <div id="font-options"></div>
+        <div id="font-weight-options"></div>
+        <div>
+          <button id="reset-settings-btn" class="w-full px-4 py-2 rounded-md text-sm font-medium border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">Reset to Default</button>
+        </div>
+      </div>
+    </div>
+  </div>
 <div id="rename-modal" class="modal-container"><div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 sm:pb-8 rounded-2xl shadow-xl w-full max-w-sm border border-light-border dark:border-dark-border"><h3 class="text-lg font-semibold mb-4">Rename Chat</h3><input id="rename-input" type="text" class="w-full p-2 rounded-md bg-light-user-bubble dark:bg-dark-user-bubble focus:outline-none focus:ring-2 focus:ring-accent mb-4"><div class="flex justify-end gap-2"><button id="rename-cancel" class="px-4 py-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover">Cancel</button><button id="rename-save" class="px-4 py-2 rounded-md bg-accent text-white">Save</button></div></div></div>
   <div id="delete-modal" class="modal-container"><div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 rounded-2xl shadow-xl w-full max-w-sm border border-light-border dark:border-dark-border"><h3 class="text-lg font-semibold mb-4">Delete Chat</h3><p id="delete-message" class="mb-4 text-light-text-subtle dark:text-dark-text-subtle"></p><div class="flex justify-end gap-2"><button id="delete-cancel" class="px-4 py-2 rounded-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover">Cancel</button><button id="delete-confirm" class="px-4 py-2 rounded-md bg-red-600 text-white">Delete</button></div></div></div>
   <div id="signin-modal" class="modal-container">
@@ -365,7 +567,7 @@
   <div id="chat-actions-dropdown" class="w-32 bg-light-sidebar dark:bg-dark-sidebar rounded-lg shadow-lg border border-light-border dark:border-dark-border"></div>
 
   <script>
-    const API_BASE_URL = 'https://fronix-html.onrender.com'; // Your Node.js backend URL
+    const API_BASE_URL = 'http://localhost:3001'; // Your Node.js backend URL
     const config = { API_ENDPOINT: 'https://text.pollinations.ai/openai' };
     const SUPABASE_URL = 'https://dfrlmrplshijbosawpms.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmcmxtcnBsc2hpamJvc2F3cG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzEzMDYsImV4cCI6MjA2ODg0NzMwNn0.BzsC5u2LGbq3QydQCAKnIiJvrRHTdjx3HzNGdCzf_ac';
@@ -438,10 +640,17 @@
     // --- CORRECTED Sign In Function ---
 async function handleSignIn(email, password, retryCount = 0) {
     if (!email || !password) {
-        alert("Please enter both your email and password.");
+        showAlert("Please enter both your email and password.", 'warning');
         return;
     }
+    
+    const signinBtn = document.getElementById('signin-email-btn');
+    const originalText = 'Sign In';
     const maxRetries = 2;
+    
+    // Show loading state
+    setButtonLoading(signinBtn, true, originalText);
+    
     try {
         // This function CORRECTLY calls your backend, not the client library.
         const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
@@ -459,31 +668,43 @@ async function handleSignIn(email, password, retryCount = 0) {
         localStorage.setItem('refreshToken', data.session.refresh_token);
         loadDataFromServer();
         closeAllModals();
-        alert('Sign in successful!');
+        showAlert('Sign in successful! Welcome back.', 'success');
     } catch (error) {
         console.error("Sign-in failed:", error);
         // Retry logic for network/fetch errors
         if (retryCount < maxRetries && (error.message.includes('fetch failed') || error.message.includes('network'))) {
             console.log(`Retrying sign-in attempt ${retryCount + 1}/${maxRetries + 1}...`);
+            showAlert(`Connection failed. Retrying... (${retryCount + 1}/${maxRetries + 1})`, 'info', 2000);
             setTimeout(() => {
                 handleSignIn(email, password, retryCount + 1);
             }, 1000 * (retryCount + 1)); // Exponential backoff: 1s, 2s
+            return; // Don't reset loading state yet
         } else {
-            alert('Error signing in: ' + error.message);
+            showAlert('Error signing in: ' + error.message, 'error');
         }
+    } finally {
+        // Reset loading state
+        setButtonLoading(signinBtn, false, originalText);
     }
 }
 
     // --- CORRECTED Sign Up Function ---
 async function handleSignUp(email, password) {
     if (!email || !password) {
-        alert("Please provide both an email and a password.");
+        showAlert("Please provide both an email and a password.", 'warning');
         return;
     }
     if (password.length < 6) {
-        alert("Password must be at least 6 characters long.");
+        showAlert("Password must be at least 6 characters long.", 'warning');
         return;
     }
+    
+    const signupBtn = document.getElementById('signup-email-btn');
+    const originalText = 'Continue with Email';
+    
+    // Show loading state
+    setButtonLoading(signupBtn, true, originalText);
+    
     try {
         // This function CORRECTLY calls your backend.
         const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
@@ -495,15 +716,27 @@ async function handleSignUp(email, password) {
         if (!response.ok) {
             throw new Error(data.error || 'Unknown sign-up error');
         }
-        alert('Sign-up successful! Please check your email for verification.');
+        showAlert('Sign-up successful! Please check your email for verification.', 'success');
         closeAllModals();
     } catch (error) {
         console.error("Sign-up failed:", error);
-        alert('Error signing up: ' + error.message);
+        showAlert('Error signing up: ' + error.message, 'error');
+    } finally {
+        // Reset loading state
+        setButtonLoading(signupBtn, false, originalText);
     }
 }
 
     async function handleGoogleLogin() {
+        const signinGoogleBtn = document.getElementById('signin-google-btn');
+        const signupGoogleBtn = document.getElementById('signup-google-btn');
+        const originalSigninText = 'Continue with Google';
+        const originalSignupText = 'Continue with Google';
+        
+        // Show loading state on both buttons
+        setButtonLoading(signinGoogleBtn, true, originalSigninText);
+        setButtonLoading(signupGoogleBtn, true, originalSignupText);
+        
         try {
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
@@ -514,9 +747,13 @@ async function handleSignUp(email, password) {
             if (error) {
                 throw new Error('Supabase Google login failed: ' + error.message);
             }
+            // Don't reset loading state here as user will be redirected
         } catch (error) {
             console.error("Error during Google login:", error);
-            alert(error.message);
+            showAlert('Google login failed: ' + error.message, 'error');
+            // Reset loading state on error
+            setButtonLoading(signinGoogleBtn, false, originalSigninText);
+            setButtonLoading(signupGoogleBtn, false, originalSignupText);
         }
     }
 // --- REPLACE your handleLogout function with this final version ---
@@ -525,7 +762,7 @@ async function handleLogout() {
         // Use the Supabase client to sign out.
         // This will automatically trigger the 'SIGNED_OUT' event
         // in your onAuthStateChange listener, which handles all the UI cleanup.
-        const { error } = await supabase.auth.signOut();
+        const { error } = await supabaseClient.auth.signOut();
         if (error) {
             throw new Error("Logout failed: " + error.message);
         }
@@ -533,7 +770,7 @@ async function handleLogout() {
         console.error(error);
         // Alert the user even if the sign-out fails, as the local state
         // will be cleared by the listener regardless.
-        alert(error.message);
+        showAlert('Logout failed: ' + error.message, 'error');
     }
 }
 function updateProfileUI() {
@@ -579,12 +816,18 @@ async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
     }
 }
 
-async function loadDataFromServer(retryCount = 0) {
+async function loadDataFromServer(retryCount = 0, silentLoad = false) {
     const maxRetries = 3;
     const token = localStorage.getItem('authToken');
     if (!token) {
         updateLoginStateUI();
         return;
+    }
+    
+    // For silent loads, don't disrupt UI if we already have cached data
+    if (silentLoad && state.chats.length > 0) {
+        console.log('[loadDataFromServer] Silent load - keeping existing UI while updating in background');
+        showSyncIndicator(); // Show subtle sync indicator during background refresh
     }
 
     try {
@@ -671,15 +914,24 @@ async function loadDataFromServer(retryCount = 0) {
         // If we get here, everything succeeded
         console.log('[loadDataFromServer] Data loaded successfully. Current state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
         console.log('[loadDataFromServer] Current state.activeId:', state.activeId);
-        renderSidebar();
-        renderChat();
+        
+        // Save to cache for instant future loads
+        saveState();
+        
+        // Only re-render if not a silent load to avoid UI flicker
+        if (!silentLoad) {
+            renderSidebar();
+            renderChat();
+        } else {
+            console.log('[loadDataFromServer] Silent load - updated cache without re-rendering');
+        }
 
     } catch (error) {
         console.error("[loadDataFromServer] Error loading data from server:", error);
         
         // Only clear token and sign out on authentication errors
         if (error.message === 'AUTH_ERROR') {
-            alert('Your session has expired. Please sign in again.');
+            showAlert('Your session has expired. Please sign in again.', 'warning');
             localStorage.removeItem('authToken');
             state.currentUser = null;
         } else {
@@ -696,26 +948,37 @@ async function loadDataFromServer(retryCount = 0) {
 // ++ ADD THIS NEW FUNCTION TO YOUR SCRIPT ++
 async function handleNewChat() {
     const token = localStorage.getItem('authToken');
-    if (!token) {
-        alert("Please sign in to create a new chat.");
-        return;
+    const isAnonymous = !token;
+    if (isAnonymous) {
+        showAlert("Creating a local chat (anonymous mode). Sign in to sync across devices.", 'info');
     }
 
-    // Optimistically create a new chat object with a temporary ID
-    const tempChatId = `temp-${Date.now()}`;
+    // Create a new chat object with appropriate ID
+    const chatId = isAnonymous ? `anon-${Date.now()}` : `temp-${Date.now()}`;
     const newChat = {
-        id: tempChatId,
+        id: chatId,
         title: 'New Chat',
         messages: [],
-        model: state.settings.model // Default model
+        model: isAnonymous ? getFirstAvailableAnonymousModel() : (state.settings.model || 'gpt-4.1'),
+        created_at: new Date().toISOString()
     };
 
     // Add the new chat to the state and set it as active
-    console.log('[handleNewChat] Optimistically adding new chat:', newChat);
+    console.log('[handleNewChat] Adding new chat:', newChat);
     state.chats.unshift(newChat);
-    setActive(tempChatId);
+    setActive(chatId);
     renderSidebar(); // Update sidebar immediately
     renderChat(); // Render empty chat immediately
+    
+    if (isAnonymous) {
+        // For anonymous users, save to localStorage and finish
+        saveAnonymousChat(newChat);
+        saveState();
+        console.log('[handleNewChat] Anonymous chat created and saved to localStorage');
+        return;
+    }
+
+    // For logged-in users, create on server
     saveState();
     console.log('[handleNewChat] State after optimistic add. state.chats:', JSON.parse(JSON.stringify(state.chats))); // Deep copy for logging
     console.log('[handleNewChat] State after optimistic add. state.activeId:', state.activeId);
@@ -738,7 +1001,7 @@ async function handleNewChat() {
         newChatFromServer.messages = []; // Initialize with an empty messages array
 
         // Find the optimistically added chat and update its real ID
-        const index = state.chats.findIndex(chat => chat.id === tempChatId);
+        const index = state.chats.findIndex(chat => chat.id === chatId);
         if (index !== -1) {
             state.chats[index].id = newChatFromServer.id;
             state.chats[index].created_at = newChatFromServer.created_at; // Update timestamp if needed
@@ -758,14 +1021,14 @@ async function handleNewChat() {
 
     } catch (error) {
         console.error("[handleNewChat] Error creating new chat:", error);
-        alert("Could not create a new chat. Please try again.");
+        showAlert("Could not create a new chat. Please try again.", 'error');
 
         // Revert optimistic update on error
-        const index = state.chats.findIndex(chat => chat.id === tempChatId);
+        const index = state.chats.findIndex(chat => chat.id === chatId);
         if (index !== -1) {
             state.chats.splice(index, 1); // Remove optimistic chat
             // If the deleted chat was active, set a new active chat
-            if (state.activeId === tempChatId) {
+            if (state.activeId === chatId) {
                 state.activeId = state.chats.length > 0 ? state.chats[0].id : null;
             }
             renderSidebar(); // Re-render sidebar after removal
@@ -787,20 +1050,20 @@ Over the course of the conversation, you adapt to the user's tone and preference
 `};
     const MODELS = {
       // Text Models
-      'openai': { name: 'OpenAI GPT-4.1 Nano', type: 'text' },
-      'openai-large': { name: 'OpenAI GPT-4.1', type: 'text' },
-      'openai-fast': { name: 'OpenAI GPT-4.1 Nano', type: 'text' },
-      'gemini': { name: 'Gemini 2.5 Flash Lite', type: 'text' },
-      'gpt-5-nano': { name: 'OpenAI GPT-5 Nano', type: 'text' },
+      'gpt-4.1': { name: 'OpenAI GPT-4.1', type: 'text', anonymous: true },
+      'gpt-5-nano': { name: 'OpenAI GPT-5 Nano', type: 'text', anonymous: true },
+      'gemini': { name: 'Gemini 2.5 Flash Lite', type: 'text', anonymous: true },
       'deepseek-reasoning': { name: 'DeepSeek R1 0528 (Bedrock)', type: 'text' },
       'openai-reasoning': { name: 'OpenAI o3 (api.navy)', type: 'text' },
       'grok': { name: 'Grok', type: 'text' },
       'elixposearch': { name: 'Elixpo Search', type: 'text' },
       'o4-mini-medium': { name: 'O4 Mini Medium', type: 'text' },
       'o4-mini-high': { name: 'O4 Mini High', type: 'text' },
-      // 'gemini-2.5-flash-thinking': { name: 'Gemini 2.5 Flash Thinking', type: 'text' },
       'provider-6/kimi-k2-instruct': { name: 'Kimi K2', type: 'text' },
       'deepseek-r1-uncensored': { name: 'DeepSeek R1 Uncensored', type: 'text' },
+      'claude-opus-4': { name: 'Claude Opus 4', type: 'text' },
+      'gemini-2.5-flash-thinking': { name: 'Gemini 2.5 Flash Thinking', type: 'text' },
+      'kimi-k2': { name: 'Kimi K2', type: 'text' },
 
       // Pro Models
       'grok-4': { name: 'Grok 4', type: 'text', pro: true },
@@ -808,9 +1071,17 @@ Over the course of the conversation, you adapt to the user's tone and preference
       'gemini-2.5-pro': { name: 'Gemini 2.5 Pro', type: 'text', pro: true },
       'gemini-2.5-flash': { name: 'Gemini 2.5 Flash', type: 'text', pro: true },
       
+      // Beta Models (MNN AI)
+      'gpt-4.1-mini': { name: 'GPT-4.1 Mini (Beta)', type: 'text', beta: true },
+      'whisper-1': { name: 'Whisper-1 (Beta)', type: 'text', beta: true },
+      'gpt-4-vision-preview': { name: 'GPT-4 Vision Preview (Beta)', type: 'text', beta: true },
+      
       // Image Generation Models
       // 'provider-4/imagen-4': { name: 'Imagen 4', type: 'image' }
     };
+    
+    // Model availability status (updated from server)
+    let modelAvailability = {};
 
     const elements = {
       body: document.body, sidebar: document.getElementById('sidebar'), sidebarOverlay: document.getElementById('sidebar-overlay'), chatList: document.getElementById('chat-list'), chatBox: document.getElementById('chat-box'), chatTitle: document.getElementById('chat-title'), userInput: document.getElementById('user-input'), sendBtn: document.getElementById('send-btn'), sendIcon: document.getElementById('send-icon'), stopIcon: document.getElementById('stop-icon'), saveIcon: document.getElementById('save-icon'), newChatBtn: document.getElementById('new-chat'), toggleSidebarBtn: document.getElementById('toggle-sidebar'), themeToggleBtn: document.getElementById('theme-toggle'), settingsBtn: document.getElementById('settings-btn'),
@@ -830,19 +1101,231 @@ Over the course of the conversation, you adapt to the user's tone and preference
       scrollToBottomBtn: document.getElementById('scroll-to-bottom-btn'), // Added scroll to bottom button
       autocompleteSuggestions: document.getElementById('autocomplete-suggestions'), // Added for autocomplete
       studyCommandBtn: document.getElementById('study-command-btn'), // Added for study command autocomplete
-      settingsModal: { container: document.getElementById('settings-modal'), fontOptions: document.getElementById('font-options'), fontWeightOptions: document.getElementById('font-weight-options'), closeBtn: document.getElementById('close-settings-btn'), resetBtn: document.getElementById('reset-settings-btn'), apiTokenInput: document.getElementById('api-token-input'), proModelsToggle: document.getElementById('pro-models-toggle') },
+      syncIndicator: document.getElementById('sync-indicator'), // Added sync indicator
+      settingsModal: { container: document.getElementById('settings-modal'), fontOptions: document.getElementById('font-options'), fontWeightOptions: document.getElementById('font-weight-options'), closeBtn: document.getElementById('close-settings-btn'), resetBtn: document.getElementById('reset-settings-btn'), apiTokenInput: document.getElementById('api-token-input'), proModelsToggle: document.getElementById('pro-models-toggle'), betaModelsToggle: document.getElementById('beta-models-toggle') },
       renameModal: { container: document.getElementById('rename-modal'), input: document.getElementById('rename-input'), saveBtn: document.getElementById('rename-save'), cancelBtn: document.getElementById('rename-cancel') },
       deleteModal: { container: document.getElementById('delete-modal'), message: document.getElementById('delete-message'), confirmBtn: document.getElementById('delete-confirm'), cancelBtn: document.getElementById('delete-cancel') },
       signinModal: { container: document.getElementById('signin-modal'), closeBtn: document.getElementById('close-signin-btn') },
     };
 
-    let state = { chats: [], activeId: null, editingMessage: null, modalContext: {}, settings: { model: 'openai', font: 'inter', fontWeight: '400', apiToken: '', proModelsEnabled: false }, currentUser: null };
+    let state = { chats: [], activeId: null, editingMessage: null, modalContext: {}, settings: { model: 'openai', font: 'inter', fontWeight: '400', apiToken: '', proModelsEnabled: false, betaModelsEnabled: false }, currentUser: null };
     let currentController = null; // For aborting fetch requests
     let isStreaming = false; // Flag to indicate if streaming is active
     let isScrolledUp = false; // Flag to indicate if the user has scrolled up
     let isGeneratingTitle = false; // Flag to indicate if title generation is in progress
     let attachedImageData = null; // To store { file, dataUrl }
 
+    // Custom alert system
+    function showAlert(message, type = 'info', duration = 5000) {
+        const alertContainer = document.createElement('div');
+        alertContainer.className = `custom-alert ${type}`;
+        
+        alertContainer.innerHTML = `
+            <div class="alert-content">${message}</div>
+            <button class="alert-close" onclick="dismissAlert(this.parentElement)">&times;</button>
+        `;
+        
+        document.body.appendChild(alertContainer);
+        
+        // Trigger show animation
+        setTimeout(() => {
+            alertContainer.classList.add('show');
+        }, 10);
+        
+        // Auto dismiss after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                dismissAlert(alertContainer);
+            }, duration);
+        }
+        
+        return alertContainer;
+    }
+    
+    function dismissAlert(alertElement) {
+        if (alertElement && alertElement.parentElement) {
+            alertElement.classList.remove('show');
+            setTimeout(() => {
+                if (alertElement.parentElement) {
+                    alertElement.parentElement.removeChild(alertElement);
+                }
+            }, 300);
+        }
+    }
+    
+    // Button loading state management
+    function setButtonLoading(button, loading, originalText) {
+        if (loading) {
+            button.disabled = true;
+            button.innerHTML = `<div class=\"loading-spinner\"></div>${originalText}`;
+        } else {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    }
+    
+    // Sync indicator controls
+    function showSyncIndicator() {
+        if (elements.syncIndicator) {
+            elements.syncIndicator.classList.remove('hidden');
+        }
+    }
+    function hideSyncIndicator() {
+        if (elements.syncIndicator) {
+            elements.syncIndicator.classList.add('hidden');
+        }
+    }
+    
+    // Model availability functions
+    async function fetchModelAvailability() {
+        try {
+            showSyncIndicator();
+            const response = await fetch(`${API_BASE_URL}/api/ai/model-status`);
+            if (response.ok) {
+                const data = await response.json();
+                modelAvailability = data.status || {};
+                console.log('📊 Model availability updated:', modelAvailability);
+                
+                // Update model selection for anonymous users if needed
+                updateAnonymousModelSelection();
+                
+                renderModelDropdown(); // Update dropdown after availability check
+            } else {
+                console.warn(`Failed to fetch model availability: HTTP ${response.status}`);
+                // Set default availability for anonymous models when backend is unavailable
+                modelAvailability = {
+                    'gpt-4.1': true,
+                    'gpt-5-nano': true, 
+                    'gemini': true
+                };
+                updateAnonymousModelSelection();
+                renderModelDropdown();
+            }
+        } catch (error) {
+            console.warn('Backend server unavailable. Using fallback model configuration:', error.message);
+            // Set default availability for anonymous models when backend is unavailable
+            modelAvailability = {
+                'gpt-4.1': true,
+                'gpt-5-nano': true, 
+                'gemini': true
+            };
+            updateAnonymousModelSelection();
+            renderModelDropdown();
+            // Show user-friendly message only if user is not already signed in
+            if (!state.currentUser) {
+                showAlert('Some features may be limited. Backend server is not available.', 'warning', 8000);
+            }
+        } finally {
+            hideSyncIndicator();
+        }
+    }
+    
+    // Check if user is anonymous (not logged in)
+    function isAnonymousUser() {
+        return !state.currentUser;
+    }
+    
+    // Check if model is available for anonymous users
+    function isModelAvailableForAnonymous(modelKey) {
+        const model = MODELS[modelKey];
+        return model && model.anonymous === true;
+    }
+    
+    // Check if model requires login
+    function doesModelRequireLogin(modelKey) {
+        const model = MODELS[modelKey];
+        return model && (model.pro || !model.anonymous) && !state.currentUser;
+    }
+    
+    // Check if model is available (not down)
+    function isModelAvailable(modelKey) {
+        // If we don't have availability data, assume available
+        if (!modelAvailability || Object.keys(modelAvailability).length === 0) {
+            return true;
+        }
+        return modelAvailability[modelKey] !== false;
+    }
+    
+    // Save chat to localStorage for anonymous users
+    function saveAnonymousChat(chat) {
+        try {
+            const anonymousChats = JSON.parse(localStorage.getItem('anonymousChats') || '[]');
+            const existingIndex = anonymousChats.findIndex(c => c.id === chat.id);
+            
+            if (existingIndex >= 0) {
+                anonymousChats[existingIndex] = chat;
+            } else {
+                anonymousChats.unshift(chat);
+            }
+            
+            // Keep only last 20 chats to avoid localStorage bloat
+            if (anonymousChats.length > 20) {
+                anonymousChats.splice(20);
+            }
+            
+            localStorage.setItem('anonymousChats', JSON.stringify(anonymousChats));
+            console.log('💾 Anonymous chat saved to localStorage');
+        } catch (error) {
+            console.warn('Failed to save anonymous chat:', error);
+        }
+    }
+    
+    // Load anonymous chats from localStorage
+    function loadAnonymousChats() {
+        try {
+            const anonymousChats = JSON.parse(localStorage.getItem('anonymousChats') || '[]');
+            return anonymousChats;
+        } catch (error) {
+            console.warn('Failed to load anonymous chats:', error);
+            return [];
+        }
+    }
+    
+    // Get the first available model for anonymous users
+    function getFirstAvailableAnonymousModel() {
+        const anonymousModels = ['gpt-4.1', 'gpt-5-nano', 'gemini']; // In order of preference
+        
+        for (const modelKey of anonymousModels) {
+            if (isModelAvailable(modelKey)) {
+                console.log(`📍 Selected available anonymous model: ${modelKey}`);
+                return modelKey;
+            }
+        }
+        
+        // If no models are available, return the first one anyway (fallback)
+        console.warn('⚠️ No anonymous models appear to be available, falling back to first model');
+        return anonymousModels[0];
+    }
+    
+    // Update model selection for anonymous users based on availability
+    function updateAnonymousModelSelection() {
+        if (!isAnonymousUser()) return; // Only for anonymous users
+        
+        const currentModel = state.settings.model;
+        
+        // Check if current model is available for anonymous users and is actually available
+        if (!isModelAvailableForAnonymous(currentModel) || !isModelAvailable(currentModel)) {
+            const newModel = getFirstAvailableAnonymousModel();
+            
+            if (newModel !== currentModel) {
+                console.log(`🔄 Switching anonymous user from ${currentModel} to ${newModel}`);
+                state.settings.model = newModel;
+                
+                // Update active chat model too if exists
+                const activeChat = state.chats.find(c => c.id === state.activeId);
+                if (activeChat) {
+                    activeChat.model = newModel;
+                }
+                
+                saveState();
+                updateModelSelectorDisplay();
+                
+                // Show a friendly notification
+                showAlert(`Switched to ${MODELS[newModel]?.name || newModel} as your current model was unavailable.`, 'info', 4000);
+            }
+        }
+    }
+    
     // New function to update the state of the send button
     function updateSendButtonState() {
         const userInputEmpty = elements.userInput.value.trim() === '';
@@ -857,11 +1340,104 @@ Over the course of the conversation, you adapt to the user's tone and preference
     const FONTS = { 'inter': 'Inter', 'sans-serif': 'Sans Serif', 'work-sans': 'Work Sans', 'yu-gothic': 'Yu Gothic' };
     const FONT_WEIGHTS = { '300': 'Thin', '400': 'Regular', '500': 'Medium', '600': 'Semibold', '700': 'Bold' };
 
+    // Mobile detection
+    const isMobile = () => window.innerWidth < 768 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    
     const createChat = (title = 'New Chat') => ({ id: Date.now().toString(), title, messages: [], model: state.settings.model });
+    // Cache version for future-proofing against data structure changes
+    const CACHE_VERSION = '1.0';
+    
+    // Enhanced state management with comprehensive caching
     const saveState = () => {
         localStorage.setItem('fronixState', JSON.stringify(state));
         localStorage.setItem('lastActiveChatId', state.activeId); // Persist active chat ID
+        
+        // Cache top 10 chats with recent messages for instant loading
+        const topChats = state.chats.slice(0, 10).map(chat => ({
+            ...chat,
+            // Cache last 20 messages for instant chat display
+            messages: chat.messages ? chat.messages.slice(-20) : []
+        }));
+        
+        const cacheData = {
+            version: CACHE_VERSION,
+            chats: topChats,
+            activeId: state.activeId,
+            timestamp: Date.now(),
+            userEmail: state.currentUser?.email || null,
+            currentUser: state.currentUser ? {
+                id: state.currentUser.id,
+                email: state.currentUser.email,
+                username: state.currentUser.username,
+                plan: state.currentUser.plan
+            } : null
+        };
+        
+        localStorage.setItem('cachedChats', JSON.stringify(cacheData));
+        console.log('[saveState] Cached', topChats.length, 'chats with recent messages');
     };
+    
+    // Load cached chats for instant UI with version checking
+    const loadCachedChats = () => {
+        try {
+            const cached = localStorage.getItem('cachedChats');
+            if (!cached) return false;
+            
+            const cachedData = JSON.parse(cached);
+            
+            // Version check - clear cache if version mismatch
+            if (cachedData.version !== CACHE_VERSION) {
+                console.log('[loadCachedChats] Cache version mismatch, clearing cache');
+                clearCachedChats();
+                return false;
+            }
+            
+            const isRecent = (Date.now() - cachedData.timestamp) < (24 * 60 * 60 * 1000); // 24 hours
+            const currentUserEmail = state.currentUser?.email || localStorage.getItem('authToken') ? 'authenticated' : null;
+            
+            // Check if cache is recent and for the same user
+            if (isRecent && cachedData.chats && cachedData.chats.length > 0) {
+                // Restore cached data
+                state.chats = cachedData.chats;
+                state.activeId = cachedData.activeId;
+                
+                // Restore user data if available
+                if (cachedData.currentUser && !state.currentUser) {
+                    state.currentUser = cachedData.currentUser;
+                }
+                
+                const messageCount = cachedData.chats.reduce((total, chat) => total + (chat.messages?.length || 0), 0);
+                console.log('[loadCachedChats] Loaded', cachedData.chats.length, 'cached chats with', messageCount, 'messages instantly');
+                
+                renderSidebar();
+                renderChat();
+                return true;
+            }
+        } catch (error) {
+            console.warn('[loadCachedChats] Error loading cached chats:', error);
+            clearCachedChats(); // Clear corrupted cache
+        }
+        return false;
+    };
+    
+    // Clear cached chats (called on logout or user change)
+    const clearCachedChats = () => {
+        localStorage.removeItem('cachedChats');
+        console.log('[clearCachedChats] Cached chats cleared');
+    };
+    // Initialize default chat for new users
+    const initializeDefaultChat = () => {
+        if (state.chats.length === 0 && !localStorage.getItem('authToken')) {
+            const defaultChat = createChat('New Chat');
+            state.chats = [defaultChat];
+            state.activeId = defaultChat.id;
+            renderSidebar();
+            renderChat();
+            saveState();
+            console.log('[initializeDefaultChat] Created default chat for new user');
+        }
+    };
+    
     const loadState = () => {
         const d = localStorage.getItem('fronixState');
         if (d) {
@@ -875,6 +1451,9 @@ Over the course of the conversation, you adapt to the user's tone and preference
         }
         if (localStorage.getItem('authToken')) {
             loadDataFromServer();
+        } else {
+            // Initialize default chat for non-authenticated users
+            initializeDefaultChat();
         }
     };
 
@@ -1110,14 +1689,42 @@ async function sendMessage() {
         return;
     }
 
-    // Validate token before proceeding
-    const token = await validateAndRefreshToken();
-    if (!token) {
-        alert("Your session has expired. Please sign in again.");
-        setTimeout(() => {
-            animateModalOpen(elements.signinModal.container);
-        }, 1000);
-        return;
+    // Check authentication - handle both logged-in and anonymous users
+    const isAnonymous = isAnonymousUser();
+    let token = null;
+    
+    if (!isAnonymous) {
+        // Validate token for logged-in users
+        token = await validateAndRefreshToken();
+        if (!token) {
+            showAlert("Your session has expired. Please sign in again.", 'warning');
+            setTimeout(() => {
+                animateModalOpen(elements.signinModal.container);
+            }, 1000);
+            return;
+        }
+    } else {
+        // For anonymous users, check if the selected model is allowed and available
+        let currentModel = activeChat.model || state.settings.model || 'gpt-4.1';
+        
+        if (!isModelAvailableForAnonymous(currentModel)) {
+            showAlert("This model requires you to sign in. Please log in or select a model available for anonymous use.", 'warning');
+            return;
+        }
+        
+        // If the model is not available, switch to the next available one
+        if (!isModelAvailable(currentModel)) {
+            const availableModel = getFirstAvailableAnonymousModel();
+            console.log(`🔄 Current model ${currentModel} unavailable, switching to ${availableModel}`);
+            
+            // Update the active chat and settings
+            activeChat.model = availableModel;
+            state.settings.model = availableModel;
+            saveState();
+            updateModelSelectorDisplay();
+            
+            showAlert(`Switched to ${MODELS[availableModel]?.name || availableModel} as ${MODELS[currentModel]?.name || currentModel} was unavailable.`, 'info', 4000);
+        }
     }
 
     // Handle /study command
@@ -1257,57 +1864,101 @@ async function sendMessage() {
                 }),
             });
         } else {
-            // Route to text chat API
+            // Route to text chat API - use public endpoint for anonymous users
             console.log('💬 Routing to text chat API for model:', currentModel);
-            response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                signal: currentController.signal,
-                body: JSON.stringify({
-                    model: currentModel,
-                    messages: activeChat.messages,
-                    chatId: activeChat.id // Pass chatId for study mode check
-                }),
-            });
+            const chatEndpoint = isAnonymous ? '/api/ai/chat-public' : '/api/ai/chat';
+            const headers = { 'Content-Type': 'application/json' };
+            
+            // Only add authorization header for logged-in users
+            if (!isAnonymous && token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            const requestBody = {
+                model: currentModel,
+                messages: activeChat.messages
+            };
+            
+            // Only add chatId for logged-in users (for study mode support)
+            if (!isAnonymous) {
+                requestBody.chatId = activeChat.id;
+            }
+            
+            try {
+                response = await fetch(`${API_BASE_URL}${chatEndpoint}`, {
+                    method: 'POST',
+                    headers: headers,
+                    signal: currentController.signal,
+                    body: JSON.stringify(requestBody)
+                });
+            } catch (fetchError) {
+                // If backend is unavailable and user is anonymous, try fallback endpoint
+                if (isAnonymous && (fetchError.message.includes('fetch') || fetchError.message.includes('Failed'))) {
+                    console.warn('🔄 Backend unavailable for anonymous user, trying fallback endpoint...');
+                    
+                    // Use direct pollinations.ai endpoint as fallback
+                    const fallbackEndpoint = 'https://text.pollinations.ai/openai/chat/completions';
+                    const fallbackBody = {
+                        model: currentModel === 'gemini' ? 'gemini-1.5-flash' : currentModel,
+                        messages: activeChat.messages,
+                        stream: true
+                    };
+                    
+                    try {
+                        response = await fetch(fallbackEndpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            signal: currentController.signal,
+                            body: JSON.stringify(fallbackBody)
+                        });
+                        console.log('✅ Using fallback endpoint successfully');
+                        showAlert('Using backup servers. Some features may be limited.', 'info', 4000);
+                    } catch (fallbackError) {
+                        console.error('❌ Fallback endpoint also failed:', fallbackError);
+                        throw new Error('All chat services are currently unavailable. Please try again later.');
+                    }
+                } else {
+                    // Re-throw the original error for logged-in users or other errors
+                    throw fetchError;
+                }
+            }
         }
 
         if (!response.ok) {
-            if (!response.ok) {
-                let errorMessage = 'Failed to get response from AI service.';
-                // Enhanced error logging for failed requests
-                console.error("❌ FRONTEND HTTP Error Response:");
-                console.error("  - Status:", response.status);
-                console.error("  - Status Text:", response.statusText);
-                console.error("  - Headers:", Object.fromEntries(response.headers.entries()));
-                console.error("  - URL:", response.url);
-                // Try to read response body for detailed error
-                let responseBody = null;
+            let errorMessage = 'Failed to get response from AI service.';
+            // Enhanced error logging for failed requests
+            console.error("❌ FRONTEND HTTP Error Response:");
+            console.error("  - Status:", response.status);
+            console.error("  - Status Text:", response.statusText);
+            console.error("  - Headers:", Object.fromEntries(response.headers.entries()));
+            console.error("  - URL:", response.url);
+            // Try to read response body for detailed error
+            let responseBody = null;
+            try {
+                const responseText = await response.text();
+                console.error("  - Response Body (text):", responseText);
+                // Try to parse as JSON
                 try {
-                    const responseText = await response.text();
-                    console.error("  - Response Body (text):", responseText);
-                    // Try to parse as JSON
-                    try {
-                        responseBody = JSON.parse(responseText);
-                        console.error("  - Response Body (parsed):", responseBody);
-                    } catch (parseError) {
-                        console.error("  - Response Body (not JSON):", responseText);
-                    }
-                } catch (readError) {
-                    console.error("  - Could not read response body:", readError);
+                    responseBody = JSON.parse(responseText);
+                    console.error("  - Response Body (parsed):", responseBody);
+                } catch (parseError) {
+                    console.error("  - Response Body (not JSON):", responseText);
                 }
-                // Handle different HTTP status codes
-                if (response.status === 401 || response.status === 403) {
-                    errorMessage = 'Invalid or expired token';
-                } else {
-                    try {
-                        errorMessage = responseBody?.error || responseText || `HTTP ${response.status}: ${response.statusText}`;
-                    } catch (e) {
-                        // If we can't parse the error response, use default message
-                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-                    }
-                }
-                throw new Error(errorMessage);
+            } catch (readError) {
+                console.error("  - Could not read response body:", readError);
             }
+            // Handle different HTTP status codes
+            if (response.status === 401 || response.status === 403) {
+                errorMessage = 'Invalid or expired token';
+            } else {
+                try {
+                    errorMessage = responseBody?.error || responseText || `HTTP ${response.status}: ${response.statusText}`;
+                } catch (e) {
+                    // If we can't parse the error response, use default message
+                    errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                }
+            }
+            throw new Error(errorMessage);
         }
 
         if (isImageModel) {
@@ -1397,44 +2048,54 @@ async function sendMessage() {
         elements.userInput.disabled = false; // Re-enable user input
         currentController = null;
 
-        // Save messages to backend AFTER AI response is complete and processed
-        // This is now in its own try-catch block to prevent aggressive rollback on save failures.
-        try {
-            // Find the actual user and assistant messages that were just sent/received
-            const lastUserMessage = activeChat.messages.findLast(m => m.role === 'user');
-            const lastAssistantMessage = activeChat.messages.findLast(m => m.role === 'assistant');
-
-            const saveResponse = await fetch(`${API_BASE_URL}/api/chat/${activeChat.id}/save-messages`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    userMessage: lastUserMessage,
-                    assistantMessage: lastAssistantMessage
-                })
-            });
-            const data = await saveResponse.json(); // Parse response to JSON here
-
-            if (!saveResponse.ok) {
-                console.error("❌ FRONTEND: Failed to save messages to backend:", data);
-                // Do NOT throw error here, just log. UI should not revert.
-                // Optionally, display a subtle "failed to save" message to user.
-            } else {
-                console.log("✅ Messages successfully saved to backend.");
-                // Check if a new title was generated and returned
-                if (data.generatedTitle) { // Now 'data' is defined
-                    activeChat.title = data.generatedTitle;
-                    renderSidebar(); // Re-render sidebar to show the new title
-                    console.log(`📝 Chat title updated to: "${data.generatedTitle}"`);
-                }
+        // Save messages - to backend for logged-in users, to localStorage for anonymous users
+        if (isAnonymous) {
+            // For anonymous users, save to localStorage
+            try {
+                saveAnonymousChat(activeChat);
+                console.log('💾 Anonymous chat saved to localStorage');
+            } catch (saveError) {
+                console.warn('Failed to save anonymous chat to localStorage:', saveError);
             }
+        } else {
+            // For logged-in users, save to backend
+            try {
+                // Find the actual user and assistant messages that were just sent/received
+                const lastUserMessage = activeChat.messages.findLast(m => m.role === 'user');
+                const lastAssistantMessage = activeChat.messages.findLast(m => m.role === 'assistant');
+
+                const saveResponse = await fetch(`${API_BASE_URL}/api/chat/${activeChat.id}/save-messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        userMessage: lastUserMessage,
+                        assistantMessage: lastAssistantMessage
+                    })
+                });
+                const data = await saveResponse.json(); // Parse response to JSON here
+
+                if (!saveResponse.ok) {
+                    console.error("❌ FRONTEND: Failed to save messages to backend:", data);
+                    // Do NOT throw error here, just log. UI should not revert.
+                    // Optionally, display a subtle "failed to save" message to user.
+                } else {
+                    console.log("✅ Messages successfully saved to backend.");
+                    // Check if a new title was generated and returned
+                    if (data.generatedTitle) { // Now 'data' is defined
+                        activeChat.title = data.generatedTitle;
+                        renderSidebar(); // Re-render sidebar to show the new title
+                        console.log(`📝 Chat title updated to: "${data.generatedTitle}"`);
+                    }
+                }
             } catch (saveError) {
                 console.error("❌ FRONTEND: Error calling save-messages API:", saveError);
                 // Do NOT perform UI rollback here.
                 // Optionally, display a subtle "failed to save" message to user.
             }
+        }
     
             // Ensure UI is fully updated before potentially running title generation
             requestAnimationFrame(() => {
@@ -1742,10 +2403,22 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
     function updateProModelsToggleUI() {
         const enabled = state.settings.proModelsEnabled;
         const toggle = elements.settingsModal.proModelsToggle;
-        if (!toggle) return;
         const knob = toggle.querySelector('span');
-
-        toggle.setAttribute('aria-checked', enabled);
+        
+        toggle.setAttribute('aria-checked', enabled.toString());
+        toggle.classList.toggle('bg-accent', enabled);
+        toggle.classList.toggle('bg-gray-200', !enabled);
+        toggle.classList.toggle('dark:bg-gray-700', !enabled);
+        knob.classList.toggle('translate-x-5', enabled);
+        knob.classList.toggle('translate-x-0', !enabled);
+    }
+    
+    function updateBetaModelsToggleUI() {
+        const enabled = state.settings.betaModelsEnabled;
+        const toggle = elements.settingsModal.betaModelsToggle;
+        const knob = toggle.querySelector('span');
+        
+        toggle.setAttribute('aria-checked', enabled.toString());
         toggle.classList.toggle('bg-accent', enabled);
         toggle.classList.toggle('bg-gray-200', !enabled);
         toggle.classList.toggle('dark:bg-gray-700', !enabled);
@@ -1758,18 +2431,39 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
       
       const isProUser = state.currentUser && state.currentUser.plan === 'pro';
       const proModelsEnabled = state.settings.proModelsEnabled;
+      const betaModelsEnabled = state.settings.betaModelsEnabled;
+      const isAnonymous = isAnonymousUser();
+      const isLoggedIn = !isAnonymous;
 
-      // Filter models based on pro status
-      const availableModels = Object.entries(MODELS).filter(([key, data]) => {
-          if (data.pro) {
-              return isProUser && proModelsEnabled;
-          }
-          return true;
+      // Separate models by type first, then filter
+      const textModels = Object.entries(MODELS).filter(([_, data]) => data.type === 'text');
+      const imageModels = Object.entries(MODELS).filter(([_, data]) => data.type === 'image');
+      
+      // Sort text models: available first, unavailable last
+      const sortedTextModels = textModels.sort((a, b) => {
+        const isAUnavailable = !isModelAvailable(a[0]);
+        const isBUnavailable = !isModelAvailable(b[0]);
+        
+        // If availability is different, sort by availability (available first)
+        if (isAUnavailable !== isBUnavailable) {
+          return isAUnavailable ? 1 : -1;
+        }
+        
+        // If both have same availability status, maintain original order
+        return 0;
       });
-
-      // Separate models by type
-      const textModels = availableModels.filter(([_, data]) => data.type === 'text');
-      const imageModels = availableModels.filter(([_, data]) => data.type === 'image');
+      
+      // Sort image models similarly
+      const sortedImageModels = imageModels.sort((a, b) => {
+        const isAUnavailable = !isModelAvailable(a[0]);
+        const isBUnavailable = !isModelAvailable(b[0]);
+        
+        if (isAUnavailable !== isBUnavailable) {
+          return isAUnavailable ? 1 : -1;
+        }
+        
+        return 0;
+      });
       
       // Add Text Models section
       const textHeader = document.createElement('div');
@@ -1777,26 +2471,75 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
       textHeader.textContent = '💬 Text Models';
       elements.modelDropdown.appendChild(textHeader);
       
-      textModels.forEach(([key, data]) => {
+      sortedTextModels.forEach(([key, data]) => {
         const btn = document.createElement('button');
         const isSelected = key === state.settings.model;
-        btn.className = `w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`;
         
-        let proBadge = '';
+        // Determine model status
+        const requiresLogin = doesModelRequireLogin(key);
+        const requiresPro = data.pro && (!isProUser || !proModelsEnabled);
+        const requiresBeta = data.beta && (!isLoggedIn || !betaModelsEnabled);
+        const isUnavailable = !isModelAvailable(key);
+        const isDisabled = requiresLogin || requiresPro || requiresBeta || isUnavailable;
+        
+        // Set button classes based on status
+        let btnClasses = 'w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between';
+        if (isDisabled) {
+            btnClasses += ' opacity-60 cursor-not-allowed';
+        } else if (isSelected) {
+            btnClasses += ' bg-accent text-white';
+        } else {
+            btnClasses += ' hover:bg-light-border-hover dark:hover:bg-dark-border-hover';
+        }
+        btn.className = btnClasses;
+        
+        // Build badge/status indicators
+        let badges = '';
         if (data.pro) {
-            proBadge = '<span class="text-xs font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full">PRO</span>';
+            badges += '<span class="flex items-center justify-center w-5 h-5 text-accent ml-2" title="PRO Model"><i data-lucide="crown" class="w-4 h-4"></i></span>';
+        }
+        if (data.beta) {
+            badges += '<span class="flex items-center justify-center w-5 h-5 text-purple-600 ml-2" title="BETA Model"><i data-lucide="flask-conical" class="w-4 h-4"></i></span>';
+        }
+        if (isAnonymous && data.anonymous) {
+            badges += '<span class="flex items-center justify-center w-5 h-5 text-green-600 ml-2" title="Free Model"><i data-lucide="user-check" class="w-4 h-4"></i></span>';
+        }
+        if (isUnavailable) {
+            badges += '<span class="flex items-center justify-center w-5 h-5 text-red-600 ml-2" title="Model Unavailable"><i data-lucide="alert-triangle" class="w-4 h-4"></i></span>';
         }
 
-        btn.innerHTML = `<span>${data.name}</span> ${proBadge}`;
+        btn.innerHTML = `<span>${data.name}</span><div class="flex items-center">${badges}</div>`;
+        
+        // Handle click event
         btn.onclick = () => {
-          state.settings.model = key;
-          const activeChat = state.chats.find(c => c.id === state.activeId);
-          if (activeChat) activeChat.model = key;
-          saveState();
-          updateModelSelectorDisplay();
-          renderModelDropdown();
-          elements.modelDropdown.style.display = 'none';
+            if (isDisabled) {
+                // Show appropriate alert for disabled models
+                if (requiresLogin) {
+                    showAlert('This model requires you to sign in. Please log in to use this model.', 'warning');
+                } else if (requiresPro) {
+                    showAlert('This is a pro model. You need a pro plan and to enable pro models in settings.', 'warning');
+                } else if (requiresBeta) {
+                    showAlert('This is a beta model. You need to be logged in and enable beta models in settings.', 'warning');
+                } else if (isUnavailable) {
+                    showAlert('This model is currently unavailable. Please try again later.', 'error');
+                }
+                return;
+            }
+            
+            // Model is available, select it
+            state.settings.model = key;
+            const activeChat = state.chats.find(c => c.id === state.activeId);
+            if (activeChat) activeChat.model = key;
+            saveState();
+            updateModelSelectorDisplay();
+            renderModelDropdown();
+            elements.modelDropdown.style.display = 'none';
+            const dropdownArrow = document.getElementById('model-dropdown-arrow');
+            if (dropdownArrow) {
+              dropdownArrow.style.transform = 'rotate(0deg)';
+            }
         };
+        
         elements.modelDropdown.appendChild(btn);
       });
       
@@ -1807,27 +2550,68 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
         imgHeader.textContent = '🎨 Image Generation';
         elements.modelDropdown.appendChild(imgHeader);
         
-        imageModels.forEach(([key, data]) => {
+        sortedImageModels.forEach(([key, data]) => {
           const btn = document.createElement('button');
           const isSelected = key === state.settings.model;
-          btn.className = `w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${isSelected ? 'bg-accent text-white' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`;
           
-          let proBadge = '';
+          // Determine model status
+          const requiresLogin = doesModelRequireLogin(key);
+          const requiresPro = data.pro && (!isProUser || !proModelsEnabled);
+          const requiresBeta = data.beta && (!isLoggedIn || !betaModelsEnabled);
+          const isUnavailable = !isModelAvailable(key);
+          const isDisabled = requiresLogin || requiresPro || requiresBeta || isUnavailable;
+          
+          // Set button classes based on status
+          let btnClasses = 'w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between';
+          if (isDisabled) {
+              btnClasses += ' opacity-60 cursor-not-allowed';
+          } else if (isSelected) {
+              btnClasses += ' bg-accent text-white';
+          } else {
+              btnClasses += ' hover:bg-light-border-hover dark:hover:bg-dark-border-hover';
+          }
+          btn.className = btnClasses;
+          
+          // Build badge/status indicators
+          let badges = '';
           if (data.pro) {
-              proBadge = '<span class="text-xs font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full">PRO</span>';
+              badges += '<span class="flex items-center justify-center w-5 h-5 text-accent ml-2" title="PRO Model"><i data-lucide="crown" class="w-4 h-4"></i></span>';
+          }
+          if (isUnavailable) {
+              badges += '<span class="flex items-center justify-center w-5 h-5 text-red-600 ml-2" title="Model Unavailable"><i data-lucide="alert-triangle" class="w-4 h-4"></i></span>';
           }
 
-          btn.innerHTML = `<span>${data.name}</span> ${proBadge}`;
+          btn.innerHTML = `<span>${data.name}</span><div class="flex items-center">${badges}</div>`;
+          
+          // Handle click event
           btn.onclick = () => {
-            state.settings.model = key;
-            const activeChat = state.chats.find(c => c.id === state.activeId);
-            if (activeChat) activeChat.model = key;
-            saveState();
-            updateModelSelectorDisplay();
-            renderModelDropdown();
-            elements.modelDropdown.style.display = 'none';
-            console.log('🖼️ Selected image model:', key);
+              if (isDisabled) {
+                  // Show appropriate alert for disabled models
+                  if (requiresLogin) {
+                      showAlert('This model requires you to sign in. Please log in to use this model.', 'warning');
+                  } else if (requiresPro) {
+                      showAlert('This is a pro model. You need a pro plan and to enable pro models in settings.', 'warning');
+                  } else if (isUnavailable) {
+                      showAlert('This model is currently unavailable. Please try again later.', 'error');
+                  }
+                  return;
+              }
+              
+              // Model is available, select it
+              state.settings.model = key;
+              const activeChat = state.chats.find(c => c.id === state.activeId);
+              if (activeChat) activeChat.model = key;
+              saveState();
+              updateModelSelectorDisplay();
+              renderModelDropdown();
+              elements.modelDropdown.style.display = 'none';
+              const dropdownArrow = document.getElementById('model-dropdown-arrow');
+              if (dropdownArrow) {
+                dropdownArrow.style.transform = 'rotate(0deg)';
+              }
+              console.log('🖼️ Selected image model:', key);
           };
+          
           elements.modelDropdown.appendChild(btn);
         });
       }
@@ -1885,6 +2669,7 @@ function init() {
             // It resets the entire application to the logged-out state.
             localStorage.removeItem('authToken');
             localStorage.removeItem('refreshToken');
+            clearCachedChats(); // Clear cached chats
             state.currentUser = null;
             state.chats = [];
             state.activeId = null;
@@ -1908,8 +2693,26 @@ function init() {
     // This is important because onAuthStateChange might not fire immediately for an existing session.
     const existingToken = localStorage.getItem('authToken');
     if (existingToken) {
-        console.log('An existing auth token was found on page load. Loading user data.');
-        loadDataFromServer();
+        console.log('An existing auth token was found on page load.');
+        
+        // First, try to load cached chats for instant UI
+        const cachedLoaded = loadCachedChats();
+        
+        if (cachedLoaded) {
+            // We have cached data - show it immediately and refresh in background
+            console.log('[init] Showing cached data instantly, refreshing in background');
+            updateLoginStateUI();
+            updateProfileUI();
+            
+            // Background refresh without disrupting UI
+            setTimeout(() => {
+                loadDataFromServer(0, true); // Silent load
+            }, 100);
+        } else {
+            // No cached data available - load normally
+            console.log('[init] No cached data available, loading from server');
+            loadDataFromServer();
+        }
     } else {
         // If no token exists, ensure the UI is in the logged-out state.
         updateLoginStateUI();
@@ -1934,7 +2737,7 @@ function init() {
             saveState();
             renderModelDropdown();
         } else {
-            alert('You need a pro plan to use pro models. Contact @zshadowultra on Discord for access.');
+            showAlert('You need a pro plan to use pro models. Contact @zshadowultra on Discord for access.', 'warning');
         }
     });
 
@@ -1968,8 +2771,48 @@ function init() {
         }
     });
 
-    // We no longer need to create a default chat here. If a user has no chats,
-    // loadDataFromServer will handle creating one.
+    // Initialize mobile sidebar state (collapsed by default on mobile)
+    if (isMobile()) {
+        elements.sidebar.classList.remove('open');
+        elements.sidebarOverlay.classList.remove('open');
+        console.log('[init] Mobile detected - sidebar collapsed by default');
+    }
+    
+    // Initialize default chat for new users (non-authenticated)
+    if (!existingToken) {
+        // Set appropriate default model for anonymous users
+        if (!state.settings.model || !isModelAvailableForAnonymous(state.settings.model)) {
+            state.settings.model = 'gpt-4.1'; // Default anonymous model
+            console.log('[init] Set default anonymous model to gpt-4.1');
+        }
+        
+        // Load anonymous chats from localStorage
+        const anonymousChats = loadAnonymousChats();
+        if (anonymousChats.length > 0) {
+            state.chats = anonymousChats;
+            state.activeId = anonymousChats[0].id;
+            console.log('[init] Loaded', anonymousChats.length, 'anonymous chats from localStorage');
+            renderSidebar();
+            renderChat();
+        } else {
+            initializeDefaultChat();
+            console.log('[init] No existing token - initialized default chat');
+        }
+    }
+    
+    // Fetch model availability on startup
+    fetchModelAvailability();
+    
+    // Set up periodic model availability checks (every 10 minutes)
+    setInterval(() => {
+        fetchModelAvailability();
+    }, 10 * 60 * 1000);
+    
+    // Update model selector display for anonymous users
+    if (!existingToken) {
+        updateModelSelectorDisplay();
+    }
+    
     setActive(state.activeId);
 
     // Image attachment logic
@@ -1986,7 +2829,7 @@ function init() {
         // Check file size (50MB limit)
         const maxSize = 50 * 1024 * 1024; // 50MB in bytes
         if (file.size > maxSize) {
-            alert('File size must be less than 50MB.');
+            showAlert('File size must be less than 50MB.', 'warning');
             imageUpload.value = null;
             return;
         }
@@ -2064,7 +2907,7 @@ elements.newChatBtn.onclick = handleNewChat;
 
         const token = localStorage.getItem('authToken');
         if (!token) {
-            alert("Authentication error. Please sign in again.");
+            showAlert("Authentication error. Please sign in again.", 'error');
             return;
         }
 
@@ -2106,7 +2949,7 @@ elements.newChatBtn.onclick = handleNewChat;
 
         } catch (error) {
             console.error("Error renaming chat:", error);
-            alert(`Failed to rename chat: ${error.message}`);
+            showAlert(`Failed to rename chat: ${error.message}`, 'error');
             
             // Revert optimistic UI update on error
             chatToRename.title = originalTitle;
@@ -2174,7 +3017,7 @@ elements.newChatBtn.onclick = handleNewChat;
 
         } catch (error) {
             console.error("Error deleting chat:", error);
-            alert(`Failed to delete chat: ${error.message}`);
+            showAlert(`Failed to delete chat: ${error.message}`, 'error');
             
             // Revert optimistic UI update on error
             state.chats.splice(chatToDeleteIndex, 0, chatToDelete); // Re-add chat
@@ -2264,13 +3107,47 @@ elements.newChatBtn.onclick = handleNewChat;
 
     elements.modelSelector.onclick = () => {
       const isHidden = elements.modelDropdown.style.display === 'none' || elements.modelDropdown.style.display === '';
-      elements.modelDropdown.style.display = isHidden ? 'block' : 'none';
+      const dropdownArrow = document.getElementById('model-dropdown-arrow');
+      
+      if (isHidden) {
+        elements.modelDropdown.style.display = 'block';
+        dropdownArrow.style.transform = 'rotate(180deg)';
+        renderModelDropdown(); // Refresh the model list when opening
+      } else {
+        elements.modelDropdown.style.display = 'none';
+        dropdownArrow.style.transform = 'rotate(0deg)';
+      }
     };
+    
     document.addEventListener('click', (e) => {
       if (!elements.modelSelector.contains(e.target) && !elements.modelDropdown.contains(e.target)) {
         elements.modelDropdown.style.display = 'none';
+        const dropdownArrow = document.getElementById('model-dropdown-arrow');
+        if (dropdownArrow) {
+          dropdownArrow.style.transform = 'rotate(0deg)';
+        }
       }
     });
+
+    // Initialize Lucide icons after rendering the dropdown
+    const initLucide = () => {
+      if (window.lucide && window.lucide.createIcons) {
+        window.lucide.createIcons();
+      } else {
+        console.warn('Lucide not loaded yet, retrying...');
+        setTimeout(initLucide, 100); // Retry if not loaded
+      }
+    };
+
+    // Ensure icons are updated whenever dropdown is rendered
+    const _renderModelDropdown = renderModelDropdown;
+    renderModelDropdown = function() {
+      _renderModelDropdown.apply(this, arguments);
+      setTimeout(initLucide, 10); // Small delay to ensure DOM is updated
+    };
+
+    // Initialize Lucide icons on startup
+    setTimeout(initLucide, 100);
 
 
   </script>

@@ -51,10 +51,10 @@ router.get('/callback', async (req, res) => {
     const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) throw error;
     // Redirect back to the frontend, which will handle the session from the URL hash
-    res.redirect('http://localhost:3000');
+    res.redirect('http://127.0.0.1:5500');
   } catch (error) {
     console.error('OAuth callback error:', error);
-    res.redirect('http://localhost:3000/auth-error');
+    res.redirect('http://127.0.0.1:5500/auth-error');
   }
 });
 
