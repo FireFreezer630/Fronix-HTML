@@ -206,7 +206,8 @@ router.post('/chat', authMiddleware, async (req, res) => {
         let apiKeyPool;
         let modelId = model;
 
-        const V2_MODELS = ['claude-opus-4', 'o4-mini-medium', 'o4-mini-high', 'gpt-4o-mini-search-preview', 'kimi-k2', 'deepseek-r1-uncensored'];
+        const V2_MODELS = ['claude-opus-4', 'kimi-k2-instruct', 'glm-4.5', 'glm-4.5-air', 'deepseek-r1-uncensored', 'gemini-2.5-flash-thinking'];
+        const POLLINATIONS_MODELS = ['deepseek-reasoning', 'openai-reasoning', 'o4-mini-medium', 'o4-mini-high'];
 
         if (PRO_MODELS.includes(model)) {
             if (!proModelsEnabled) {
@@ -231,6 +232,8 @@ router.post('/chat', authMiddleware, async (req, res) => {
             provider = 'mnn';
         } else if (V2_MODELS.includes(model)) {
             provider = 'v2';
+        } else if (POLLINATIONS_MODELS.includes(model)) {
+            provider = 'pollinations';
         } else {
             // Default models use V2 with provider-3 prefix
             provider = 'v2';
@@ -245,25 +248,34 @@ router.post('/chat', authMiddleware, async (req, res) => {
                 apiEndpoint = 'https://api.airforce/v1/chat/completions';
                 apiKeyPool = airforceApiKeyPool;
                 break;
+            case 'pollinations':
+                apiEndpoint = 'https://text.pollinations.ai/openai/chat/completions';
+                const pollinationsMapping = {
+                    'deepseek-reasoning': 'deepseek-reasoning',
+                    'openai-reasoning': 'openai',  // OpenAI o3 maps to 'openai'
+                    'o4-mini-medium': 'openai-reasoning',
+                    'o4-mini-high': 'openai-reasoning',
+                    'gemini': 'gemini'  // Pass gemini directly to pollinations
+                };
+                modelId = pollinationsMapping[model] || model;
+                // No API key needed for pollinations
+                break;
             case 'v2':
                 apiEndpoint = `${process.env.AI_API_ENDPOINT_V2}/chat/completions`;
                 const modelMapping = {
-                    // V2 models with provider-6 prefix
+                    // V2 models with provider prefixes
                     'claude-opus-4': 'provider-6/claude-opus-4-20250514',
-                    'o4-mini-medium': 'provider-6/o4-mini-medium',
-                    'o4-mini-high': 'provider-6/o4-mini-high',
-                    'gpt-4o-mini-search-preview': 'provider-6/gpt-4o-mini-search-preview',
-                    'gemini-2.5-flash-thinking': 'provider-6/gemini-2.5-flash-thinking',
-                    'kimi-k2': 'provider-6/kimi-k2',
+                    'kimi-k2-instruct': 'provider-5/kimi-k2-instruct',
+                    'glm-4.5': 'provider-1/glm-4.5-fp8',
+                    'glm-4.5-air': 'provider-1/glm-4.5-air-fp8',
                     'deepseek-r1-uncensored': 'provider-6/deepseek-r1-uncensored',
+                    'gemini-2.5-flash-thinking': 'provider-6/gemini-2.5-flash-thinking',
                     
                     // Default models with provider-3 prefix
                     'gpt-4.1': 'provider-3/gpt-4.1-nano',
                     'gpt-5-nano': 'provider-3/gpt-5-nano',
                     'gpt-4.1-mini': 'provider-3/gpt-4.1-mini',
-                    'gpt-4o-mini': 'provider-3/gpt-4o-mini',
-                    'gemini-2.5-lite': 'provider-2/gemini-2.5-flash-lite',
-                    'gemini': 'provider-2/gemini-2.5-flash-lite'
+                    'gpt-4o-mini': 'provider-3/gpt-4o-mini'
                 };
                 modelId = modelMapping[model] || model;
                 apiKeyPool = v2ApiKeyPool;
@@ -273,19 +285,24 @@ router.post('/chat', authMiddleware, async (req, res) => {
                 apiKeyPool = mnnApiKeyPool;
                 break;
             default:
-                // Use V2 endpoint as fallback since V1 pollinations.ai is unreliable
-                apiEndpoint = `${process.env.AI_API_ENDPOINT_V2}/chat/completions`;
-                // Map default models with provider-3 prefix
-                const defaultModelMapping = {
-                    'gpt-4.1': 'provider-3/gpt-4.1-nano',
-                    'gpt-5-nano': 'provider-3/gpt-5-nano',
-                    'gpt-4.1-mini': 'provider-3/gpt-4.1-mini',
-                    'gpt-4o-mini': 'provider-3/gpt-4o-mini',
-                    'gemini-2.5-lite': 'provider-2/gemini-2.5-flash-lite',
-                    'gemini': 'provider-2/gemini-2.5-flash-lite'
-                };
-                modelId = defaultModelMapping[model] || model;
-                apiKeyPool = v2ApiKeyPool;
+                // Check if it's an anonymous model that should go to pollinations
+                if (model === 'gemini') {
+                    apiEndpoint = 'https://text.pollinations.ai/openai/chat/completions';
+                    modelId = 'gemini'; // Pass gemini directly
+                    provider = 'pollinations';
+                } else {
+                    // Use V2 endpoint as fallback for other models
+                    apiEndpoint = `${process.env.AI_API_ENDPOINT_V2}/chat/completions`;
+                    // Map default models with provider-3 prefix
+                    const defaultModelMapping = {
+                        'gpt-4.1': 'provider-3/gpt-4.1-nano',
+                        'gpt-5-nano': 'provider-3/gpt-5-nano',
+                        'gpt-4.1-mini': 'provider-3/gpt-4.1-mini',
+                        'gpt-4o-mini': 'provider-3/gpt-4o-mini'
+                    };
+                    modelId = defaultModelMapping[model] || model;
+                    apiKeyPool = v2ApiKeyPool;
+                }
         }
 
         const requestBody = {
@@ -294,15 +311,25 @@ router.post('/chat', authMiddleware, async (req, res) => {
             stream: true
         };
 
-        const aiResponse = await makeApiRequestWithRetry(
-            apiEndpoint,
-            requestBody,
-            {
+        let aiResponse;
+        if (provider === 'pollinations') {
+            // Direct request to pollinations without API key
+            aiResponse = await axios.post(apiEndpoint, requestBody, {
                 headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
                 responseType: 'stream'
-            },
-            apiKeyPool
-        );
+            });
+        } else {
+            // Use API key pool for other providers
+            aiResponse = await makeApiRequestWithRetry(
+                apiEndpoint,
+                requestBody,
+                {
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+                    responseType: 'stream'
+                },
+                apiKeyPool
+            );
+        }
 
         aiResponse.data.pipe(res);
 
@@ -569,12 +596,11 @@ router.post('/chat-public', async (req, res) => {
         actualModel = 'gemini-2.5-lite'; // Map gemini to gemini-2.5-lite
     }
     
-    // Map model names to provider-prefixed versions for the API
+    // Map model names for the public API
     const publicModelMapping = {
         'gpt-4.1': 'provider-3/gpt-4.1-nano',
         'gpt-5-nano': 'provider-3/gpt-5-nano',
-        'gemini-2.5-lite': 'provider-2/gemini-2.5-flash-lite',
-        'gemini': 'provider-2/gemini-2.5-flash-lite'
+        'gemini': 'gemini'  // Pass gemini directly to pollinations
     };
     
     if (!ANONYMOUS_ALLOWED_MODELS.includes(model)) {

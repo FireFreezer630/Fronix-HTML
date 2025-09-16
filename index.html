@@ -1078,21 +1078,24 @@ Personality: v2
 Over the course of the conversation, you adapt to the user's tone and preference. Try to match the user's vibe, tone, and generally how they are speaking. You want the conversation to feel natural. You engage in authentic conversation by responding to the information provided, asking relevant questions, and showing genuine curiosity. If natural, continue the conversation with casual conversation.
 `};
     const MODELS = {
-      // Text Models
+      // Text Models - Anonymous (Pollinations.ai)
       'gpt-4.1': { name: 'OpenAI GPT-4.1', type: 'text', anonymous: true },
       'gpt-5-nano': { name: 'OpenAI GPT-5 Nano', type: 'text', anonymous: true },
       'gemini': { name: 'Gemini 2.5 Flash Lite', type: 'text', anonymous: true },
+      
+      // Text Models - Pollinations.ai direct models
       'deepseek-reasoning': { name: 'DeepSeek R1 0528 (Bedrock)', type: 'text' },
       'openai-reasoning': { name: 'OpenAI o3 (api.navy)', type: 'text' },
-      'grok': { name: 'Grok', type: 'text' },
-      'elixposearch': { name: 'Elixpo Search', type: 'text' },
       'o4-mini-medium': { name: 'O4 Mini Medium', type: 'text' },
       'o4-mini-high': { name: 'O4 Mini High', type: 'text' },
-      'provider-6/kimi-k2-instruct': { name: 'Kimi K2', type: 'text' },
+      
+      // A4F.co models (provider-prefixed)
+      'kimi-k2-instruct': { name: 'Kimi K2 Instruct', type: 'text' },
+      'glm-4.5': { name: 'GLM 4.5', type: 'text' },
+      'glm-4.5-air': { name: 'GLM 4.5 Air', type: 'text' },
       'deepseek-r1-uncensored': { name: 'DeepSeek R1 Uncensored', type: 'text' },
       'claude-opus-4': { name: 'Claude Opus 4', type: 'text' },
       'gemini-2.5-flash-thinking': { name: 'Gemini 2.5 Flash Thinking', type: 'text' },
-      'kimi-k2': { name: 'Kimi K2', type: 'text' },
 
       // Pro Models
       'grok-4': { name: 'Grok 4', type: 'text', pro: true },
@@ -1928,7 +1931,7 @@ async function sendMessage() {
                     // Use direct pollinations.ai endpoint as fallback
                     const fallbackEndpoint = 'https://text.pollinations.ai/openai/chat/completions';
                     const fallbackBody = {
-                        model: currentModel === 'gemini' ? 'gemini-1.5-flash' : currentModel,
+                        model: currentModel === 'gemini' ? 'gemini' : currentModel,  // Pass gemini directly
                         messages: activeChat.messages,
                         stream: true
                     };
