@@ -666,9 +666,15 @@ async function handleSignIn(email, password, retryCount = 0) {
         // We manually set the token to speed up the process.
         localStorage.setItem('authToken', data.session.access_token);
         localStorage.setItem('refreshToken', data.session.refresh_token);
-        loadDataFromServer();
+        
+        // Update UI immediately for instant feedback
+        state.currentUser = { email: email }; // Set minimal user info immediately
+        updateLoginStateUI();
         closeAllModals();
         showAlert('Sign in successful! Welcome back.', 'success');
+        
+        // Load full data in background
+        loadDataFromServer();
     } catch (error) {
         console.error("Sign-in failed:", error);
         // Retry logic for network/fetch errors
@@ -824,22 +830,27 @@ async function loadDataFromServer(retryCount = 0, silentLoad = false) {
         return;
     }
     
-    // For silent loads, don't disrupt UI if we already have cached data
-    if (silentLoad && state.chats.length > 0) {
-        console.log('[loadDataFromServer] Silent load - keeping existing UI while updating in background');
-        showSyncIndicator(); // Show subtle sync indicator during background refresh
+    // Show sync indicator for all loads
+    if (!silentLoad || state.chats.length === 0) {
+        showSyncIndicator();
     }
 
     try {
         // Wrap the entire data loading process in retry mechanism
         await retryWithBackoff(async () => {
-            // Fetch user info first
-            const userResponse = await fetch(`${API_BASE_URL}/api/user/me`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            // Fetch user info and chats in parallel for speed
+            const [userResponse, chatsResponse] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/user/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }),
+                fetch(`${API_BASE_URL}/api/chat`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+            ]);
             
+            // Check user response
             if (userResponse.status === 401 || userResponse.status === 403) {
-                throw new Error('AUTH_ERROR'); // Special error for authentication issues
+                throw new Error('AUTH_ERROR');
             }
             if (!userResponse.ok) {
                 const error = new Error(`Failed to fetch user data. Status: ${userResponse.status}`);
@@ -847,12 +858,12 @@ async function loadDataFromServer(retryCount = 0, silentLoad = false) {
                 throw error;
             }
             state.currentUser = await userResponse.json();
-
-            // Then fetch chats
-            const chatsResponse = await fetch(`${API_BASE_URL}/api/chat`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
             
+            // Update UI immediately after getting user data
+            updateLoginStateUI();
+            updateProfileUI();
+
+            // Check chats response
             if (chatsResponse.status === 401 || chatsResponse.status === 403) {
                 throw new Error('AUTH_ERROR');
             }
@@ -863,24 +874,41 @@ async function loadDataFromServer(retryCount = 0, silentLoad = false) {
             }
             const chats = await chatsResponse.json();
             state.chats = chats; // Store all chats
+            
+            // Render sidebar immediately with chat list (even without messages)
+            if (!silentLoad) {
+                renderSidebar();
+            }
 
-            // Fetch messages for each chat
-            for (let i = 0; i < state.chats.length; i++) {
-                const chat = state.chats[i];
-                const messagesResponse = await fetch(`${API_BASE_URL}/api/chat/${chat.id}/messages`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+            // Fetch messages for all chats in parallel (limit to 5 concurrent requests)
+            const messagePromises = [];
+            const batchSize = 5;
+            
+            for (let i = 0; i < state.chats.length; i += batchSize) {
+                const batch = state.chats.slice(i, i + batchSize).map(async (chat) => {
+                    try {
+                        const messagesResponse = await fetch(`${API_BASE_URL}/api/chat/${chat.id}/messages`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        
+                        if (messagesResponse.status === 401 || messagesResponse.status === 403) {
+                            throw new Error('AUTH_ERROR');
+                        }
+                        if (messagesResponse.ok) {
+                            const messages = await messagesResponse.json();
+                            chat.messages = Array.isArray(messages.messages) ? messages.messages : [];
+                        } else {
+                            console.warn(`Failed to fetch messages for chat ${chat.id}`);
+                            chat.messages = [];
+                        }
+                    } catch (error) {
+                        console.warn(`Error fetching messages for chat ${chat.id}:`, error);
+                        chat.messages = [];
+                    }
                 });
-
-                if (messagesResponse.status === 401 || messagesResponse.status === 403) {
-                    throw new Error('AUTH_ERROR');
-                }
-                if (!messagesResponse.ok) {
-                    const error = new Error(`Failed to fetch messages for chat ${chat.id}. Status: ${messagesResponse.status}`);
-                    error.status = messagesResponse.status;
-                    throw error;
-                }
-                const messages = await messagesResponse.json();
-                chat.messages = Array.isArray(messages.messages) ? messages.messages : []; // Ensure it's an array
+                
+                // Wait for this batch to complete before starting next batch
+                await Promise.all(batch);
             }
 
             // Set active chat based on persisted ID or default to the first chat
@@ -940,6 +968,7 @@ async function loadDataFromServer(retryCount = 0, silentLoad = false) {
             // Don't alert for temporary issues, just log them
         }
     } finally {
+        hideSyncIndicator();
         updateLoginStateUI();
         updateProfileUI();
         console.log('[loadDataFromServer] Finished. Final state.activeId:', state.activeId);
@@ -2662,8 +2691,20 @@ function init() {
             console.log('User signed in. Session:', session);
             localStorage.setItem('authToken', session.access_token);
             localStorage.setItem('refreshToken', session.refresh_token);
-            loadDataFromServer(); // Fetch user's chats and info.
+            
+            // Update UI immediately for instant feedback
+            if (session.user) {
+                state.currentUser = { 
+                    email: session.user.email,
+                    id: session.user.id
+                };
+                updateLoginStateUI();
+            }
+            
             closeAllModals();
+            
+            // Load full data in background
+            loadDataFromServer();
         } else if (event === 'SIGNED_OUT') {
             // This block runs after supabase.auth.signOut() is called successfully.
             // It resets the entire application to the logged-out state.
