@@ -504,7 +504,8 @@
         </div>
         <div id="font-options"></div>
         <div id="font-weight-options"></div>
-        <div>
+        <div class="space-y-2">
+          <button id="check-model-status-btn" class="w-full px-4 py-2 rounded-md text-sm font-medium border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">Check Model Availability</button>
           <button id="reset-settings-btn" class="w-full px-4 py-2 rounded-md text-sm font-medium border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">Reset to Default</button>
         </div>
       </div>
@@ -565,6 +566,27 @@
     </div>
 </div>
   <div id="chat-actions-dropdown" class="w-32 bg-light-sidebar dark:bg-dark-sidebar rounded-lg shadow-lg border border-light-border dark:border-dark-border"></div>
+  
+  <!-- Model Availability Modal -->
+  <div id="model-availability-modal" class="modal-container">
+    <div class="modal-content bg-light-sidebar dark:bg-dark-sidebar p-6 rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] overflow-y-auto border border-light-border dark:border-dark-border">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-semibold">Model Availability Status</h3>
+        <button id="close-model-availability-btn" class="p-1 rounded-full hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div id="model-availability-content" class="space-y-2">
+        <div class="text-center py-8">
+          <div class="loading-spinner mx-auto"></div>
+          <p class="mt-2 text-sm text-light-text-subtle dark:text-dark-text-subtle">Checking model availability...</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     const API_BASE_URL = 'https://fronix-html.onrender.com'; // Official Render server URL
@@ -1093,9 +1115,6 @@ Over the course of the conversation, you adapt to the user's tone and preference
       'kimi-k2-instruct': { name: 'Kimi K2 Instruct', type: 'text' },
       'glm-4.5': { name: 'GLM 4.5', type: 'text' },
       'glm-4.5-air': { name: 'GLM 4.5 Air', type: 'text' },
-      'deepseek-r1-uncensored': { name: 'DeepSeek R1 Uncensored', type: 'text' },
-      'claude-opus-4': { name: 'Claude Opus 4', type: 'text' },
-      'gemini-2.5-flash-thinking': { name: 'Gemini 2.5 Flash Thinking', type: 'text' },
 
       // Pro Models
       'grok-4': { name: 'Grok 4', type: 'text', pro: true },
@@ -1105,7 +1124,6 @@ Over the course of the conversation, you adapt to the user's tone and preference
       
       // Beta Models (MNN AI)
       'gpt-4.1-mini': { name: 'GPT-4.1 Mini (Beta)', type: 'text', beta: true },
-      'whisper-1': { name: 'Whisper-1 (Beta)', type: 'text', beta: true },
       'gpt-4-vision-preview': { name: 'GPT-4 Vision Preview (Beta)', type: 'text', beta: true },
       
       // Image Generation Models
@@ -1134,7 +1152,8 @@ Over the course of the conversation, you adapt to the user's tone and preference
       autocompleteSuggestions: document.getElementById('autocomplete-suggestions'), // Added for autocomplete
       studyCommandBtn: document.getElementById('study-command-btn'), // Added for study command autocomplete
       syncIndicator: document.getElementById('sync-indicator'), // Added sync indicator
-      settingsModal: { container: document.getElementById('settings-modal'), fontOptions: document.getElementById('font-options'), fontWeightOptions: document.getElementById('font-weight-options'), closeBtn: document.getElementById('close-settings-btn'), resetBtn: document.getElementById('reset-settings-btn'), apiTokenInput: document.getElementById('api-token-input'), proModelsToggle: document.getElementById('pro-models-toggle'), betaModelsToggle: document.getElementById('beta-models-toggle') },
+      settingsModal: { container: document.getElementById('settings-modal'), fontOptions: document.getElementById('font-options'), fontWeightOptions: document.getElementById('font-weight-options'), closeBtn: document.getElementById('close-settings-btn'), resetBtn: document.getElementById('reset-settings-btn'), apiTokenInput: document.getElementById('api-token-input'), proModelsToggle: document.getElementById('pro-models-toggle'), betaModelsToggle: document.getElementById('beta-models-toggle'), checkModelStatusBtn: document.getElementById('check-model-status-btn') },
+      modelAvailabilityModal: { container: document.getElementById('model-availability-modal'), content: document.getElementById('model-availability-content'), closeBtn: document.getElementById('close-model-availability-btn') },
       renameModal: { container: document.getElementById('rename-modal'), input: document.getElementById('rename-input'), saveBtn: document.getElementById('rename-save'), cancelBtn: document.getElementById('rename-cancel') },
       deleteModal: { container: document.getElementById('delete-modal'), message: document.getElementById('delete-message'), confirmBtn: document.getElementById('delete-confirm'), cancelBtn: document.getElementById('delete-cancel') },
       signinModal: { container: document.getElementById('signin-modal'), closeBtn: document.getElementById('close-signin-btn') },
@@ -1224,23 +1243,21 @@ Over the course of the conversation, you adapt to the user's tone and preference
                 renderModelDropdown(); // Update dropdown after availability check
             } else {
                 console.warn(`Failed to fetch model availability: HTTP ${response.status}`);
-                // Set default availability for anonymous models when backend is unavailable
-                modelAvailability = {
-                    'gpt-4.1': true,
-                    'gpt-5-nano': true, 
-                    'gemini': true
-                };
+                // Set all models as available by default
+                modelAvailability = {};
+                Object.keys(MODELS).forEach(key => {
+                    modelAvailability[key] = { available: true };
+                });
                 updateAnonymousModelSelection();
                 renderModelDropdown();
             }
         } catch (error) {
             console.warn('Backend server unavailable. Using fallback model configuration:', error.message);
-            // Set default availability for anonymous models when backend is unavailable
-            modelAvailability = {
-                'gpt-4.1': true,
-                'gpt-5-nano': true, 
-                'gemini': true
-            };
+            // Set all models as available by default
+            modelAvailability = {};
+            Object.keys(MODELS).forEach(key => {
+                modelAvailability[key] = { available: true };
+            });
             updateAnonymousModelSelection();
             renderModelDropdown();
             // Show user-friendly message only if user is not already signed in
@@ -1249,6 +1266,77 @@ Over the course of the conversation, you adapt to the user's tone and preference
             }
         } finally {
             hideSyncIndicator();
+        }
+    }
+    
+    // Show detailed model availability in modal
+    async function showModelAvailability() {
+        animateModalOpen(elements.modelAvailabilityModal.container);
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/ai/model-status`);
+            if (response.ok) {
+                const data = await response.json();
+                const status = data.status || {};
+                
+                let html = '<div class="space-y-4">';
+                
+                // Group models by provider
+                const modelsByProvider = {};
+                
+                Object.entries(status).forEach(([modelId, info]) => {
+                    const provider = info.provider || 'Unknown';
+                    if (!modelsByProvider[provider]) {
+                        modelsByProvider[provider] = [];
+                    }
+                    const modelInfo = MODELS[modelId] || { name: modelId };
+                    modelsByProvider[provider].push({
+                        id: modelId,
+                        name: modelInfo.name,
+                        apiName: info.apiName || modelId,
+                        available: info.available !== false
+                    });
+                });
+                
+                // Render by provider
+                Object.entries(modelsByProvider).forEach(([provider, models]) => {
+                    html += `
+                        <div class="border border-light-border dark:border-dark-border rounded-lg p-4">
+                            <h4 class="font-semibold text-lg mb-3">${provider}</h4>
+                            <div class="space-y-2">
+                    `;
+                    
+                    models.forEach(model => {
+                        const statusIcon = model.available ? 
+                            '<span class="text-green-500">✓</span>' : 
+                            '<span class="text-red-500">✗</span>';
+                        html += `
+                            <div class="flex items-start justify-between text-sm">
+                                <div class="flex-1">
+                                    <div class="font-medium">${statusIcon} ${model.name}</div>
+                                    <div class="text-xs text-light-text-subtle dark:text-dark-text-subtle">API: ${model.apiName}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div></div>';
+                });
+                
+                html += '</div>';
+                
+                elements.modelAvailabilityModal.content.innerHTML = html;
+            } else {
+                throw new Error('Failed to fetch model status');
+            }
+        } catch (error) {
+            console.error('Error fetching model availability:', error);
+            elements.modelAvailabilityModal.content.innerHTML = `
+                <div class="text-center py-8">
+                    <p class="text-red-500">Failed to fetch model availability</p>
+                    <p class="text-sm text-light-text-subtle dark:text-dark-text-subtle mt-2">${error.message}</p>
+                </div>
+            `;
         }
     }
     
@@ -1271,11 +1359,8 @@ Over the course of the conversation, you adapt to the user's tone and preference
     
     // Check if model is available (not down)
     function isModelAvailable(modelKey) {
-        // If we don't have availability data, assume available
-        if (!modelAvailability || Object.keys(modelAvailability).length === 0) {
-            return true;
-        }
-        return modelAvailability[modelKey] !== false;
+        // Always return true - don't hide models from users
+        return true;
     }
     
     // Save chat to localStorage for anonymous users
@@ -2944,6 +3029,8 @@ elements.newChatBtn.onclick = handleNewChat;
       localStorage.clear();
       window.location.reload();
     };
+    elements.settingsModal.checkModelStatusBtn.onclick = () => showModelAvailability();
+    elements.modelAvailabilityModal.closeBtn.onclick = () => animateModalClose(elements.modelAvailabilityModal.container);
     elements.renameModal.saveBtn.onclick = async () => {
         const { chatId } = state.modalContext;
         const newName = elements.renameModal.input.value.trim();

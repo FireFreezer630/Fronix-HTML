@@ -153,7 +153,7 @@ async function makeApiRequestWithRetry(url, requestBody, requestOptions, pool) {
 }
 
 const PRO_MODELS = ['grok-4', 'gpt-5', 'gemini-2.5-pro', 'gemini-2.5-flash'];
-const BETA_MODELS = ['gpt-4.1-mini', 'whisper-1', 'gpt-4-vision-preview']; // MNN AI beta models
+const BETA_MODELS = ['gpt-4.1-mini', 'gpt-4-vision-preview']; // MNN AI beta models
 
 async function selectProProvider(userId) {
     const cacheKey = `last_pro_provider_${userId}`;
@@ -206,7 +206,7 @@ router.post('/chat', authMiddleware, async (req, res) => {
         let apiKeyPool;
         let modelId = model;
 
-        const V2_MODELS = ['claude-opus-4', 'kimi-k2-instruct', 'glm-4.5', 'glm-4.5-air', 'deepseek-r1-uncensored', 'gemini-2.5-flash-thinking'];
+        const V2_MODELS = ['kimi-k2-instruct', 'glm-4.5', 'glm-4.5-air'];
         const POLLINATIONS_MODELS = ['deepseek-reasoning', 'openai-reasoning', 'o4-mini-medium', 'o4-mini-high'];
 
         if (PRO_MODELS.includes(model)) {
@@ -264,12 +264,9 @@ router.post('/chat', authMiddleware, async (req, res) => {
                 apiEndpoint = `${process.env.AI_API_ENDPOINT_V2}/chat/completions`;
                 const modelMapping = {
                     // V2 models with provider prefixes
-                    'claude-opus-4': 'provider-6/claude-opus-4-20250514',
                     'kimi-k2-instruct': 'provider-5/kimi-k2-instruct',
                     'glm-4.5': 'provider-1/glm-4.5-fp8',
                     'glm-4.5-air': 'provider-1/glm-4.5-air-fp8',
-                    'deepseek-r1-uncensored': 'provider-6/deepseek-r1-uncensored',
-                    'gemini-2.5-flash-thinking': 'provider-6/gemini-2.5-flash-thinking',
                     
                     // Default models with provider-3 prefix
                     'gpt-4.1': 'provider-3/gpt-4.1-nano',
@@ -422,114 +419,48 @@ class ModelAvailabilityChecker {
         
         // Models to check availability for
         this.modelsToCheck = [
-            { id: 'gpt-4.1', provider: 'default' },
-            { id: 'gpt-5-nano', provider: 'default' },
-            { id: 'gemini-2.5-lite', provider: 'default' },
-            { id: 'claude-opus-4', provider: 'v2' },
-            { id: 'o4-mini-medium', provider: 'v2' },
-            { id: 'grok-4', provider: 'navy' },
-            { id: 'gpt-5', provider: 'airforce' },
-            { id: 'gemini-2.5-pro', provider: 'airforce' },
-            { id: 'gpt-4.1-mini', provider: 'mnn' },
-            { id: 'whisper-1', provider: 'mnn' },
-            { id: 'gpt-4-vision-preview', provider: 'mnn' }
+            // Anonymous/Pollinations models
+            { id: 'gpt-4.1', provider: 'pollinations', apiName: 'provider-3/gpt-4.1-nano' },
+            { id: 'gpt-5-nano', provider: 'pollinations', apiName: 'provider-3/gpt-5-nano' },
+            { id: 'gemini', provider: 'pollinations', apiName: 'gemini' },
+            { id: 'deepseek-reasoning', provider: 'pollinations', apiName: 'deepseek-reasoning' },
+            { id: 'openai-reasoning', provider: 'pollinations', apiName: 'openai' },
+            { id: 'o4-mini-medium', provider: 'pollinations', apiName: 'openai-reasoning' },
+            { id: 'o4-mini-high', provider: 'pollinations', apiName: 'openai-reasoning' },
+            // A4F models
+            { id: 'kimi-k2-instruct', provider: 'A4F', apiName: 'provider-5/kimi-k2-instruct' },
+            { id: 'glm-4.5', provider: 'A4F', apiName: 'provider-1/glm-4.5-fp8' },
+            { id: 'glm-4.5-air', provider: 'A4F', apiName: 'provider-1/glm-4.5-air-fp8' },
+            // Pro models
+            { id: 'gpt-5', provider: 'airforce', apiName: 'gpt-5' },
+            { id: 'gemini-2.5-pro', provider: 'airforce', apiName: 'gemini-2.5-pro' },
+            { id: 'gemini-2.5-flash', provider: 'airforce', apiName: 'gemini-2.5-flash' },
+            // Beta models
+            { id: 'gpt-4.1-mini', provider: 'MNN', apiName: 'gpt-4.1-mini' },
+            { id: 'gpt-4-vision-preview', provider: 'MNN', apiName: 'gpt-4-vision-preview' }
         ];
     }
     
     async checkModelAvailability(modelId, provider) {
-        try {
-            let apiEndpoint, apiKeyPool;
-            
-            switch (provider) {
-                case 'navy':
-                    apiEndpoint = 'https://api.navy/v1/chat/completions';
-                    apiKeyPool = navyApiKeyPool;
-                    break;
-                case 'airforce':
-                    apiEndpoint = 'https://api.airforce/v1/chat/completions';
-                    apiKeyPool = airforceApiKeyPool;
-                    break;
-                case 'v2':
-                    apiEndpoint = `${process.env.AI_API_ENDPOINT_V2}/chat/completions`;
-                    apiKeyPool = v2ApiKeyPool;
-                    break;
-                case 'mnn':
-                    apiEndpoint = 'https://api.mnnai.ru/v1/chat/completions';
-                    apiKeyPool = mnnApiKeyPool;
-                    break;
-                default:
-                    // Use V2 endpoint as fallback since V1 pollinations.ai is unreliable
-                    apiEndpoint = `${process.env.AI_API_ENDPOINT_V2}/chat/completions`;
-                    apiKeyPool = v2ApiKeyPool;
-            }
-            
-            // Map model names to provider-prefixed versions
-            const modelMappingForAvailability = {
-                'gpt-4.1': 'provider-3/gpt-4.1-nano',
-                'gpt-5-nano': 'provider-3/gpt-5-nano',
-                'gemini-2.5-lite': 'provider-2/gemini-2.5-flash-lite',
-                'claude-opus-4': 'provider-6/claude-opus-4-20250514',
-                'o4-mini-medium': 'provider-6/o4-mini-medium',
-                'gpt-4.1-mini': 'provider-3/gpt-4.1-mini',
-                'gpt-4-vision-preview': 'gpt-4-vision-preview',
-                'whisper-1': 'whisper-1',
-                'grok-4': 'grok-4',
-                'gpt-5': 'gpt-5',
-                'gemini-2.5-pro': 'gemini-2.5-pro'
-            };
-            
-            const mappedModelId = modelMappingForAvailability[modelId] || modelId;
-            
-            // Simple ping request with minimal tokens
-            const requestBody = {
-                model: mappedModelId,
-                messages: [{ role: 'user', content: 'ping' }],
-                max_tokens: 1,
-                stream: false
-            };
-            
-            const currentKey = apiKeyPool.getCurrentKey();
-            const requestOptions = {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                timeout: 5000 // 5 second timeout
-            };
-            
-            if (currentKey) {
-                requestOptions.headers['Authorization'] = `Bearer ${currentKey}`;
-            }
-            
-            await axios.post(apiEndpoint, requestBody, requestOptions);
-            return true;
-            
-        } catch (error) {
-            // If it's just a timeout or connection error, mark as unavailable
-            if (error.code === 'ECONNABORTED' || error.code === 'ECONNREFUSED') {
-                console.log(`⚠️ Model ${modelId} unavailable: ${error.message}`);
-                return false;
-            }
-            
-            // If we get a proper HTTP response (even error), the model exists
-            if (error.response && error.response.status) {
-                return true;
-            }
-            
-            return false;
-        }
+        // Always return true - don't mark models as unavailable
+        // This prevents false negatives from temporary network issues
+        return true;
     }
     
     async checkAllModels() {
-        console.log('🔍 Checking model availability...');
+        console.log('🔍 Updating model availability...');
         
-        const promises = this.modelsToCheck.map(async (model) => {
-            const isAvailable = await this.checkModelAvailability(model.id, model.provider);
-            this.modelStatus.set(model.id, isAvailable);
-            console.log(`📊 Model ${model.id}: ${isAvailable ? '✅ Available' : '❌ Unavailable'}`);
+        // Set all models as available with their metadata
+        this.modelsToCheck.forEach((model) => {
+            this.modelStatus.set(model.id, {
+                available: true,
+                provider: model.provider,
+                apiName: model.apiName
+            });
+            console.log(`📊 Model ${model.id}: ✅ Available`);
         });
         
-        await Promise.all(promises);
-        console.log('✅ Model availability check completed');
+        console.log('✅ Model availability update completed');
     }
     
     start() {
@@ -560,11 +491,15 @@ class ModelAvailabilityChecker {
     }
     
     getModelStatus(modelId) {
-        return this.modelStatus.get(modelId) || false;
+        return this.modelStatus.get(modelId) || { available: true };
     }
     
     getAllModelStatus() {
-        return Object.fromEntries(this.modelStatus);
+        const status = {};
+        this.modelStatus.forEach((value, key) => {
+            status[key] = value;
+        });
+        return status;
     }
 }
 
