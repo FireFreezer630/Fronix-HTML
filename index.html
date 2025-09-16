@@ -1159,7 +1159,7 @@ Over the course of the conversation, you adapt to the user's tone and preference
       signinModal: { container: document.getElementById('signin-modal'), closeBtn: document.getElementById('close-signin-btn') },
     };
 
-    let state = { chats: [], activeId: null, editingMessage: null, modalContext: {}, settings: { model: 'openai', font: 'inter', fontWeight: '400', apiToken: '', proModelsEnabled: false, betaModelsEnabled: false }, currentUser: null };
+    let state = { chats: [], activeId: null, editingMessage: null, modalContext: {}, settings: { model: 'gpt-4.1', font: 'inter', fontWeight: '400', apiToken: '', proModelsEnabled: false, betaModelsEnabled: false }, currentUser: null };
     let currentController = null; // For aborting fetch requests
     let isStreaming = false; // Flag to indicate if streaming is active
     let isScrolledUp = false; // Flag to indicate if the user has scrolled up
@@ -1359,7 +1359,7 @@ Over the course of the conversation, you adapt to the user's tone and preference
     
     // Check if model is available (not down)
     function isModelAvailable(modelKey) {
-        // Always return true - don't hide models from users
+        // Always return true - never show models as unavailable
         return true;
     }
     
@@ -1648,7 +1648,7 @@ Over the course of the conversation, you adapt to the user's tone and preference
         state.activeId = id;
         const chat = state.chats.find(c => c.id === id);
         if (chat) {
-            state.settings.model = chat.model || 'openai';
+            state.settings.model = chat.model || 'gpt-4.1';
             console.log(`[setActive] Chat found. Setting model to: ${state.settings.model}`);
         } else {
             state.activeId = null;
@@ -1805,6 +1805,33 @@ async function sendMessage() {
         console.log(`[sendMessage] Aborting due to input/chat/streaming/title gen state. isStreaming = ${isStreaming}, isGeneratingTitle = ${isGeneratingTitle}`);
         return;
     }
+    
+    // Handle message editing
+    const wasEditing = !!state.editingMessage; // Store editing state
+    if (state.editingMessage) {
+        let newContent;
+        if (attachedImageData) {
+            // If an image is attached, save as multimodal
+            newContent = [
+                { type: 'text', text: userInput },
+                { type: 'image_url', image_url: { url: attachedImageData.dataUrl } }
+            ];
+        } else {
+            // Otherwise, save as plain text
+            newContent = userInput;
+        }
+
+        // Update the message content
+        activeChat.messages[state.editingMessage.messageIndex].content = newContent;
+        // Truncate history after this message
+        activeChat.messages.length = state.editingMessage.messageIndex + 1;
+        
+        exitEditMode(); // Reset the UI and state
+        saveState();
+        
+        // Continue to send the edited message to get a new response
+        // Don't return here - let the function continue to send the message
+    }
 
     // Check authentication - handle both logged-in and anonymous users
     const isAnonymous = isAnonymousUser();
@@ -1929,11 +1956,14 @@ async function sendMessage() {
         userMessageContent = userInput;
     }
     
-    const userMessageObj = { role: 'user', content: userMessageContent };
+    // Only add user message if we're not editing (editing already updated the existing message)
+    if (!wasEditing) {
+        const userMessageObj = { role: 'user', content: userMessageContent };
+        activeChat.messages.push(userMessageObj);
+    }
+    
+    // Always add assistant placeholder for the response
     const assistantMessageObj = { role: 'assistant', content: '...', id: 'assistant-msg-' + Date.now() }; // Temporary ID for placeholder
-
-    // Optimistically add user and assistant placeholder messages
-    activeChat.messages.push(userMessageObj);
     activeChat.messages.push(assistantMessageObj);
     console.log('[sendMessage] Messages optimistically added. activeChat.messages (after push):', JSON.parse(JSON.stringify(activeChat.messages))); // Deep copy for logging
     renderChat(); // Render immediately with new messages
