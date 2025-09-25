@@ -1,6 +1,3 @@
-//
-// ENTIRELY REPLACE YOUR .../routes/chat.js WITH THIS FINAL VERSION
-//
 const express = require('express');
 const router = express.Router();
 const supabase = require('../config/supabaseClient');
@@ -8,25 +5,47 @@ const authMiddleware = require('../middleware/authMiddleware');
 const crypto = require('crypto');
 const { generateChatTitle } = require('../utils/titleGenerator');
 const { getFirstTwoNonTrivialMessages } = require('../utils/messageUtils');
+const cache = require('../utils/cache');
 
 // GET all chats for the logged-in user
 router.get('/', authMiddleware, async (req, res) => {
+    const cacheKey = `chats_${req.user.id}`;
+    const cachedData = cache.get(cacheKey);
+
+    if (cachedData) {
+        console.log(`[Cache] HIT for key: ${cacheKey}`);
+        return res.status(200).json(cachedData);
+    }
+
+    console.log(`[Cache] MISS for key: ${cacheKey}`);
     try {
         const { data, error } = await supabase
             .from('chats')
             .select('*')
             .eq('user_id', req.user.id)
-            .order('created_at', { ascending: false }); // Show newest first
+            .order('created_at', { ascending: false });
 
         if (error) throw error;
+
+        cache.set(cacheKey, data, 300); // Cache for 5 minutes
         res.status(200).json(data);
     } catch (error) {
         res.status(500).json({ error: 'Error fetching chats' });
     }
 });
+
 // GET a single chat by ID
 router.get('/:chatId', authMiddleware, async (req, res) => {
     const { chatId } = req.params;
+    const cacheKey = `chat_${chatId}`;
+    const cachedData = cache.get(cacheKey);
+
+    if (cachedData) {
+        console.log(`[Cache] HIT for key: ${cacheKey}`);
+        return res.status(200).json(cachedData);
+    }
+
+    console.log(`[Cache] MISS for key: ${cacheKey}`);
     try {
         const { data, error } = await supabase
             .from('chats')
@@ -39,6 +58,8 @@ router.get('/:chatId', authMiddleware, async (req, res) => {
         if (!data) {
             return res.status(404).json({ error: 'Chat not found or unauthorized.' });
         }
+
+        cache.set(cacheKey, data, 300); // Cache for 5 minutes
         res.status(200).json(data);
     } catch (error) {
         console.error("Error fetching single chat:", error);
@@ -57,9 +78,15 @@ router.post('/', authMiddleware, async (req, res) => {
                 title: title || 'New Chat'
             })
             .select()
-            .single(); // Get the new chat back
+            .single();
 
         if (error) throw error;
+
+        // Invalidate chats list cache
+        const cacheKey = `chats_${req.user.id}`;
+        cache.del(cacheKey);
+        console.log(`[Cache] INVALIDATED for key: ${cacheKey}`);
+
         res.status(201).json(data);
     } catch (error) {
         console.error("Error creating new chat:", error);
@@ -67,13 +94,20 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 });
 
-
 // GET all messages for a specific chat
 router.get('/:chatId/messages', authMiddleware, async (req, res) => {
     const { chatId } = req.params;
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 50 } = req.query; // Increased limit
     const offset = (page - 1) * limit;
+    const cacheKey = `messages_${chatId}_page_${page}`;
+    const cachedData = cache.get(cacheKey);
 
+    if (cachedData) {
+        console.log(`[Cache] HIT for key: ${cacheKey}`);
+        return res.status(200).json(cachedData);
+    }
+
+    console.log(`[Cache] MISS for key: ${cacheKey}`);
     try {
         const { data, error, count } = await supabase
             .from('messages')
@@ -81,7 +115,7 @@ router.get('/:chatId/messages', authMiddleware, async (req, res) => {
             .eq('chat_id', chatId)
             .eq('user_id', req.user.id)
             .order('created_at', { ascending: true })
-            .order('id', { ascending: true }) // Secondary sort for stability
+            .order('id', { ascending: true })
             .range(offset, offset + limit - 1);
 
         if (error) throw error;
@@ -91,12 +125,15 @@ router.get('/:chatId/messages', authMiddleware, async (req, res) => {
             return res.status(404).json({ error: 'Page not found' });
         }
 
-        res.status(200).json({
+        const responseData = {
             messages: data,
             currentPage: Number(page),
             totalPages,
             totalMessages: count
-        });
+        };
+
+        cache.set(cacheKey, responseData, 300); // Cache for 5 minutes
+        res.status(200).json(responseData);
     } catch (error) {
         res.status(500).json({ error: 'Error fetching messages' });
     }
@@ -108,18 +145,11 @@ router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
     const { userMessage, assistantMessage } = req.body;
     const userId = req.user.id;
 
-    console.log(`[Save Messages] Received request for chatId: ${chatId}`);
-    
     if (!userMessage || !assistantMessage || !userMessage.content || !assistantMessage.content) {
         return res.status(400).json({ error: 'Both user and assistant messages with content are required.' });
     }
 
     try {
-        // Basic content validation
-        if (typeof userMessage.content !== 'string' || typeof assistantMessage.content !== 'string') {
-            return res.status(400).json({ error: 'Message content must be a string.' });
-        }
-
         const { error } = await supabase.from('messages').insert([
             { chat_id: chatId, user_id: userId, role: 'user', content: userMessage.content },
             { chat_id: chatId, user_id: userId, role: 'assistant', content: assistantMessage.content }
@@ -127,7 +157,15 @@ router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
         
         if (error) throw error;
 
-        // Check if a title needs to be generated
+        // Invalidate message cache for this chat
+        const keys = cache.keys();
+        keys.forEach(key => {
+            if (key.startsWith(`messages_${chatId}`)) {
+                cache.del(key);
+                console.log(`[Cache] INVALIDATED for key: ${key}`);
+            }
+        });
+
         const { data: chat, error: chatError } = await supabase
             .from('chats')
             .select('title, title_generated')
@@ -139,7 +177,6 @@ router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
         } else if (!chat.title_generated && chat.title === 'New Chat') {
             const messages = await getFirstTwoNonTrivialMessages(chatId);
             if (messages.length >= 2) {
-                console.log('Triggering title generation...');
                 try {
                     await generateChatTitle(chatId, messages);
                 } catch (titleError) {
@@ -150,7 +187,6 @@ router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
         
         let responsePayload = { success: true, message: 'Conversation saved.' };
 
-        // Fetch the possibly updated title to return
         const { data: updatedChat, error: updatedChatError } = await supabase
             .from('chats')
             .select('title')
@@ -161,6 +197,10 @@ router.post('/:chatId/save-messages', authMiddleware, async (req, res) => {
             console.error('Error fetching updated chat title:', updatedChatError);
         } else if (updatedChat) {
             responsePayload.title = updatedChat.title;
+            // Invalidate single chat cache
+            cache.del(`chat_${chatId}`);
+            // Invalidate chats list cache
+            cache.del(`chats_${userId}`);
         }
 
         res.status(201).json(responsePayload);
@@ -194,6 +234,11 @@ router.put('/:chatId', authMiddleware, async (req, res) => {
         if (!data) {
             return res.status(404).json({ error: 'Chat not found or you do not have permission to edit it.' });
         }
+
+        // Invalidate caches
+        cache.del(`chat_${chatId}`);
+        cache.del(`chats_${userId}`);
+        console.log(`[Cache] INVALIDATED for keys: chat_${chatId}, chats_${userId}`);
         
         res.status(200).json(data);
     } catch (error) {
@@ -208,21 +253,26 @@ router.delete('/:chatId', authMiddleware, async (req, res) => {
     const userId = req.user.id;
 
     try {
-        // The '.eq('user_id', userId)' clause ensures users can only delete their own chats.
         const { error } = await supabase
             .from('chats')
             .delete()
             .eq('id', chatId)
             .eq('user_id', userId);
 
-        if (error) {
-            // This could be a database error or a row-level security policy violation.
-            throw error;
-        }
+        if (error) throw error;
 
-        // The 'ON DELETE CASCADE' constraint handles deleting all associated messages.
+        // Invalidate caches
+        cache.del(`chat_${chatId}`);
+        cache.del(`chats_${userId}`);
+        const keys = cache.keys();
+        keys.forEach(key => {
+            if (key.startsWith(`messages_${chatId}`)) {
+                cache.del(key);
+            }
+        });
+        console.log(`[Cache] INVALIDATED for chat ${chatId} and user ${userId}`);
+
         res.status(200).json({ message: 'Chat deleted successfully' });
-
     } catch (error) {
         console.error("Error deleting chat:", error);
         res.status(500).json({ error: 'Error deleting chat' });
@@ -238,17 +288,14 @@ router.post('/upload-image', authMiddleware, async (req, res) => {
             return res.status(400).json({ error: 'Image data and filename are required.' });
         }
         
-        // Convert base64 to buffer
         const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
         const buffer = Buffer.from(base64Data, 'base64');
         
-        // Generate unique filename
         const timestamp = Date.now();
         const randomId = crypto.randomBytes(8).toString('hex');
         const fileExtension = fileName.split('.').pop() || 'jpg';
         const uniqueFileName = `${timestamp}-${randomId}.${fileExtension}`;
         
-        // Upload to Supabase storage
         const { data, error } = await supabase.storage
             .from('chat_images')
             .upload(`${req.user.id}/${uniqueFileName}`, buffer, {
@@ -261,7 +308,6 @@ router.post('/upload-image', authMiddleware, async (req, res) => {
             throw error;
         }
         
-        // Get public URL
         const { data: publicUrl } = supabase.storage
             .from('chat_images')
             .getPublicUrl(`${req.user.id}/${uniqueFileName}`);
@@ -278,35 +324,26 @@ router.post('/upload-image', authMiddleware, async (req, res) => {
     }
 });
 
-// DELETE cleanup orphaned images for a user (optional maintenance endpoint)
+// DELETE cleanup orphaned images for a user
 router.delete('/cleanup-images', authMiddleware, async (req, res) => {
     try {
-        // Get all images for this user from storage
         const { data: files, error: listError } = await supabase.storage
             .from('chat_images')
             .list(`${req.user.id}/`, { limit: 1000 });
-        if (listError) {
-            console.error('Error listing user images:', listError);
-            return res.status(500).json({ error: 'Failed to list user images.' });
-        }
+        if (listError) throw listError;
         
         if (!files || files.length === 0) {
             return res.status(200).json({ message: 'No images to cleanup.', deleted: 0 });
         }
         
-        // Get all message content that might contain image URLs
         const { data: messages, error: msgError } = await supabase
             .from('messages')
             .select('content')
             .eq('user_id', req.user.id)
-            .ilike('content', '%chat_images%'); // More efficient query
+            .ilike('content', '%chat_images%');
 
-        if (msgError) {
-            console.error('Error fetching user messages:', msgError);
-            return res.status(500).json({ error: 'Failed to fetch user messages.' });
-        }
+        if (msgError) throw msgError;
         
-        // Extract all image URLs from messages
         const referencedUrls = new Set();
         messages.forEach(msg => {
             try {
@@ -321,12 +358,9 @@ router.delete('/cleanup-images', authMiddleware, async (req, res) => {
                         }
                     });
                 }
-            } catch (e) {
-                // Skip invalid JSON
-            }
+            } catch (e) { /* Skip invalid JSON */ }
         });
         
-        // Find orphaned images
         const orphanedFiles = files.filter(file => {
             const { data: publicUrl } = supabase.storage
                 .from('chat_images')
@@ -334,16 +368,12 @@ router.delete('/cleanup-images', authMiddleware, async (req, res) => {
             return !referencedUrls.has(publicUrl.publicUrl);
         });
         
-        // Delete orphaned images
         if (orphanedFiles.length > 0) {
             const pathsToDelete = orphanedFiles.map(file => `${req.user.id}/${file.name}`);
             const { error: deleteError } = await supabase.storage
                 .from('chat_images')
                 .remove(pathsToDelete);
-            if (deleteError) {
-                console.error('Error deleting orphaned images:', deleteError);
-                return res.status(500).json({ error: 'Failed to delete orphaned images.' });
-            }
+            if (deleteError) throw deleteError;
         }
         
         res.status(200).json({
@@ -358,58 +388,123 @@ router.delete('/cleanup-images', authMiddleware, async (req, res) => {
     }
 });
 
-
 router.post('/:chatId/toggle-study-mode', authMiddleware, async (req, res) => {
     const { chatId } = req.params;
-    const userId = req.user.id;
-
-    console.log(`[Toggle Study Mode] Received request for chatId: ${chatId}, userId: ${userId}`);
+    const userId = req.user?.id;
 
     try {
-        // Fetch the current study_mode status
-        const { data: chat, error: fetchError } = await supabase
+        // First, try to get the chat (works for both authenticated and anonymous)
+        let chatQuery = supabase
             .from('chats')
-            .select('study_mode')
-            .eq('id', chatId)
-            .eq('user_id', userId) // Ensure user owns the chat
-            .single();
+            .select('study_mode, user_id')
+            .eq('id', chatId);
+
+        // If user is authenticated, ensure they own the chat
+        if (userId) {
+            chatQuery = chatQuery.eq('user_id', userId);
+        }
+
+        const { data: chat, error: fetchError } = await chatQuery.single();
 
         if (fetchError) {
-            console.error(`[Toggle Study Mode] Error fetching chat ${chatId} for user ${userId}:`, fetchError);
-            throw fetchError;
+            console.error('Error fetching chat for study mode toggle:', fetchError);
+            return res.status(404).json({
+                error: 'Chat not found or unauthorized.',
+                timestamp: new Date().toISOString()
+            });
         }
+
         if (!chat) {
-            console.warn(`[Toggle Study Mode] Chat ${chatId} not found or unauthorized for user ${userId}.`);
-            return res.status(404).json({ error: 'Chat not found or unauthorized.' });
+            return res.status(404).json({
+                error: 'Chat not found or unauthorized.',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // If user is authenticated but doesn't own the chat, deny access
+        if (userId && chat.user_id !== userId) {
+            return res.status(403).json({
+                error: 'Access denied. You do not own this chat.',
+                timestamp: new Date().toISOString()
+            });
         }
 
         const newStudyModeStatus = !chat.study_mode;
-        console.log(`[Toggle Study Mode] Current study_mode for chat ${chatId}: ${chat.study_mode}. New status will be: ${newStudyModeStatus}`);
 
-        // Update the study_mode status
-        const { data, error: updateError } = await supabase
+        // Update the study mode
+        let updateQuery = supabase
             .from('chats')
             .update({ study_mode: newStudyModeStatus })
-            .eq('id', chatId)
-            .eq('user_id', userId)
-            .select()
-            .single();
+            .eq('id', chatId);
+
+        // If user is authenticated, include user_id filter
+        if (userId) {
+            updateQuery = updateQuery.eq('user_id', userId);
+        }
+
+        const { data, error: updateError } = await updateQuery.select().single();
 
         if (updateError) {
-            console.error(`[Toggle Study Mode] Error updating study_mode for chat ${chatId} for user ${userId}:`, updateError);
+            console.error('Error updating study mode:', updateError);
             throw updateError;
         }
 
-        console.log(`[Toggle Study Mode] Successfully updated chat ${chatId} to study_mode: ${newStudyModeStatus}`);
+        // Invalidate caches
+        if (userId) {
+            cache.del(`chat_${chatId}`);
+            cache.del(`chats_${userId}`);
+        }
+
         res.status(200).json({
             success: true,
             study_mode: newStudyModeStatus,
-            message: `Study mode ${newStudyModeStatus ? 'enabled' : 'disabled'} for chat ${chatId}.`
+            message: `Study mode ${newStudyModeStatus ? 'enabled' : 'disabled'} for chat ${chatId}.`,
+            timestamp: new Date().toISOString()
         });
 
     } catch (error) {
-        console.error("[Toggle Study Mode] Unhandled error:", error);
-        res.status(500).json({ error: 'Failed to toggle study mode.' });
+        console.error('Error toggling study mode:', error);
+        res.status(500).json({
+            error: 'Failed to toggle study mode.',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Anonymous study mode toggle (for non-authenticated users with local chats)
+router.post('/anonymous/:chatId/toggle-study-mode', async (req, res) => {
+    const { chatId } = req.params;
+    const clientId = req.headers['x-client-id'] || req.ip || 'anonymous';
+
+    try {
+        // For anonymous users, we need to handle localStorage-based chat IDs
+        // Since we can't verify ownership securely, we'll add basic protection
+        if (!chatId || !chatId.startsWith('anon-')) {
+            return res.status(400).json({
+                error: 'Invalid chat ID for anonymous study mode toggle.',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // For now, we'll allow the toggle but log it for security monitoring
+        console.log(`[${new Date().toISOString()}] Anonymous study mode toggle - Client: ${clientId}, Chat: ${chatId}`);
+
+        // Since anonymous chats are stored locally, we can't actually update them on the server
+        // The frontend will handle the local state update
+        res.status(200).json({
+            success: true,
+            study_mode: true, // Frontend will manage the actual state
+            message: 'Study mode toggled locally. Changes are not synced to server.',
+            timestamp: new Date().toISOString(),
+            anonymous: true
+        });
+
+    } catch (error) {
+        console.error('Error in anonymous study mode toggle:', error);
+        res.status(500).json({
+            error: 'Failed to toggle study mode.',
+            timestamp: new Date().toISOString()
+        });
     }
 });
 
@@ -432,6 +527,9 @@ router.post('/generate-missing-titles', authMiddleware, async (req, res) => {
             }
         }
 
+        // Invalidate chats list cache
+        cache.del(`chats_${req.user.id}`);
+
         res.status(200).json({ success: true, message: `${titlesGenerated} titles generated.` });
     } catch (error) {
         console.error('Error generating missing titles:', error);
@@ -440,3 +538,4 @@ router.post('/generate-missing-titles', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
+

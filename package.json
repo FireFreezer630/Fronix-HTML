@@ -1,5 +1,29 @@
 {
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "screenshots": "node screenshotShowcase.js",
+    "serve": "node serve-frontend.js",
+    "view-showcase": "node viewRealShowcase.js"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/test/**/*.js"
+    ],
+    "collectCoverageFrom": [
+      "test/**/*.js",
+      "!test/coverage/**"
+    ]
+  },
   "dependencies": {
-    "axios": "^1.11.0"
+    "axios": "^1.11.0",
+    "express": "^5.1.0",
+    "puppeteer": "^24.22.0"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "jest": "^29.7.0"
   }
 }

@@ -391,10 +391,13 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-light-text-subtle dark:text-dark-text-subtle flex-shrink-0 transition-transform" id="model-dropdown-arrow"><path d="m6 9 6 6 6-6"></path></svg>
       </div>
       
-      <!-- Syncing Indicator -->
-      <div id="sync-indicator" class="hidden flex items-center gap-2 ml-auto text-xs text-light-text-subtle dark:text-dark-text-subtle">
-        <div class="loading-spinner w-3 h-3"></div>
-        <span>Syncing...</span>
+      <!-- Study Mode Indicator -->
+      <div id="study-mode-indicator" class="hidden flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 rounded-full text-xs font-medium text-blue-800 dark:text-blue-200">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+        </svg>
+        <span>Study Mode</span>
       </div>
       
       <div id="model-dropdown" class="absolute top-full left-4 mt-2 w-72 bg-light-sidebar dark:bg-dark-sidebar rounded-lg shadow-lg border border-light-border dark:border-dark-border z-10 max-h-96 overflow-y-auto"></div>
@@ -543,7 +546,7 @@
                 <div class="flex-grow border-t border-light-border dark:border-dark-border"></div>
             </div>
             <button id="signin-google-btn" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-md bg-white dark:bg-dark-user-bubble border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors font-medium">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1h22v22H1z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1h22v22H1z"></svg>
                 Continue with Google
             </button>
         </div>
@@ -559,7 +562,7 @@
                 <div class="flex-grow border-t border-light-border dark:border-dark-border"></div>
             </div>
             <button id="signup-google-btn" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-md bg-white dark:bg-dark-user-bubble border border-light-border dark:border-dark-border hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors font-medium">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1h22v22H1z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1h22v22H1z"></svg>
                 Continue with Google
             </button>
         </div>
@@ -589,7 +592,7 @@
   </div>
 
   <script>
-    const API_BASE_URL = 'https://fronix-html.onrender.com'; // Official Render server URL
+    const API_BASE_URL = 'http://localhost:3001'; // Official Render server URL = https://fronix-html.onrender.com
     const config = { API_ENDPOINT: 'https://text.pollinations.ai/openai' };
     const SUPABASE_URL = 'https://dfrlmrplshijbosawpms.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmcmxtcnBsc2hpamJvc2F3cG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzEzMDYsImV4cCI6MjA2ODg0NzMwNn0.BzsC5u2LGbq3QydQCAKnIiJvrRHTdjx3HzNGdCzf_ac';
@@ -611,8 +614,86 @@
             return true; // Consider invalid tokens as expired
         }
     }
+
+    function serializeMessageContent(content) {
+        if (content == null) {
+            return '';
+        }
+        if (typeof content === 'string') {
+            return content;
+        }
+        try {
+            return JSON.stringify(content);
+        } catch (error) {
+            console.error('Failed to serialize message content:', error);
+            return String(content);
+        }
+    }
+
+    async function saveMessagesToServer(chatId, userMessage, assistantMessage, token) {
+        if (!chatId || !token || !userMessage || !assistantMessage) {
+            return;
+        }
+
+        try {
+            const payload = {
+                userMessage: {
+                    role: userMessage.role,
+                    content: serializeMessageContent(userMessage.content)
+                },
+                assistantMessage: {
+                    role: assistantMessage.role,
+                    content: serializeMessageContent(assistantMessage.content)
+                }
+            };
+
+            const response = await fetch(`${API_BASE_URL}/api/chat/${chatId}/save-messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `Failed to save messages (HTTP ${response.status})`);
+            }
+
+            console.log(`[saveMessagesToServer] Conversation saved for chat ${chatId}`);
+        } catch (error) {
+            console.error('[saveMessagesToServer] Error saving messages:', error);
+        }
+    }
     
-    async function validateAndRefreshToken() {
+    function scheduleTokenRefresh(token) {
+        if (tokenRefreshTimeout) {
+            clearTimeout(tokenRefreshTimeout);
+            tokenRefreshTimeout = null;
+        }
+
+        if (!token) return;
+
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1] || ''));
+            if (!payload.exp) return;
+            const refreshTime = payload.exp * 1000 - Date.now() - (2 * 60 * 1000); // 2 minutes before expiry
+            if (refreshTime <= 0) {
+                tokenRefreshTimeout = setTimeout(() => refreshAuthSession(), 5000);
+            } else {
+                tokenRefreshTimeout = setTimeout(() => refreshAuthSession(), refreshTime);
+            }
+        } catch (error) {
+            console.warn('Failed to schedule token refresh:', error);
+        }
+    }
+
+    async function refreshAuthSession() {
+        await validateAndRefreshToken(true);
+    }
+
+    async function validateAndRefreshToken(forceRefresh = false) {
         let token = localStorage.getItem('authToken');
         const refreshToken = localStorage.getItem('refreshToken');
 
@@ -620,7 +701,7 @@
             return null;
         }
 
-        if (isTokenExpired(token)) {
+        if (forceRefresh || isTokenExpired(token)) {
             console.log("Access token expired. Attempting to refresh...");
             if (!refreshToken) {
                 console.log("No refresh token available. Logging out.");
@@ -646,6 +727,7 @@
                 localStorage.setItem('refreshToken', session.refresh_token);
                 token = session.access_token;
                 console.log("Token refreshed successfully.");
+                scheduleTokenRefresh(token);
             } catch (error) {
                 console.error("Failed to refresh token:", error);
                 localStorage.removeItem('authToken');
@@ -654,8 +736,10 @@
                 updateLoginStateUI();
                 return null;
             }
+        } else {
+            scheduleTokenRefresh(token);
         }
-        
+
         return token;
     }
     
@@ -1104,30 +1188,34 @@ Over the course of the conversation, you adapt to the user's tone and preference
       'gpt-4.1': { name: 'OpenAI GPT-4.1', type: 'text', anonymous: true },
       'gpt-5-nano': { name: 'OpenAI GPT-5 Nano', type: 'text', anonymous: true },
       'gemini': { name: 'Gemini 2.5 Flash Lite', type: 'text', anonymous: true },
-      
+
       // Text Models - Pollinations.ai direct models
       'deepseek-reasoning': { name: 'DeepSeek R1 0528 (Bedrock)', type: 'text' },
       'openai-reasoning': { name: 'OpenAI o3 (api.navy)', type: 'text' },
       'o4-mini-medium': { name: 'O4 Mini Medium', type: 'text' },
       'o4-mini-high': { name: 'O4 Mini High', type: 'text' },
-      
+
       // A4F.co models (provider-prefixed)
       'kimi-k2-instruct': { name: 'Kimi K2 Instruct', type: 'text' },
       'glm-4.5': { name: 'GLM 4.5', type: 'text' },
       'glm-4.5-air': { name: 'GLM 4.5 Air', type: 'text' },
+      'gpt-4o-mini': { name: 'GPT-4o Mini', type: 'text' },
 
       // Pro Models
       'grok-4': { name: 'Grok 4', type: 'text', pro: true },
       'gpt-5': { name: 'GPT-5', type: 'text', pro: true },
       'gemini-2.5-pro': { name: 'Gemini 2.5 Pro', type: 'text', pro: true },
       'gemini-2.5-flash': { name: 'Gemini 2.5 Flash', type: 'text', pro: true },
-      
-      // Beta Models (MNN AI)
-      'gpt-4.1-mini': { name: 'GPT-4.1 Mini (Beta)', type: 'text', beta: true },
-      'gpt-4-vision-preview': { name: 'GPT-4 Vision Preview (Beta)', type: 'text', beta: true },
-      
+
       // Image Generation Models
-      // 'provider-4/imagen-4': { name: 'Imagen 4', type: 'image' }
+      'imagen-4': { name: 'Imagen 4', type: 'image', provider: 'airforce', pro: true },
+      'pollinations-flux': { name: 'Flux', type: 'image', provider: 'pollinations' },
+      'pollinations-kontext': { name: 'Flux Kontext (Image-to-Image)', type: 'image', provider: 'pollinations' },
+      'nanobanana': { name: 'NanoBanana', type: 'image', provider: 'pollinations' },
+      'seedream': { name: 'SeeDream', type: 'image', provider: 'pollinations' },
+
+      // Image Editing Models (A4F.co)
+      'provider-4/qwen-image': { name: 'Qwen Image Editor', type: 'image-edit', provider: 'a4f' }
     };
     
     // Model availability status (updated from server)
@@ -1151,6 +1239,7 @@ Over the course of the conversation, you adapt to the user's tone and preference
       scrollToBottomBtn: document.getElementById('scroll-to-bottom-btn'), // Added scroll to bottom button
       autocompleteSuggestions: document.getElementById('autocomplete-suggestions'), // Added for autocomplete
       studyCommandBtn: document.getElementById('study-command-btn'), // Added for study command autocomplete
+      studyModeIndicator: document.getElementById('study-mode-indicator'), // Added study mode indicator
       syncIndicator: document.getElementById('sync-indicator'), // Added sync indicator
       settingsModal: { container: document.getElementById('settings-modal'), fontOptions: document.getElementById('font-options'), fontWeightOptions: document.getElementById('font-weight-options'), closeBtn: document.getElementById('close-settings-btn'), resetBtn: document.getElementById('reset-settings-btn'), apiTokenInput: document.getElementById('api-token-input'), proModelsToggle: document.getElementById('pro-models-toggle'), betaModelsToggle: document.getElementById('beta-models-toggle'), checkModelStatusBtn: document.getElementById('check-model-status-btn') },
       modelAvailabilityModal: { container: document.getElementById('model-availability-modal'), content: document.getElementById('model-availability-content'), closeBtn: document.getElementById('close-model-availability-btn') },
@@ -1164,7 +1253,138 @@ Over the course of the conversation, you adapt to the user's tone and preference
     let isStreaming = false; // Flag to indicate if streaming is active
     let isScrolledUp = false; // Flag to indicate if the user has scrolled up
     let isGeneratingTitle = false; // Flag to indicate if title generation is in progress
-    let attachedImageData = null; // To store { file, dataUrl }
+    let attachedImageData = null; // To store { file?, dataUrl, previewUrl }
+    let attachmentDownloadPromise = null;
+    let isAttachmentLoading = false;
+    let tokenRefreshTimeout = null;
+
+    function clearAttachedImage(resetPreview = true) {
+        attachedImageData = null;
+        attachmentDownloadPromise = null;
+        isAttachmentLoading = false;
+        const imageUpload = document.getElementById('image-upload');
+        if (imageUpload) {
+            imageUpload.value = null;
+        }
+        if (resetPreview) {
+            hideImagePreview();
+        }
+        updateSendButtonState();
+    }
+
+    function hideImagePreview() {
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        if (!imagePreviewContainer) return;
+        imagePreviewContainer.innerHTML = '';
+        imagePreviewContainer.classList.add('hidden');
+    }
+
+    function imagePreviewContainerHasContent() {
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        if (!imagePreviewContainer) return false;
+        return imagePreviewContainer.innerHTML.trim() !== '' && !imagePreviewContainer.classList.contains('hidden');
+    }
+
+    function renderImagePreview(imageUrl) {
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        if (!imagePreviewContainer) return;
+
+        imagePreviewContainer.innerHTML = `
+            <div class="relative inline-block">
+                <img src="${imageUrl}" class="h-20 w-20 object-cover rounded-lg">
+                <button id="remove-image-btn" class="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1 leading-none" title="Remove image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+        `;
+        imagePreviewContainer.classList.remove('hidden');
+
+        const removeBtn = document.getElementById('remove-image-btn');
+        if (removeBtn) {
+            removeBtn.onclick = () => clearAttachedImage();
+        }
+        updateSendButtonState();
+    }
+
+    async function fetchImageAsDataUrl(imageUrl) {
+        const response = await fetch(imageUrl, { mode: 'cors' });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch image (HTTP ${response.status})`);
+        }
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    async function attachImageFromUrl(imageUrl) {
+        if (!imageUrl) return;
+        if (isAttachmentLoading) {
+            showAlert('Still preparing your previous image. Please wait.', 'info', 2000);
+            return;
+        }
+        const loadingPreviewContainer = document.getElementById('image-preview-container');
+        if (loadingPreviewContainer) {
+            loadingPreviewContainer.innerHTML = `
+                <div class="relative inline-flex h-20 w-20 items-center justify-center rounded-lg border border-light-border dark:border-dark-border bg-light-border/30 dark:bg-dark-border/30">
+                    <div class="loading-spinner w-6 h-6"></div>
+                </div>
+            `;
+            loadingPreviewContainer.classList.remove('hidden');
+        }
+
+        try {
+            const cacheBustingUrl = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+            isAttachmentLoading = true;
+            updateSendButtonState();
+            attachedImageData = { dataUrl: null, previewUrl: imageUrl, isPending: true };
+            attachmentDownloadPromise = fetchImageAsDataUrl(cacheBustingUrl);
+            const base64Data = await attachmentDownloadPromise;
+            attachedImageData = { dataUrl: base64Data, previewUrl: imageUrl, isPending: false };
+            renderImagePreview(imageUrl);
+
+            const imageUpload = document.getElementById('image-upload');
+            if (imageUpload) {
+                imageUpload.value = null;
+            }
+
+            elements.userInput.focus();
+            showAlert('Image attached for editing. Add your prompt to refine it.', 'info', 3500);
+        } catch (error) {
+            console.error('Failed to attach image for editing:', error);
+            showAlert('Failed to attach image for editing. Please try again.', 'error', 4000);
+            clearAttachedImage();
+        } finally {
+            attachmentDownloadPromise = null;
+            isAttachmentLoading = false;
+            updateSendButtonState();
+        }
+    }
+
+    function bindGeneratedImageEditButtons() {
+        const buttons = document.querySelectorAll('.edit-generated-image-btn');
+        buttons.forEach(button => {
+            if (button.dataset.bound === 'true') return;
+            button.dataset.bound = 'true';
+            button.addEventListener('click', () => {
+                const imageUrl = button.getAttribute('data-image-url');
+                attachImageFromUrl(imageUrl);
+            });
+        });
+    }
+
+    function getAttachmentPreviewUrl() {
+        if (!attachedImageData) return null;
+        return attachedImageData.previewUrl || attachedImageData.dataUrl || null;
+    }
+
+    function getAttachmentDataUrl() {
+        if (!attachedImageData) return null;
+        return attachedImageData.dataUrl || attachedImageData.previewUrl || null;
+    }
 
     // Custom alert system
     function showAlert(message, type = 'info', duration = 5000) {
@@ -1208,7 +1428,7 @@ Over the course of the conversation, you adapt to the user's tone and preference
     function setButtonLoading(button, loading, originalText) {
         if (loading) {
             button.disabled = true;
-            button.innerHTML = `<div class=\"loading-spinner\"></div>${originalText}`;
+            button.innerHTML = `<div class="loading-spinner"></div>${originalText}`;
         } else {
             button.disabled = false;
             button.innerHTML = originalText;
@@ -1227,7 +1447,7 @@ Over the course of the conversation, you adapt to the user's tone and preference
         }
     }
     
-    // Model availability functions
+    // Model availability functions with optimization support
     async function fetchModelAvailability() {
         try {
             showSyncIndicator();
@@ -1236,10 +1456,15 @@ Over the course of the conversation, you adapt to the user's tone and preference
                 const data = await response.json();
                 modelAvailability = data.status || {};
                 console.log('📊 Model availability updated:', modelAvailability);
-                
+
+                // Log optimization statistics if available
+                if (data.optimizationEnabled) {
+                    console.log('🚀 Network optimization enabled:', data.cacheStats);
+                }
+
                 // Update model selection for anonymous users if needed
                 updateAnonymousModelSelection();
-                
+
                 renderModelDropdown(); // Update dropdown after availability check
             } else {
                 console.warn(`Failed to fetch model availability: HTTP ${response.status}`);
@@ -1268,18 +1493,48 @@ Over the course of the conversation, you adapt to the user's tone and preference
             hideSyncIndicator();
         }
     }
+
+    // Fetch optimization statistics
+    async function fetchOptimizationStats() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/ai/optimization-stats`);
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📈 Optimization statistics:', data);
+
+                // Show optimization benefits in a notification
+                if (data.optimizationFeatures.requestBatching) {
+                    showAlert(`🚀 Network optimization active! Using request batching, intelligent caching, and deduplication for faster model checks.`, 'info', 5000);
+                }
+
+                return data;
+            } else {
+                console.warn(`Failed to fetch optimization stats: HTTP ${response.status}`);
+                return null;
+            }
+        } catch (error) {
+            console.warn('Could not fetch optimization statistics:', error.message);
+            return null;
+        }
+    }
     
-    // Show detailed model availability in modal
+    // Show detailed model availability in modal with live testing
     async function showModelAvailability() {
         animateModalOpen(elements.modelAvailabilityModal.container);
+        
+        // Initially show loading state
+        elements.modelAvailabilityModal.content.innerHTML = `
+            <div class="text-center py-8">
+                <div class="loading-spinner mx-auto"></div>
+                <p class="mt-2 text-sm text-light-text-subtle dark:text-dark-text-subtle">Sending test messages to models...</p>
+            </div>
+        `;
         
         try {
             const response = await fetch(`${API_BASE_URL}/api/ai/model-status`);
             if (response.ok) {
                 const data = await response.json();
                 const status = data.status || {};
-                
-                let html = '<div class="space-y-4">';
                 
                 // Group models by provider
                 const modelsByProvider = {};
@@ -1294,38 +1549,31 @@ Over the course of the conversation, you adapt to the user's tone and preference
                         id: modelId,
                         name: modelInfo.name,
                         apiName: info.apiName || modelId,
-                        available: info.available !== false
+                        available: info.available !== false,
+                        response: null,
+                        testing: true
                     });
                 });
                 
-                // Render by provider
-                Object.entries(modelsByProvider).forEach(([provider, models]) => {
-                    html += `
-                        <div class="border border-light-border dark:border-dark-border rounded-lg p-4">
-                            <h4 class="font-semibold text-lg mb-3">${provider}</h4>
-                            <div class="space-y-2">
-                    `;
-                    
-                    models.forEach(model => {
-                        const statusIcon = model.available ? 
-                            '<span class="text-green-500">✓</span>' : 
-                            '<span class="text-red-500">✗</span>';
-                        html += `
-                            <div class="flex items-start justify-between text-sm">
-                                <div class="flex-1">
-                                    <div class="font-medium">${statusIcon} ${model.name}</div>
-                                    <div class="text-xs text-light-text-subtle dark:text-dark-text-subtle">API: ${model.apiName}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    
-                    html += '</div></div>';
-                });
+                // Render initial UI with all models in testing state
+                renderModelAvailabilityUI(modelsByProvider);
                 
-                html += '</div>';
-                
-                elements.modelAvailabilityModal.content.innerHTML = html;
+                // Test each model with a "hi" message
+                for (const [provider, models] of Object.entries(modelsByProvider)) {
+                    for (const model of models) {
+                        testModelWithHello(model.id, model.apiName || model.id).then(response => {
+                            model.testing = false;
+                            model.response = response;
+                            model.available = response.success;
+                            renderModelAvailabilityUI(modelsByProvider);
+                        }).catch(err => {
+                            model.testing = false;
+                            model.response = { success: false, message: 'Failed to test' };
+                            model.available = false;
+                            renderModelAvailabilityUI(modelsByProvider);
+                        });
+                    }
+                }
             } else {
                 throw new Error('Failed to fetch model status');
             }
@@ -1339,6 +1587,316 @@ Over the course of the conversation, you adapt to the user's tone and preference
             `;
         }
     }
+
+    // Update progress during testing
+    function updateModelAvailabilityProgress(completed, total) {
+        const progressPercent = Math.round((completed / total) * 100);
+        const progressHtml = `
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-light-text-subtle dark:text-dark-text-subtle">
+                        Testing models... (${completed}/${total})
+                    </span>
+                    <span class="text-sm font-medium text-accent">${progressPercent}%</span>
+                </div>
+                <div class="w-full bg-light-border dark:bg-dark-border rounded-full h-2">
+                    <div class="bg-accent h-2 rounded-full transition-all duration-300" style="width: ${progressPercent}%"></div>
+                </div>
+            </div>
+        `;
+
+        const existingContent = elements.modelAvailabilityModal.content.innerHTML;
+        elements.modelAvailabilityModal.content.innerHTML = existingContent.replace(
+            /<div class="space-y-3">[\s\S]*?<\/div>/,
+            progressHtml
+        );
+    }
+
+    // Render final test results with improved UI
+    function renderModelAvailabilityResults(results) {
+        let html = '<div class="p-6"><h3 class="text-lg font-semibold mb-4 text-light-text dark:text-dark-text">Model Availability Results</h3>';
+
+        Object.entries(results).forEach(([provider, models]) => {
+            html += `<div class="mb-6"><h4 class="text-md font-medium mb-3 text-light-text dark:text-dark-text">${provider}</h4>`;
+
+            models.forEach(({ key, data, result }) => {
+                const isSuccess = result.success;
+                const statusIcon = isSuccess ?
+                    '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' :
+                    '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+
+                const badges = [];
+                if (data.pro) badges.push('<span class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded text-xs">PRO</span>');
+                if (data.beta) badges.push('<span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded text-xs">BETA</span>');
+                if (data.anonymous) badges.push('<span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded text-xs">FREE</span>');
+
+                html += `
+                    <div class="flex items-center justify-between p-3 bg-light-border-hover dark:bg-dark-border-hover rounded-lg mb-2">
+                        <div class="flex items-center gap-3 flex-1">
+                            ${statusIcon}
+                            <div class="flex-1">
+                                <div class="font-medium text-sm">${data.name}</div>
+                                <div class="text-xs text-light-text-subtle dark:text-dark-text-subtle">
+                                    ${result.message} ${result.responseTime > 0 ? `(${result.responseTime}ms)` : ''}
+                                </div>
+                            </div>
+                            <div class="flex gap-1">
+                                ${badges.join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+        });
+
+        html += `
+            <div class="mt-6 pt-4 border-t border-light-border dark:border-dark-border">
+                <div class="flex items-center justify-between text-sm text-light-text-subtle dark:text-dark-text-subtle">
+                    <span>Tests cached for 5 minutes</span>
+                    <button onclick="showModelAvailability()" class="px-3 py-1 bg-accent hover:bg-accent-hover text-white rounded text-xs transition-colors">
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </div>`;
+
+        elements.modelAvailabilityModal.content.innerHTML = html;
+    }
+
+    // Clean up when modal is closed
+    function closeModelAvailabilityModal() {
+        modelTester.cleanup();
+        animateModalClose(elements.modelAvailabilityModal.container);
+    }
+    
+    // Enhanced Model Tester Class with proper cleanup and retry logic
+    class ModelTester {
+        constructor() {
+            this.controllers = new Map();
+            this.activeTests = new Map();
+            this.testResults = new Map();
+        }
+
+        // Test a model with retry logic and proper cleanup
+        async testModelWithRetry(modelId, apiName, maxRetries = 2) {
+            const testKey = `${modelId}-${apiName}`;
+
+            // Check if test is already running
+            if (this.activeTests.has(testKey)) {
+                return this.activeTests.get(testKey);
+            }
+
+            const testPromise = this._testModelWithRetryInternal(modelId, apiName, maxRetries);
+            this.activeTests.set(testKey, testPromise);
+
+            try {
+                const result = await testPromise;
+                return result;
+            } finally {
+                this.activeTests.delete(testKey);
+            }
+        }
+
+        async _testModelWithRetryInternal(modelId, apiName, maxRetries) {
+            let lastError;
+
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                try {
+                    const result = await this.testModelWithTimeout(modelId, apiName);
+                    this.testResults.set(`${modelId}-${apiName}`, {
+                        ...result,
+                        timestamp: Date.now()
+                    });
+                    return result;
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`[ModelTester] Attempt ${attempt + 1} failed for ${modelId}:`, error.message);
+
+                    if (attempt < maxRetries) {
+                        // Exponential backoff: 1s, 2s, 4s
+                        const delay = Math.pow(2, attempt) * 1000;
+                        await this.delay(delay);
+                    }
+                }
+            }
+
+            // All retries failed
+            return {
+                success: false,
+                message: `Failed after ${maxRetries + 1} attempts: ${lastError?.message || 'Unknown error'}`,
+                error: lastError
+            };
+        }
+
+        async testModelWithTimeout(modelId, apiName, timeoutMs = 10000) {
+            return new Promise(async (resolve, reject) => {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => {
+                    controller.abort();
+                    reject(new Error('Test timeout'));
+                }, timeoutMs);
+
+                this.controllers.set(`${modelId}-${apiName}`, controller);
+
+                try {
+                    const result = await this._testModelOnce(modelId, apiName, controller);
+                    clearTimeout(timeout);
+                    resolve(result);
+                } catch (error) {
+                    clearTimeout(timeout);
+                    reject(error);
+                } finally {
+                    this.controllers.delete(`${modelId}-${apiName}`);
+                }
+            });
+        }
+
+        async _testModelOnce(modelId, apiName, controller) {
+            const isImageModel = MODELS[modelId]?.type === 'image' || MODELS[modelId]?.type === 'image-edit';
+
+            try {
+                if (isImageModel) {
+                    // For image models, we'll just check if they're configured
+                    return {
+                        success: true,
+                        message: 'Image model ready',
+                        responseTime: 50,
+                        timestamp: Date.now()
+                    };
+                }
+
+                // Test text models with a simple message
+                const token = state.settings.apiToken || localStorage.getItem('authToken');
+                const endpoint = state.currentUser ? `${API_BASE_URL}/api/ai/chat` : `${API_BASE_URL}/api/ai/chat-public`;
+                const startTime = Date.now();
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token && state.currentUser ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({
+                        model: modelId,
+                        messages: [{ role: 'user', content: 'hi' }]
+                    }),
+                    signal: controller.signal
+                });
+
+                const responseTime = Date.now() - startTime;
+
+                if (response.ok) {
+                    // Try to read response to verify it's working
+                    try {
+                        const reader = response.body.getReader();
+                        const decoder = new TextDecoder();
+                        let responseText = '';
+                        let hasContent = false;
+
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+
+                            const chunk = decoder.decode(value);
+                            responseText += chunk;
+
+                            // Look for content in the stream
+                            const matches = chunk.match(/"content":"([^"]+)"/g);
+                            if (matches && matches.length > 0) {
+                                hasContent = true;
+                                const content = matches[0].replace(/"content":"/, '').replace(/"$/, '');
+                                return {
+                                    success: true,
+                                    message: content.substring(0, 30) + '...',
+                                    responseTime,
+                                    timestamp: Date.now()
+                                };
+                            }
+
+                            // Stop after getting enough data or taking too long
+                            if (responseText.length > 500 || (Date.now() - startTime) > 8000) break;
+                        }
+
+                        return {
+                            success: true,
+                            message: hasContent ? 'Responding...' : 'Connected successfully',
+                            responseTime,
+                            timestamp: Date.now()
+                        };
+                    } catch (streamError) {
+                        return {
+                            success: true,
+                            message: 'Connected successfully',
+                            responseTime,
+                            timestamp: Date.now()
+                        };
+                    }
+                } else {
+                    const errorText = await response.text().catch(() => 'Unknown error');
+                    return {
+                        success: false,
+                        message: `HTTP ${response.status}: ${response.statusText}`,
+                        responseTime,
+                        timestamp: Date.now()
+                    };
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    return {
+                        success: false,
+                        message: 'Test timeout',
+                        responseTime: 0,
+                        timestamp: Date.now()
+                    };
+                }
+
+                return {
+                    success: false,
+                    message: error.message.substring(0, 50),
+                    responseTime: 0,
+                    timestamp: Date.now()
+                };
+            }
+        }
+
+        // Clean up all active connections
+        cleanup() {
+            console.log(`[ModelTester] Cleaning up ${this.controllers.size} active connections`);
+            this.controllers.forEach((controller, key) => {
+                controller.abort();
+            });
+            this.controllers.clear();
+            this.activeTests.clear();
+        }
+
+        // Get cached test result
+        getCachedResult(modelId, apiName) {
+            const key = `${modelId}-${apiName}`;
+            const cached = this.testResults.get(key);
+
+            if (cached) {
+                // Consider result valid for 5 minutes
+                const isValid = (Date.now() - cached.timestamp) < (5 * 60 * 1000);
+                if (isValid) {
+                    return cached;
+                } else {
+                    this.testResults.delete(key);
+                }
+            }
+
+            return null;
+        }
+
+        // Utility function for delays
+        delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    }
+
+    // Create global model tester instance
+    const modelTester = new ModelTester();
     
     // Check if user is anonymous (not logged in)
     function isAnonymousUser() {
@@ -1401,14 +1959,14 @@ Over the course of the conversation, you adapt to the user's tone and preference
     // Get the first available model for anonymous users
     function getFirstAvailableAnonymousModel() {
         const anonymousModels = ['gpt-4.1', 'gpt-5-nano', 'gemini']; // In order of preference
-        
+
         for (const modelKey of anonymousModels) {
             if (isModelAvailable(modelKey)) {
                 console.log(`📍 Selected available anonymous model: ${modelKey}`);
                 return modelKey;
             }
         }
-        
+
         // If no models are available, return the first one anyway (fallback)
         console.warn('⚠️ No anonymous models appear to be available, falling back to first model');
         return anonymousModels[0];
@@ -1457,25 +2015,44 @@ Over the course of the conversation, you adapt to the user's tone and preference
     const FONTS = { 'inter': 'Inter', 'sans-serif': 'Sans Serif', 'work-sans': 'Work Sans', 'yu-gothic': 'Yu Gothic' };
     const FONT_WEIGHTS = { '300': 'Thin', '400': 'Regular', '500': 'Medium', '600': 'Semibold', '700': 'Bold' };
 
-    // Mobile detection
-    const isMobile = () => window.innerWidth < 768 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    
-    const createChat = (title = 'New Chat') => ({ id: Date.now().toString(), title, messages: [], model: state.settings.model });
+    // Study Mode functions
+    function updateStudyModeIndicator() {
+        const activeChat = state.chats.find(c => c.id === state.activeId);
+        if (activeChat && activeChat.study_mode && elements.studyModeIndicator) {
+            elements.studyModeIndicator.classList.remove('hidden');
+        } else if (elements.studyModeIndicator) {
+            elements.studyModeIndicator.classList.add('hidden');
+        }
+    }
+
+    // Handle slash commands with improved validation
+    function handleSlashCommand(input) {
+        const trimmed = input.trim();
+        const command = trimmed.toLowerCase();
+
+        if (command === '/study') {
+            return { type: 'study', action: 'toggle' };
+        } else if (command.startsWith('/study ')) {
+            return { type: 'study', action: 'help' };
+        }
+
+        return null;
+    }
     // Cache version for future-proofing against data structure changes
     const CACHE_VERSION = '1.0';
     
-    // Enhanced state management with comprehensive caching
+    // Enhanced state management with comprehensive caching and debouncing
     const saveState = () => {
         localStorage.setItem('fronixState', JSON.stringify(state));
         localStorage.setItem('lastActiveChatId', state.activeId); // Persist active chat ID
-        
+
         // Cache top 10 chats with recent messages for instant loading
         const topChats = state.chats.slice(0, 10).map(chat => ({
             ...chat,
             // Cache last 20 messages for instant chat display
             messages: chat.messages ? chat.messages.slice(-20) : []
         }));
-        
+
         const cacheData = {
             version: CACHE_VERSION,
             chats: topChats,
@@ -1489,9 +2066,24 @@ Over the course of the conversation, you adapt to the user's tone and preference
                 plan: state.currentUser.plan
             } : null
         };
-        
+
         localStorage.setItem('cachedChats', JSON.stringify(cacheData));
         console.log('[saveState] Cached', topChats.length, 'chats with recent messages');
+    };
+
+    // Debounced version of saveState for better performance
+    let saveStateTimeout;
+    const debouncedSaveState = () => {
+        clearTimeout(saveStateTimeout);
+        saveStateTimeout = setTimeout(() => {
+            saveState();
+        }, 500); // 500ms debounce delay
+    };
+
+    // Critical state changes should save immediately
+    const immediateSaveState = () => {
+        clearTimeout(saveStateTimeout);
+        saveState();
     };
     
     // Load cached chats for instant UI with version checking
@@ -1550,7 +2142,7 @@ Over the course of the conversation, you adapt to the user's tone and preference
             state.activeId = defaultChat.id;
             renderSidebar();
             renderChat();
-            saveState();
+            immediateSaveState(); // Critical state change - save immediately
             console.log('[initializeDefaultChat] Created default chat for new user');
         }
     };
@@ -1585,6 +2177,147 @@ Over the course of the conversation, you adapt to the user's tone and preference
     function renderContent(text) { if (!text) return ''; let html = marked.parse(text, { breaks: true, gfm: true }); return html; }
     function renderStreamingContent(text) { if (!text) return ''; let html = marked.parseInline(text, { breaks: true, gfm: true }); return html; }
 
+    // Global Error Boundary System
+    class ErrorBoundary {
+        constructor() {
+            this.errors = [];
+            this.maxErrors = 10;
+            this.errorTimeout = 5000; // 5 seconds
+        }
+
+        // Capture and handle JavaScript errors
+        captureError(error, errorInfo = {}) {
+            const errorData = {
+                message: error.message || error.toString(),
+                stack: error.stack,
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                url: window.location.href,
+                userId: state.currentUser?.id || 'anonymous',
+                ...errorInfo
+            };
+
+            this.errors.push(errorData);
+
+            // Keep only recent errors
+            if (this.errors.length > this.maxErrors) {
+                this.errors.shift();
+            }
+
+            console.error('[ErrorBoundary] Captured error:', errorData);
+
+            // Show user-friendly error message
+            this.showErrorToUser(errorData);
+
+            // Report to analytics (if available)
+            this.reportError(errorData);
+
+            return errorData;
+        }
+
+        // Show error to user in a non-intrusive way
+        showErrorToUser(errorData) {
+            // Don't show error for minor issues
+            if (errorData.message.includes('AbortError') ||
+                errorData.message.includes('NetworkError') && errorData.message.includes('fetch')) {
+                return;
+            }
+
+            // Show alert for significant errors
+            const isNetworkError = errorData.message.includes('Failed to fetch') ||
+                                 errorData.message.includes('NetworkError');
+
+            if (isNetworkError) {
+                showAlert('Connection error. Please check your internet connection and try again.', 'warning');
+            } else if (!errorData.message.includes('Script error')) {
+                // Only show errors that aren't generic script errors
+                showAlert('An unexpected error occurred. Please refresh the page if problems persist.', 'error');
+            }
+        }
+
+        // Report error to monitoring service
+        reportError(errorData) {
+            // In a real application, send to monitoring service like Sentry
+            // For now, just log to console
+            console.error('[ErrorReporting] Error report:', errorData);
+        }
+
+        // Get recent errors for debugging
+        getRecentErrors() {
+            return this.errors.slice(-5);
+        }
+
+        // Clear old errors
+        clearErrors() {
+            this.errors = [];
+        }
+    }
+
+    // Create global error boundary instance
+    const errorBoundary = new ErrorBoundary();
+
+    // Global error handler
+    window.addEventListener('error', (event) => {
+        errorBoundary.captureError(event.error, {
+            filename: event.filename,
+            lineno: event.lineno,
+            colno: event.colno,
+            type: 'javascript'
+        });
+    });
+
+    // Unhandled promise rejection handler
+    window.addEventListener('unhandledrejection', (event) => {
+        errorBoundary.captureError(event.reason, {
+            type: 'promise',
+            promise: event.promise
+        });
+    });
+
+    // Enhanced error handling for fetch requests
+    const safeFetch = async (url, options = {}) => {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            return response;
+        } catch (error) {
+            errorBoundary.captureError(error, {
+                type: 'fetch',
+                url: url,
+                options: options
+            });
+            throw error;
+        }
+    };
+
+    // Enhanced error handling for async functions
+    const safeAsync = (fn, errorContext = {}) => {
+        return async (...args) => {
+            try {
+                return await fn(...args);
+            } catch (error) {
+                errorBoundary.captureError(error, errorContext);
+                throw error;
+            }
+        };
+    };
+
+    // Mobile detection
+    const isMobile = () => window.innerWidth < 768 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+    const createChat = (title = 'New Chat') => ({ id: Date.now().toString(), title, messages: [], model: state.settings.model });
     function renderSidebar() {
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         elements.chatList.innerHTML = '';
@@ -1655,11 +2388,12 @@ Over the course of the conversation, you adapt to the user's tone and preference
             console.log(`[setActive] Chat with ID ${id} not found. Setting activeId to null.`);
         }
         updateModelSelectorDisplay();
+        updateStudyModeIndicator(); // Update study mode indicator when chat changes
         renderModelDropdown();
         console.log(`[setActive] Calling renderSidebar and renderChat for chat ID: ${state.activeId}`);
         renderSidebar();
         renderChat(); // This will now use the messages already loaded in state.chats
-        saveState();
+        debouncedSaveState(); // Use debounced save for non-critical chat changes
         console.log(`[setActive] Active chat set to: ${state.activeId}. State saved.`);
     }
     
@@ -1680,56 +2414,115 @@ function addMessage(role, content, customId = null) {
     chat.messages.push(message);
     console.log('[addMessage] Message added. Chat messages (after push):', JSON.parse(JSON.stringify(chat.messages))); // Deep copy for logging
     renderChat(); // RenderChat will now correctly use the ID
-    saveState();
+    debouncedSaveState(); // Use debounced save for message additions
     console.log('[addMessage] State saved after adding message. Current chat messages:', JSON.parse(JSON.stringify(chat.messages))); // Deep copy for logging
 };
 
-// Place this function where your current renderChat is.
-// ... inside your <script> tag ...
+// Virtual scrolling state for DOM virtualization
+let virtualScrollState = {
+    visibleStart: 0,
+    visibleEnd: 50,
+    itemHeight: 120, // Estimated average message height
+    bufferSize: 10, // Number of extra items to render above/below visible area
+    totalItems: 0,
+    scrollTop: 0,
+    containerHeight: 0
+};
 
-// Place this function where your current renderChat is.
-function renderChat() {
+// Function to estimate message height based on content
+function estimateMessageHeight(msg, isUser) {
+    const baseHeight = isUser ? 80 : 100;
+    let contentHeight = 20; // Base content height
+
+    if (typeof msg.content === 'string') {
+        const lines = Math.ceil(msg.content.length / 80); // Rough estimate: 80 chars per line
+        contentHeight = Math.max(20, lines * 18);
+    } else if (Array.isArray(msg.content)) {
+        contentHeight = msg.content.length * 60; // Array items take more space
+    } else if (msg.content && typeof msg.content === 'object') {
+        contentHeight = 80; // Object content
+    }
+
+    return baseHeight + contentHeight + 40; // Add padding and actions
+}
+
+// Update virtual scroll state based on scroll position
+function updateVirtualScrollState() {
     const chat = state.chats.find(c => c.id === state.activeId);
-    elements.chatBox.innerHTML = '';
+    if (!chat || !chat.messages) return;
 
-    // CORRECTED CHECK: First, verify a chat exists. If not, show the welcome screen and exit.
-    // This prevents any further code from running with an undefined 'chat' object.
+    const container = elements.chatBox.parentElement;
+    virtualScrollState.containerHeight = container.clientHeight;
+    virtualScrollState.scrollTop = container.scrollTop;
+    virtualScrollState.totalItems = chat.messages.length;
+
+    // Calculate visible range
+    const start = Math.floor(virtualScrollState.scrollTop / virtualScrollState.itemHeight) - virtualScrollState.bufferSize;
+    const end = Math.ceil((virtualScrollState.scrollTop + virtualScrollState.containerHeight) / virtualScrollState.itemHeight) + virtualScrollState.bufferSize;
+
+    virtualScrollState.visibleStart = Math.max(0, start);
+    virtualScrollState.visibleEnd = Math.min(virtualScrollState.totalItems, end);
+}
+
+// Render only visible messages with virtual scrolling
+function renderChatVirtualized() {
+    const chat = state.chats.find(c => c.id === state.activeId);
     if (!chat) {
         elements.chatBox.innerHTML = `<div class="text-center text-light-text-subtle dark:text-dark-text-subtle py-8"><h2 class="text-3xl font-bold mb-2">Fronix</h2><p>Start a new message to begin.</p></div>`;
         return;
     }
-    
-    // SECOND CHECK: If the chat exists but messages haven't been loaded yet, show welcome screen.
+
     if (!chat.messages || chat.messages.length === 0) {
         elements.chatBox.innerHTML = `<div class="text-center text-light-text-subtle dark:text-dark-text-subtle py-8"><h2 class="text-3xl font-bold mb-2">Fronix</h2><p>Start a new message to begin.</p></div>`;
         return;
     }
 
-    // The rest of the function remains the same, but is now safe to run.
+    updateVirtualScrollState();
+
+    // Calculate total height for proper scrolling
+    let totalHeight = 0;
     chat.messages.forEach((msg, index) => {
+        const isUser = msg.role === 'user';
+        const height = estimateMessageHeight(msg, isUser);
+        if (index < virtualScrollState.visibleStart) {
+            totalHeight += height;
+        }
+    });
+
+    // Clear existing content
+    elements.chatBox.innerHTML = '';
+
+    // Render only visible messages
+    const visibleMessages = chat.messages.slice(virtualScrollState.visibleStart, virtualScrollState.visibleEnd);
+
+    visibleMessages.forEach((msg, index) => {
+        const globalIndex = virtualScrollState.visibleStart + index;
         const wrapper = document.createElement('div');
+        wrapper.style.position = 'absolute';
+        wrapper.style.top = totalHeight + 'px';
+        wrapper.style.width = '100%';
+
         const msgDiv = document.createElement('div');
-        
         if (msg.id) {
             msgDiv.id = msg.id;
         }
 
         const isUser = msg.role === 'user';
+        const messageHeight = estimateMessageHeight(msg, isUser);
 
         if (isUser) {
             msgDiv.className = 'ml-auto w-fit max-w-[90%]';
-            
+
             // Parse content if it's a JSON string from database
             let content = msg.content;
             if (typeof content === 'string' && (content.startsWith('[') || content.startsWith('{'))) {
                 try {
                     content = JSON.parse(content);
                 } catch (e) {
-                    // If parsing fails, treat as regular text
                     content = msg.content;
                 }
             }
-            
+
             if (Array.isArray(content)) {
                 const contentWrapper = document.createElement('div');
                 contentWrapper.className = 'p-4 rounded-2xl bg-light-user-bubble dark:bg-dark-user-bubble flex flex-col gap-3';
@@ -1757,29 +2550,587 @@ function renderChat() {
             }
         } else {
             msgDiv.className = 'prose prose-sm md:prose-base max-w-none text-light-text dark:text-dark-text';
-            if (msg.content === '...') {
-                msgDiv.innerHTML = `<div class="flex items-center space-x-1.5">${Array(3).fill().map(() => `<div class="loader-dot w-2 h-2 bg-gray-400 rounded-full"></div>`).join('')}</div>`;
-            } else {
-                msgDiv.innerHTML = renderContent(msg.content);
+            let assistantContent = msg.content;
+            if (typeof assistantContent === 'string') {
+                const trimmed = assistantContent.trim();
+                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                    try {
+                        assistantContent = JSON.parse(trimmed);
+                    } catch (error) {
+                        // leave as string if parsing fails
+                    }
+                }
             }
-            renderMathInElement(msgDiv, {
-                delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
-            });
+
+            if (assistantContent === '...') {
+                msgDiv.innerHTML = `<div class="flex items-center space-x-1.5">${Array(3).fill().map(() => `<div class="loader-dot w-2 h-2 bg-gray-400 rounded-full"></div>`).join('')}</div>`;
+            } else if (Array.isArray(assistantContent)) {
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'flex flex-col gap-3';
+                assistantContent.forEach(part => {
+                    if (part.type === 'text' && part.text) {
+                        const p = document.createElement('p');
+                        p.innerHTML = renderContent(part.text);
+                        contentWrapper.appendChild(p);
+                    } else if (part.type === 'image_url' && part.image_url?.url) {
+                        const img = document.createElement('img');
+                        img.src = part.image_url.url;
+                        img.className = 'w-full max-w-sm h-auto rounded-lg cursor-pointer';
+                        img.onclick = () => window.open(part.image_url.url, '_blank');
+                        contentWrapper.appendChild(img);
+                    }
+                });
+                msgDiv.appendChild(contentWrapper);
+            } else if (typeof assistantContent === 'object' && assistantContent !== null) {
+                if (assistantContent.type === 'html' && assistantContent.html) {
+                    msgDiv.innerHTML = assistantContent.html;
+                } else if (assistantContent.type === 'text' && assistantContent.text) {
+                    msgDiv.innerHTML = renderContent(assistantContent.text);
+                    renderMathInElement(msgDiv, {
+                        delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+                    });
+                } else {
+                    msgDiv.innerHTML = renderContent(JSON.stringify(assistantContent));
+                    renderMathInElement(msgDiv, {
+                        delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+                    });
+                }
+            } else {
+                msgDiv.innerHTML = renderContent(assistantContent || '');
+                renderMathInElement(msgDiv, {
+                    delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+                });
+            }
         }
 
         const actionsDiv = document.createElement('div');
         actionsDiv.className = `flex gap-2 mt-2 items-center text-light-text-subtle dark:text-dark-text-subtle ${isUser ? 'justify-end' : 'justify-start'}`;
         const copyBtn = document.createElement('button');
-        copyBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors';
+        copyBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors copy-btn';
         copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
-        copyBtn.onclick = () => copyMessage(msg.content, copyBtn);
+        copyBtn.dataset.messageContent = JSON.stringify(msg.content);
         actionsDiv.appendChild(copyBtn);
 
         if (isUser) {
             const editBtn = document.createElement('button');
-            editBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors';
+            editBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors edit-btn';
             editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`;
-            editBtn.onclick = () => enterEditMode(chat.id, index);
+            editBtn.dataset.chatId = chat.id;
+            editBtn.dataset.messageIndex = globalIndex;
+            actionsDiv.appendChild(editBtn);
+        }
+
+        wrapper.appendChild(msgDiv);
+        wrapper.appendChild(actionsDiv);
+        elements.chatBox.appendChild(wrapper);
+
+        totalHeight += messageHeight;
+    });
+
+    // Set container height for proper scrolling
+    elements.chatBox.style.height = totalHeight + 'px';
+    bindGeneratedImageEditButtons();
+}
+
+// Message processing optimization with diffing
+let messageCache = new Map();
+let lastRenderedMessages = new Map();
+
+// Create message diffing function to identify changes
+function createMessageDiff(currentMessages, newMessages) {
+    const diff = {
+        added: [],
+        removed: [],
+        changed: [],
+        unchanged: []
+    };
+
+    // Create maps for efficient lookup
+    const currentMap = new Map();
+    const newMap = new Map();
+
+    currentMessages.forEach((msg, index) => {
+        const key = `${msg.role}-${JSON.stringify(msg.content)}`;
+        currentMap.set(key, { msg, index });
+    });
+
+    newMessages.forEach((msg, index) => {
+        const key = `${msg.role}-${JSON.stringify(msg.content)}`;
+        newMap.set(key, { msg, index });
+    });
+
+    // Find added, removed, and changed messages
+    for (const [key, current] of currentMap) {
+        if (newMap.has(key)) {
+            diff.unchanged.push(current);
+        } else {
+            diff.removed.push(current);
+        }
+    }
+
+    for (const [key, newMsg] of newMap) {
+        if (!currentMap.has(key)) {
+            diff.added.push(newMsg);
+        }
+    }
+
+    return diff;
+}
+
+// Cache parsed message content to avoid re-parsing
+function getCachedMessageContent(msg) {
+    const cacheKey = `${msg.role}-${JSON.stringify(msg.content)}`;
+
+    if (messageCache.has(cacheKey)) {
+        return messageCache.get(cacheKey);
+    }
+
+    let content = msg.content;
+    if (typeof content === 'string' && (content.startsWith('[') || content.startsWith('{'))) {
+        try {
+            content = JSON.parse(content);
+        } catch (e) {
+            content = msg.content;
+        }
+    }
+
+    const cachedContent = { original: msg.content, parsed: content };
+    messageCache.set(cacheKey, cachedContent);
+
+    // Limit cache size
+    if (messageCache.size > 500) {
+        const firstKey = messageCache.keys().next().value;
+        messageCache.delete(firstKey);
+    }
+
+    return cachedContent;
+}
+
+// Optimized message rendering with selective updates
+function renderMessageOptimized(chat, msg, index, isUser, container) {
+    const cachedContent = getCachedMessageContent(msg);
+    const wrapper = document.createElement('div');
+    const msgDiv = document.createElement('div');
+
+    if (msg.id) {
+        msgDiv.id = msg.id;
+    }
+
+    if (isUser) {
+        msgDiv.className = 'ml-auto w-fit max-w-[90%]';
+
+        if (Array.isArray(cachedContent.parsed)) {
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'p-4 rounded-2xl bg-light-user-bubble dark:bg-dark-user-bubble flex flex-col gap-3';
+            cachedContent.parsed.forEach(part => {
+                if (part.type === 'text' && part.text) {
+                    const p = document.createElement('p');
+                    p.className = 'whitespace-pre-wrap';
+                    p.textContent = part.text;
+                    contentWrapper.appendChild(p);
+                } else if (part.type === 'image_url') {
+                    const img = document.createElement('img');
+                    img.src = part.image_url.url;
+                    img.className = 'w-48 h-auto rounded-lg cursor-pointer';
+                    img.onclick = () => window.open(part.image_url.url, '_blank');
+                    contentWrapper.appendChild(img);
+                }
+            });
+            msgDiv.appendChild(contentWrapper);
+        } else {
+            msgDiv.classList.add('p-4', 'rounded-2xl', 'bg-light-user-bubble', 'dark:bg-dark-user-bubble');
+            const p = document.createElement('p');
+            p.className = 'whitespace-pre-wrap';
+            p.textContent = cachedContent.parsed;
+            msgDiv.appendChild(p);
+        }
+    } else {
+        msgDiv.className = 'prose prose-sm md:prose-base max-w-none text-light-text dark:text-dark-text';
+
+        if (cachedContent.parsed === '...') {
+            msgDiv.innerHTML = `<div class="flex items-center space-x-1.5">${Array(3).fill().map(() => `<div class="loader-dot w-2 h-2 bg-gray-400 rounded-full"></div>`).join('')}</div>`;
+        } else if (Array.isArray(cachedContent.parsed)) {
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'flex flex-col gap-3';
+            cachedContent.parsed.forEach(part => {
+                if (part.type === 'text' && part.text) {
+                    const p = document.createElement('p');
+                    p.innerHTML = renderContent(part.text);
+                    contentWrapper.appendChild(p);
+                } else if (part.type === 'image_url' && part.image_url?.url) {
+                    const img = document.createElement('img');
+                    img.src = part.image_url.url;
+                    img.className = 'w-full max-w-sm h-auto rounded-lg cursor-pointer';
+                    img.onclick = () => window.open(part.image_url.url, '_blank');
+                    contentWrapper.appendChild(img);
+                }
+            });
+            msgDiv.appendChild(contentWrapper);
+        } else if (typeof cachedContent.parsed === 'object' && cachedContent.parsed !== null) {
+            if (cachedContent.parsed.type === 'html' && cachedContent.parsed.html) {
+                msgDiv.innerHTML = cachedContent.parsed.html;
+            } else if (cachedContent.parsed.type === 'text' && cachedContent.parsed.text) {
+                msgDiv.innerHTML = renderContent(cachedContent.parsed.text);
+                renderMathInElement(msgDiv, {
+                    delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+                });
+            } else {
+                msgDiv.innerHTML = renderContent(JSON.stringify(cachedContent.parsed));
+                renderMathInElement(msgDiv, {
+                    delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+                });
+            }
+        } else {
+            msgDiv.innerHTML = renderContent(cachedContent.parsed || '');
+            renderMathInElement(msgDiv, {
+                delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+            });
+        }
+    }
+
+    // Add action buttons with event delegation
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = `flex gap-2 mt-2 items-center text-light-text-subtle dark:text-dark-text-subtle ${isUser ? 'justify-end' : 'justify-start'}`;
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors copy-btn';
+    copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+    copyBtn.dataset.messageContent = JSON.stringify(msg.content);
+    actionsDiv.appendChild(copyBtn);
+
+    if (isUser) {
+        const editBtn = document.createElement('button');
+        editBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors edit-btn';
+        editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`;
+        editBtn.dataset.chatId = chat.id;
+        editBtn.dataset.messageIndex = index;
+        actionsDiv.appendChild(editBtn);
+    }
+
+    wrapper.appendChild(msgDiv);
+    wrapper.appendChild(actionsDiv);
+    container.appendChild(wrapper);
+
+    return wrapper;
+}
+
+// Enhanced scroll handler for virtual scrolling
+function handleVirtualScroll() {
+    const container = elements.chatBox.parentElement;
+    const oldScrollTop = virtualScrollState.scrollTop;
+
+    container.addEventListener('scroll', () => {
+        const newScrollTop = container.scrollTop;
+
+        // Only re-render if scroll position changed significantly
+        if (Math.abs(newScrollTop - oldScrollTop) > virtualScrollState.itemHeight) {
+            renderChatVirtualized();
+        }
+    });
+}
+
+// Image lazy loading and caching system
+let imageObserver;
+let imageCache = new Map();
+let loadingImages = new Set();
+
+// Initialize image lazy loading
+function initImageLazyLoading() {
+    // Create intersection observer for lazy loading
+    imageObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                loadImage(img);
+                imageObserver.unobserve(img);
+            }
+        });
+    }, {
+        rootMargin: '50px' // Start loading 50px before image comes into view
+    });
+
+    // Observe all existing lazy images
+    document.querySelectorAll('img[data-src]').forEach(img => {
+        imageObserver.observe(img);
+    });
+
+    // Set up Service Worker for caching if supported
+    if ('serviceWorker' in navigator) {
+        registerServiceWorker();
+    }
+}
+
+// Load image with caching and error handling
+function loadImage(img) {
+    const src = img.dataset.src || img.src;
+    if (!src) return;
+
+    // Check cache first
+    if (imageCache.has(src)) {
+        img.src = imageCache.get(src);
+        img.classList.remove('lazy');
+        return;
+    }
+
+    // Show loading placeholder
+    showImagePlaceholder(img);
+
+    // Create new image for loading
+    const newImg = new Image();
+
+    newImg.onload = () => {
+        // Cache the loaded image
+        imageCache.set(src, src);
+
+        // Update the original image
+        img.src = src;
+        img.classList.remove('lazy', 'loading');
+        img.classList.add('loaded');
+        loadingImages.delete(img);
+
+        // Clean cache if it gets too large
+        if (imageCache.size > 100) {
+            const firstKey = imageCache.keys().next().value;
+            imageCache.delete(firstKey);
+        }
+    };
+
+    newImg.onerror = () => {
+        console.warn('Failed to load image:', src);
+        img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5YTNhZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBBdmFpbGFibGU8L3RleHQ+PC9zdmc+';
+        img.classList.remove('lazy', 'loading');
+        img.classList.add('error');
+        loadingImages.delete(img);
+    };
+
+    loadingImages.add(img);
+    newImg.src = src;
+}
+
+// Show loading placeholder for image
+function showImagePlaceholder(img) {
+    const rect = img.getBoundingClientRect();
+    const aspectRatio = img.dataset.aspect || '1';
+
+    img.classList.add('loading');
+    img.style.background = `linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)`;
+    img.style.backgroundSize = '200% 100%';
+    img.style.animation = 'loading-shimmer 2s infinite';
+}
+
+// Register Service Worker for image caching
+async function registerServiceWorker() {
+    try {
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        console.log('[ServiceWorker] Registered successfully:', registration.scope);
+    } catch (error) {
+        console.log('[ServiceWorker] Registration failed:', error);
+    }
+}
+
+// Add CSS for lazy loading animations
+const lazyLoadingCSS = `
+    <style>
+    img.lazy {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    img.loaded {
+        opacity: 1;
+    }
+
+    img.error {
+        opacity: 0.7;
+        filter: grayscale(100%);
+    }
+
+    @keyframes loading-shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+
+    .image-placeholder {
+        background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+        background-size: 200% 100%;
+        animation: loading-shimmer 2s infinite;
+    }
+    </style>
+`;
+
+// Inject CSS
+document.head.insertAdjacentHTML('beforeend', lazyLoadingCSS);
+
+// Enhanced image creation with lazy loading
+function createLazyImage(src, className = '', alt = '') {
+    const img = document.createElement('img');
+    img.dataset.src = src;
+    img.className = `lazy ${className}`.trim();
+    img.alt = alt;
+    img.loading = 'lazy'; // Native lazy loading as fallback
+
+    // Add placeholder
+    showImagePlaceholder(img);
+
+    return img;
+}
+
+// Update existing image rendering to use lazy loading
+function updateImageRendering() {
+    // Replace existing img elements with lazy loading versions
+    document.querySelectorAll('img:not(.lazy)').forEach(img => {
+        if (!img.src.startsWith('data:') && !img.src.includes('blob:')) {
+            const src = img.src;
+            img.dataset.src = src;
+            img.src = '';
+            img.classList.add('lazy');
+            showImagePlaceholder(img);
+            imageObserver.observe(img);
+        }
+    });
+}
+
+// Replace the old renderChat with virtualized version
+function renderChat() {
+    // Use virtualized rendering for better performance with large chat histories
+    if (state.chats.find(c => c.id === state.activeId)?.messages?.length > 50) {
+        renderChatVirtualized();
+    } else {
+        // Fall back to regular rendering for small chats
+        renderChatRegular();
+    }
+}
+
+// Keep the original function as fallback
+function renderChatRegular() {
+    const chat = state.chats.find(c => c.id === state.activeId);
+    elements.chatBox.innerHTML = '';
+
+    if (!chat) {
+        elements.chatBox.innerHTML = `<div class="text-center text-light-text-subtle dark:text-dark-text-subtle py-8"><h2 class="text-3xl font-bold mb-2">Fronix</h2><p>Start a new message to begin.</p></div>`;
+        return;
+    }
+
+    if (!chat.messages || chat.messages.length === 0) {
+        elements.chatBox.innerHTML = `<div class="text-center text-light-text-subtle dark:text-dark-text-subtle py-8"><h2 class="text-3xl font-bold mb-2">Fronix</h2><p>Start a new message to begin.</p></div>`;
+        return;
+    }
+
+    chat.messages.forEach((msg, index) => {
+        const wrapper = document.createElement('div');
+        const msgDiv = document.createElement('div');
+
+        if (msg.id) {
+            msgDiv.id = msg.id;
+        }
+
+        const isUser = msg.role === 'user';
+
+        if (isUser) {
+            msgDiv.className = 'ml-auto w-fit max-w-[90%]';
+
+            let content = msg.content;
+            if (typeof content === 'string' && (content.startsWith('[') || content.startsWith('{'))) {
+                try {
+                    content = JSON.parse(content);
+                } catch (e) {
+                    content = msg.content;
+                }
+            }
+
+            if (Array.isArray(content)) {
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'p-4 rounded-2xl bg-light-user-bubble dark:bg-dark-user-bubble flex flex-col gap-3';
+                content.forEach(part => {
+                    if (part.type === 'text' && part.text) {
+                        const p = document.createElement('p');
+                        p.className = 'whitespace-pre-wrap';
+                        p.textContent = part.text;
+                        contentWrapper.appendChild(p);
+                    } else if (part.type === 'image_url') {
+                        const img = document.createElement('img');
+                        img.src = part.image_url.url;
+                        img.className = 'w-48 h-auto rounded-lg cursor-pointer';
+                        img.onclick = () => window.open(part.image_url.url, '_blank');
+                        contentWrapper.appendChild(img);
+                    }
+                });
+                msgDiv.appendChild(contentWrapper);
+            } else {
+                msgDiv.classList.add('p-4', 'rounded-2xl', 'bg-light-user-bubble', 'dark:bg-dark-user-bubble');
+                const p = document.createElement('p');
+                p.className = 'whitespace-pre-wrap';
+                p.textContent = content;
+                msgDiv.appendChild(p);
+            }
+        } else {
+            msgDiv.className = 'prose prose-sm md:prose-base max-w-none text-light-text dark:text-dark-text';
+            let assistantContent = msg.content;
+            if (typeof assistantContent === 'string') {
+                const trimmed = assistantContent.trim();
+                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+                    try {
+                        assistantContent = JSON.parse(trimmed);
+                    } catch (error) {
+                        // leave as string if parsing fails
+                    }
+                }
+            }
+
+            if (assistantContent === '...') {
+                msgDiv.innerHTML = `<div class="flex items-center space-x-1.5">${Array(3).fill().map(() => `<div class="loader-dot w-2 h-2 bg-gray-400 rounded-full"></div>`).join('')}</div>`;
+            } else if (Array.isArray(assistantContent)) {
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'flex flex-col gap-3';
+                assistantContent.forEach(part => {
+                    if (part.type === 'text' && part.text) {
+                        const p = document.createElement('p');
+                        p.innerHTML = renderContent(part.text);
+                        contentWrapper.appendChild(p);
+                    } else if (part.type === 'image_url' && part.image_url?.url) {
+                        const img = document.createElement('img');
+                        img.src = part.image_url.url;
+                        img.className = 'w-full max-w-sm h-auto rounded-lg cursor-pointer';
+                        img.onclick = () => window.open(part.image_url.url, '_blank');
+                        contentWrapper.appendChild(img);
+                    }
+                });
+                msgDiv.appendChild(contentWrapper);
+            } else if (typeof assistantContent === 'object' && assistantContent !== null) {
+                if (assistantContent.type === 'html' && assistantContent.html) {
+                    msgDiv.innerHTML = assistantContent.html;
+                } else if (assistantContent.type === 'text' && assistantContent.text) {
+                    msgDiv.innerHTML = renderContent(assistantContent.text);
+                    renderMathInElement(msgDiv, {
+                        delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+                    });
+                } else {
+                    msgDiv.innerHTML = renderContent(JSON.stringify(assistantContent));
+                    renderMathInElement(msgDiv, {
+                        delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+                    });
+                }
+            } else {
+                msgDiv.innerHTML = renderContent(assistantContent || '');
+                renderMathInElement(msgDiv, {
+                    delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+                });
+            }
+        }
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = `flex gap-2 mt-2 items-center text-light-text-subtle dark:text-dark-text-subtle ${isUser ? 'justify-end' : 'justify-start'}`;
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors copy-btn';
+        copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+        copyBtn.dataset.messageContent = JSON.stringify(msg.content);
+        actionsDiv.appendChild(copyBtn);
+
+        if (isUser) {
+            const editBtn = document.createElement('button');
+            editBtn.className = 'p-1 hover:text-light-text dark:hover:text-dark-text rounded-md transition-colors edit-btn';
+            editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`;
+            editBtn.dataset.chatId = chat.id;
+            editBtn.dataset.messageIndex = index;
             actionsDiv.appendChild(editBtn);
         }
 
@@ -1788,13 +3139,31 @@ function renderChat() {
         elements.chatBox.appendChild(wrapper);
     });
     elements.chatBox.parentElement.scrollTop = elements.chatBox.parentElement.scrollHeight;
-};
+    bindGeneratedImageEditButtons();
+}
 // Function to scroll to the bottom of the chat
 function scrollToBottom() {
-    elements.chatBox.parentElement.scrollTo({
-        top: elements.chatBox.parentElement.scrollHeight,
-        behavior: 'smooth'
-    });
+    const chat = state.chats.find(c => c.id === state.activeId);
+    if (!chat || !chat.messages) return;
+
+    // For virtual scrolling, calculate total height and scroll to bottom
+    if (chat.messages.length > 50) {
+        let totalHeight = 0;
+        chat.messages.forEach((msg) => {
+            const isUser = msg.role === 'user';
+            totalHeight += estimateMessageHeight(msg, isUser);
+        });
+        elements.chatBox.parentElement.scrollTo({
+            top: totalHeight,
+            behavior: 'smooth'
+        });
+    } else {
+        // Regular scrolling for small chats
+        elements.chatBox.parentElement.scrollTo({
+            top: elements.chatBox.parentElement.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
 }
 
 async function sendMessage() {
@@ -1810,11 +3179,31 @@ async function sendMessage() {
     const wasEditing = !!state.editingMessage; // Store editing state
     if (state.editingMessage) {
         let newContent;
+        let attachmentPreviewUrl = getAttachmentPreviewUrl();
+        let attachmentDataUrl = getAttachmentDataUrl();
+
+        // Only wait for attachmentDownloadPromise if we don't already have the image data
+        // This prevents the 1-second delay when editing messages with existing images
+        if (attachmentDownloadPromise && !attachedImageData?.dataUrl) {
+            try {
+                await attachmentDownloadPromise;
+                attachmentDataUrl = getAttachmentDataUrl();
+            } catch (error) {
+                console.error('Failed to finish preparing attachment before send:', error);
+                showAlert('Could not prepare the attached image. Please try again.', 'error', 4000);
+                clearAttachedImage();
+                return;
+            }
+        }
+
+        attachmentPreviewUrl = attachmentPreviewUrl || attachmentDataUrl;
+        attachmentDataUrl = attachmentDataUrl || attachmentPreviewUrl;
+
         if (attachedImageData) {
             // If an image is attached, save as multimodal
             newContent = [
                 { type: 'text', text: userInput },
-                { type: 'image_url', image_url: { url: attachedImageData.dataUrl } }
+                { type: 'image_url', image_url: { url: attachmentDataUrl } }
             ];
         } else {
             // Otherwise, save as plain text
@@ -1871,63 +3260,125 @@ async function sendMessage() {
         }
     }
 
-    // Handle /study command
-    if (userInput.trim().startsWith('/study')) {
-        const command = userInput.trim().split(' ')[0];
-        if (command === '/study') {
-            elements.userInput.value = '';
-            elements.userInput.style.height = 'auto';
-            addMessage('user', '/study'); // Add user's command to chat history
+    // Handle image generation models separately
+    const currentModelKey = activeChat.model || state.settings.model;
+    const modelData = MODELS[currentModelKey];
 
-            const originalStudyMode = activeChat.study_mode; // Store original for rollback
-            const newStudyModeStatus = !originalStudyMode;
-
-            // Optimistically update study_mode status
-            activeChat.study_mode = newStudyModeStatus;
-            saveState();
-            addMessage('assistant', `📚 Study mode ${newStudyModeStatus ? 'enabled' : 'disabled'}.`); // Optimistic system message
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/chat/${activeChat.id}/toggle-study-mode`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to toggle study mode.');
-                }
-                // No further UI updates needed for success, as it was handled optimistically
-                console.log(`Study mode toggled successfully to: ${data.study_mode}`);
-
-            } catch (error) {
-                console.error("Error toggling study mode:", error);
-                alert(`Failed to toggle study mode: ${error.message}`);
-
-                // Revert optimistic UI update on error
-                activeChat.study_mode = originalStudyMode;
-                saveState();
-                // Optionally remove the optimistic system message, or add a new error message
-                // For simplicity, we'll add a new error message
-                addMessage('assistant', `⚠️ Failed to toggle study mode. Reverting to ${originalStudyMode ? 'enabled' : 'disabled'}.`);
-            } finally {
-                // Reset UI elements after command execution (ensure they are always re-enabled)
-                elements.sendIcon.classList.remove('hidden');
-                elements.stopIcon.classList.add('hidden');
-                elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-                elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
-                updateSendButtonState(); // Update button state
-                elements.userInput.disabled = false; // Ensure user input is re-enabled
-                isStreaming = false;
-            }
-            return; // Exit sendMessage function after handling /study command
+    if (modelData && modelData.type === 'image') {
+        handleImageGeneration(userInput, currentModelKey);
+        return; // Stop execution for image models
     }
-}
 
-    // Call updateSendButtonState at the start of sendMessage (after /study handling)
+    // Handle /study command with improved error handling and anonymous user support
+    const command = handleSlashCommand(userInput.trim());
+    if (command && command.type === 'study') {
+        elements.userInput.value = '';
+        elements.userInput.style.height = 'auto';
+
+        if (command.action === 'help') {
+            addMessage('user', userInput.trim());
+            addMessage('assistant', '📚 **Study Mode Help:**\n\n• `/study` - Toggle study mode on/off\n• Study mode provides educational guidance and structured learning\n• Perfect for homework help, concept explanations, and practice exercises\n• Works with both authenticated and anonymous users');
+            return;
+        }
+
+        // Toggle study mode
+        const activeChat = state.chats.find(c => c.id === state.activeId);
+        if (!activeChat) {
+            showAlert('No active chat found. Please select or create a chat first.', 'warning');
+            return;
+        }
+
+        const originalStudyMode = activeChat.study_mode || false;
+        const newStudyModeStatus = !originalStudyMode;
+
+        // Add user's command to chat history
+        addMessage('user', '/study');
+
+        // Optimistically update UI
+        activeChat.study_mode = newStudyModeStatus;
+        updateStudyModeIndicator();
+        debouncedSaveState(); // Use debounced save for study mode changes
+        addMessage('assistant', `📚 Study mode ${newStudyModeStatus ? 'enabled' : 'disabled'}. ${newStudyModeStatus ? 'I\'ll help guide your learning!' : 'Switched back to normal mode.'}`);
+
+        // Determine the correct endpoint based on authentication status
+        const isAnonymous = isAnonymousUser();
+        const endpoint = isAnonymous
+            ? `${API_BASE_URL}/api/chat/anonymous/${activeChat.id}/toggle-study-mode`
+            : `${API_BASE_URL}/api/chat/${activeChat.id}/toggle-study-mode`;
+
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+
+        // Only add authorization header for authenticated users
+        if (!isAnonymous) {
+            const token = await validateAndRefreshToken();
+            if (!token) {
+                showAlert('Your session has expired. Please sign in again.', 'warning');
+                // Revert optimistic update
+                activeChat.study_mode = originalStudyMode;
+                updateStudyModeIndicator();
+                debouncedSaveState(); // Use debounced save for error rollback
+                addMessage('assistant', '⚠️ Failed to toggle study mode due to authentication error. Please sign in and try again.');
+                return;
+            }
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: headers
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            // Success - backend confirmed the change
+            console.log(`Study mode toggled successfully to: ${data.study_mode}`);
+
+            // If anonymous, the backend doesn't actually store the state, so it's managed locally
+            if (isAnonymous) {
+                console.log('Anonymous study mode - state managed locally');
+            }
+
+        } catch (error) {
+            console.error("Error toggling study mode:", error);
+
+            // Show user-friendly error message
+            let errorMsg = 'Failed to toggle study mode.';
+            if (error.message.includes('404')) {
+                errorMsg = 'Chat not found. The study mode state has been updated locally.';
+            } else if (error.message.includes('403')) {
+                errorMsg = 'You do not have permission to modify this chat.';
+            } else if (error.message.includes('fetch')) {
+                errorMsg = 'Network error. Study mode has been updated locally.';
+            }
+
+            showAlert(errorMsg, 'warning');
+
+            // Revert optimistic UI update on error
+            activeChat.study_mode = originalStudyMode;
+            updateStudyModeIndicator();
+            debouncedSaveState(); // Use debounced save for error rollback
+
+            // Add error message to chat
+            addMessage('assistant', `⚠️ ${errorMsg} Reverting to ${originalStudyMode ? 'enabled' : 'disabled'}.`);
+        } finally {
+            // Reset UI elements
+            elements.sendIcon.classList.remove('hidden');
+            elements.stopIcon.classList.add('hidden');
+            elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
+            updateSendButtonState();
+            elements.userInput.disabled = false;
+            isStreaming = false;
+        }
+        return; // Exit sendMessage function after handling /study command
+    } // Call updateSendButtonState at the start of sendMessage (after /study handling)
     updateSendButtonState();
 
     elements.sendIcon.classList.add('hidden');
@@ -1936,32 +3387,26 @@ async function sendMessage() {
     elements.sendBtn.classList.add('bg-red-600', 'hover:bg-red-700');
     // elements.sendBtn.disabled = true; // No longer disable here, managed by updateSendButtonState
     // elements.userInput.disabled = true; // User input should not be disabled
-    elements.userInput.value = '';
-    elements.userInput.style.height = 'auto';
-    isStreaming = true; // Indicate that AI is streaming (moved here)
-    
-    // Format user message with image if attached
-    let userMessageContent;
-    if (attachedImageData) {
-        userMessageContent = [
+
+    const requestAttachment = attachedImageData ? { previewUrl: attachmentPreviewUrl, dataUrl: attachmentDataUrl } : null;
+    const userMessagePayload = requestAttachment
+        ? [
             { type: 'text', text: userInput },
             {
                 type: 'image_url',
                 image_url: {
-                    url: attachedImageData.dataUrl
+                    url: requestAttachment.previewUrl
                 }
             }
-        ];
-    } else {
-        userMessageContent = userInput;
-    }
-    
+        ]
+        : userInput;
+
     // Only add user message if we're not editing (editing already updated the existing message)
     if (!wasEditing) {
-        const userMessageObj = { role: 'user', content: userMessageContent };
+        const userMessageObj = { role: 'user', content: userMessagePayload };
         activeChat.messages.push(userMessageObj);
     }
-    
+
     // Always add assistant placeholder for the response
     const assistantMessageObj = { role: 'assistant', content: '...', id: 'assistant-msg-' + Date.now() }; // Temporary ID for placeholder
     activeChat.messages.push(assistantMessageObj);
@@ -1969,440 +3414,502 @@ async function sendMessage() {
     renderChat(); // Render immediately with new messages
     scrollToBottom();
 
-    // Clear attached image immediately after adding to chat history
+    // Clear UI immediately for snappier UX
+    elements.userInput.value = '';
+    elements.userInput.style.height = 'auto';
+
+    // Always clear attachment immediately after sending to prevent it from staying
     if (attachedImageData) {
-        attachedImageData = null;
-        document.getElementById('image-upload').value = null;
-        const imagePreviewContainer = document.getElementById('image-preview-container');
-        imagePreviewContainer.innerHTML = '';
-        imagePreviewContainer.classList.add('hidden');
+        clearAttachedImage();
     }
-    
+
     const assistantMsgDiv = document.getElementById(assistantMessageObj.id); // Get the placeholder div
     
     currentController = new AbortController();
     let fullResponse = "";
 
     try {
-        // Detect model type and route accordingly
-        const currentModel = activeChat.model || state.settings.model || 'openai';
-        const modelData = MODELS[currentModel] || { name: 'OpenAI (Default)', type: 'text' };
-        const isImageModel = modelData.type === 'image';
-        
-        console.log('🔍 Current model for request:', currentModel);
-        console.log('🔍 Model data:', modelData);
-        console.log('🔍 Is image model:', isImageModel);
-        
-        let response;
-        if (isImageModel) {
-            // Route to image generation API
-            console.log('🎨 Routing to image generation API for model:', currentModel);
-            response = await fetch(`${API_BASE_URL}/api/ai/images/generations`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                signal: currentController.signal,
-                body: JSON.stringify({
-                    model: currentModel,
-                    prompt: userInput,
-                    n: 1,
-                    size: '1024x1024',
-                    quality: 'standard',
-                    response_format: 'url'
-                }),
-            });
-        } else {
-            // Route to text chat API - use public endpoint for anonymous users
-            console.log('💬 Routing to text chat API for model:', currentModel);
-            const chatEndpoint = isAnonymous ? '/api/ai/chat-public' : '/api/ai/chat';
-            const headers = { 'Content-Type': 'application/json' };
-            
-            // Only add authorization header for logged-in users
-            if (!isAnonymous && token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-            
-            const requestBody = {
-                model: currentModel,
-                messages: activeChat.messages
-            };
-            
-            // Only add chatId for logged-in users (for study mode support)
-            if (!isAnonymous) {
-                requestBody.chatId = activeChat.id;
-            }
-            
-            try {
-                response = await fetch(`${API_BASE_URL}${chatEndpoint}`, {
-                    method: 'POST',
-                    headers: headers,
-                    signal: currentController.signal,
-                    body: JSON.stringify(requestBody)
-                });
-            } catch (fetchError) {
-                // If backend is unavailable and user is anonymous, try fallback endpoint
-                if (isAnonymous && (fetchError.message.includes('fetch') || fetchError.message.includes('Failed'))) {
-                    console.warn('🔄 Backend unavailable for anonymous user, trying fallback endpoint...');
-                    
-                    // Use direct pollinations.ai endpoint as fallback
-                    const fallbackEndpoint = 'https://text.pollinations.ai/openai/chat/completions';
-                    const fallbackBody = {
-                        model: currentModel === 'gemini' ? 'gemini' : currentModel,  // Pass gemini directly
-                        messages: activeChat.messages,
-                        stream: true
-                    };
-                    
-                    try {
-                        response = await fetch(fallbackEndpoint, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            signal: currentController.signal,
-                            body: JSON.stringify(fallbackBody)
-                        });
-                        console.log('✅ Using fallback endpoint successfully');
-                        showAlert('Using backup servers. Some features may be limited.', 'info', 4000);
-                    } catch (fallbackError) {
-                        console.error('❌ Fallback endpoint also failed:', fallbackError);
-                        throw new Error('All chat services are currently unavailable. Please try again later.');
-                    }
-                } else {
-                    // Re-throw the original error for logged-in users or other errors
-                    throw fetchError;
-                }
-            }
-        }
-
-        if (!response.ok) {
-            let errorMessage = 'Failed to get response from AI service.';
-            // Enhanced error logging for failed requests
-            console.error("❌ FRONTEND HTTP Error Response:");
-            console.error("  - Status:", response.status);
-            console.error("  - Status Text:", response.statusText);
-            console.error("  - Headers:", Object.fromEntries(response.headers.entries()));
-            console.error("  - URL:", response.url);
-            // Try to read response body for detailed error
-            let responseBody = null;
-            try {
-                const responseText = await response.text();
-                console.error("  - Response Body (text):", responseText);
-                // Try to parse as JSON
-                try {
-                    responseBody = JSON.parse(responseText);
-                    console.error("  - Response Body (parsed):", responseBody);
-                } catch (parseError) {
-                    console.error("  - Response Body (not JSON):", responseText);
-                }
-            } catch (readError) {
-                console.error("  - Could not read response body:", readError);
-            }
-            // Handle different HTTP status codes
-            if (response.status === 401 || response.status === 403) {
-                errorMessage = 'Invalid or expired token';
-            } else {
-                try {
-                    errorMessage = responseBody?.error || responseText || `HTTP ${response.status}: ${response.statusText}`;
-                } catch (e) {
-                    // If we can't parse the error response, use default message
-                    errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-                }
-            }
-            throw new Error(errorMessage);
-        }
-
-        if (isImageModel) {
-            // Handle image generation response (not streaming)
-            const imageData = await response.json();
-            console.log('🎨 Image generation response:', imageData);
-            if (imageData.data && imageData.data.length > 0) {
-                const imageUrl = imageData.data[0].url;
-                const revisedPrompt = imageData.data[0].revised_prompt;
-                fullResponse = `![Generated Image](${imageUrl})`;
-                if (revisedPrompt && revisedPrompt !== userInput) {
-                    fullResponse += `\n\n*Revised prompt: ${revisedPrompt}*`;
-                }
-                assistantMsgDiv.innerHTML = renderContent(fullResponse);
-            } else {
-                throw new Error('No image data received from API');
-            }
-        } else {
-            // Handle text streaming response
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-            
-            while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
-                
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                
-                // Keep the last incomplete line in the buffer
-                buffer = lines.pop() || '';
-                
-                for (const line of lines) {
-                    const trimmedLine = line.trim();
-                    if (!trimmedLine) continue;
-                    
-                    if (trimmedLine === 'data: [DONE]') {
-                        // Stream completed
-                        break;
-                    }
-                    
-                    if (trimmedLine.startsWith('data: ')) {
-                        try {
-                            const jsonStr = trimmedLine.slice(6); // Remove 'data: ' prefix
-                            const data = JSON.parse(jsonStr);
-                            
-                            // Extract content from choices[0].delta.content
-                            if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
-                                const content = data.choices[0].delta.content;
-                                fullResponse += content;
-                                assistantMsgDiv.innerHTML = renderStreamingContent(fullResponse + '<span class="blinking-cursor"></span>');
-                                scrollToBottom();
-                            }
-                        } catch (error) {
-                            console.warn('Failed to parse streaming chunk:', trimmedLine, error);
-                        }
-                    }
-                }
-            }
-
-            // Update the content of the optimistic assistant message
-            assistantMessageObj.content = fullResponse;
-            // Update the actual message in state.chats after stream completes
-            const currentChat = state.chats.find(c => c.id === activeChat.id);
-            if (currentChat) {
-                const messageToUpdate = currentChat.messages.find(m => m.id === assistantMessageObj.id);
-                if (messageToUpdate) {
-                    messageToUpdate.content = fullResponse;
-                    delete messageToUpdate.id; // Remove temporary ID
-                }
-            }
-            saveState(); // Save state after content is fully received
-            console.log('[sendMessage] State updated after AI stream completion. activeChat.messages (after update):', JSON.parse(JSON.stringify(activeChat.messages))); // Deep copy for logging
-
-            assistantMsgDiv.innerHTML = renderContent(fullResponse);
-            renderMathInElement(assistantMsgDiv);
-        }
-
-        // Reset streaming state and button BEFORE title generation
-        isStreaming = false;
-        elements.stopIcon.classList.add('hidden');
-        elements.sendIcon.classList.remove('hidden');
-        elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-        elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
-        updateSendButtonState(); // Re-enable the button using the new function
-        elements.userInput.disabled = false; // Re-enable user input
-        currentController = null;
-
-        // Save messages - to backend for logged-in users, to localStorage for anonymous users
-        if (isAnonymous) {
-            // For anonymous users, save to localStorage
-            try {
-                saveAnonymousChat(activeChat);
-                console.log('💾 Anonymous chat saved to localStorage');
-            } catch (saveError) {
-                console.warn('Failed to save anonymous chat to localStorage:', saveError);
-            }
-        } else {
-            // For logged-in users, save to backend
-            try {
-                // Find the actual user and assistant messages that were just sent/received
-                const lastUserMessage = activeChat.messages.findLast(m => m.role === 'user');
-                const lastAssistantMessage = activeChat.messages.findLast(m => m.role === 'assistant');
-
-                const saveResponse = await fetch(`${API_BASE_URL}/api/chat/${activeChat.id}/save-messages`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        userMessage: lastUserMessage,
-                        assistantMessage: lastAssistantMessage
-                    })
-                });
-                const data = await saveResponse.json(); // Parse response to JSON here
-
-                if (!saveResponse.ok) {
-                    console.error("❌ FRONTEND: Failed to save messages to backend:", data);
-                    // Do NOT throw error here, just log. UI should not revert.
-                    // Optionally, display a subtle "failed to save" message to user.
-                } else {
-                    console.log("✅ Messages successfully saved to backend.");
-                    // Check if a new title was generated and returned
-                    if (data.generatedTitle) { // Now 'data' is defined
-                        activeChat.title = data.generatedTitle;
-                        renderSidebar(); // Re-render sidebar to show the new title
-                        console.log(`📝 Chat title updated to: "${data.generatedTitle}"`);
-                    }
-                }
-            } catch (saveError) {
-                console.error("❌ FRONTEND: Error calling save-messages API:", saveError);
-                // Do NOT perform UI rollback here.
-                // Optionally, display a subtle "failed to save" message to user.
-            }
-        }
-    
-            // Ensure UI is fully updated before potentially running title generation
-            requestAnimationFrame(() => {
-                console.log(`[sendMessage] After AI response & save (rAF): isStreaming = ${isStreaming}, sendBtn hidden: ${elements.sendIcon.classList.contains('hidden')}, stopBtn hidden: ${elements.stopIcon.classList.contains('hidden')}`);
-    
-                // After the second message, check for title generation
-                if (activeChat.messages.length >= 2 && activeChat.title === 'New Chat') {
-                    // The backend will handle the title generation asynchronously.
-                    // For now, we will rely on a full page reload or subsequent data fetch
-                    // to pick up the new title. This avoids a race condition with loadDataFromServer.
-                    console.log("📝 Chat title generation triggered on backend. Title will update on next data load, or has been updated by response.");
-                }
-            });
-    } catch (error) {
-        // This catch block now primarily handles errors during AI response generation/streaming
-        // or authentication errors, without affecting message persistence errors.
-        if (error.name === 'AbortError') {
-            if (activeChat) {
-                activeChat.messages.pop(); // Remove only AI placeholder
-                renderChat(); // Re-render to reflect reverted state
-                saveState();
-            }
-            assistantMsgDiv.innerHTML = renderContent(fullResponse + '\n\n*Stream stopped by user.*');
-            isStreaming = false;
-            elements.stopIcon.classList.add('hidden');
-            elements.sendIcon.classList.remove('hidden');
-            elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-            elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
-            updateSendButtonState();
-        } else {
-            if (activeChat) {
-                // For other errors, remove both user message and AI placeholder
-                activeChat.messages.pop(); // Remove AI placeholder
-                activeChat.messages.pop(); // Remove user message
-                console.log('[sendMessage] Other Error: Messages reverted. activeChat.messages:', activeChat.messages);
-                renderChat(); // Re-render to reflect reverted state
-                saveState();
-                console.log('[sendMessage] Other Error: State saved after rollback.');
-            }
-            console.error("❌ FRONTEND sendMessage Error:", error);
-            console.error("❌ FRONTEND Error message:", error.message);
-            console.error("❌ FRONTEND Error stack:", error.stack);
-            
-            if (error.response) {
-                console.error("❌ FRONTEND Error response status:", error.response.status);
-                console.error("❌ FRONTEND Error response data:", error.response.data);
-            }
-            
-            if (typeof error.text === 'function') {
-                try {
-                    const errorText = await error.text();
-                    console.error("❌ FRONTEND Error response text:", errorText);
-                } catch (e) {
-                    console.error("❌ FRONTEND Could not read error text:", e);
-                }
-            }
-            
-            const isAuthError = error.message.includes('Invalid or expired token') ||
-                               error.message.includes('401') ||
-                               error.message.includes('403') ||
-                               error.message.includes('Unauthorized') ||
-                               error.message.includes('Authentication failed');
-            
-            if (isAuthError) {
-                assistantMsgDiv.innerHTML = renderContent('⚠️ Your session has expired. Please sign in again.');
-                localStorage.removeItem('authToken');
-                state.currentUser = null;
-                updateLoginStateUI();
-                window.sendMessageRetryCount = 0;
-                setTimeout(() => {
-                    animateModalOpen(elements.signinModal.container);
-                }, 1500);
-                return;
-            }
-            
-            const isNetworkError = error.message.includes('fetch') || error.message.includes('Failed to get response') || error.message.includes('network');
-            const isServerError = error.message.includes('500') || error.message.includes('502') || error.message.includes('503');
-            const shouldRetry = isNetworkError || isServerError;
-            
-            console.error("❌ FRONTEND Error classification:");
-            console.error("  - Is Network Error:", isNetworkError);
-            console.error("  - Is Server Error:", isServerError);
-            console.error("  - Should Retry:", shouldRetry);
-            console.error("  - Current Retry Count:", window.sendMessageRetryCount || 0);
-            
-            if (shouldRetry && (!window.sendMessageRetryCount || window.sendMessageRetryCount < 2)) {
-                window.sendMessageRetryCount = (window.sendMessageRetryCount || 0) + 1;
-                
-                assistantMsgDiv.innerHTML = renderContent(`🔄 Connection issue detected. Retrying... (${window.sendMessageRetryCount}/2)`);
-                
-                setTimeout(async () => {
-                    elements.userInput.value = userInput;
-                    await sendMessage();
-                }, 1500 * window.sendMessageRetryCount);
-                
-                return;
-            } else {
-                window.sendMessageRetryCount = 0;
-                if (shouldRetry) {
-                    assistantMsgDiv.innerHTML = renderContent(`⚠️ Connection failed after multiple attempts. Please check your internet connection and try again.`);
-                } else {
-                    assistantMsgDiv.innerHTML = renderContent(`⚠️ An error occurred: ${error.message}`);
-                }
-            }
-        }
-    }
-}
-
-// --- Image Generation Function ---
-async function generateImage(prompt, model = 'provider-4/imagen-4') {
-    if (!prompt?.trim()) {
-        console.error('❌ Image generation requires a prompt');
-        return null;
-    }
-
-    try {
-        console.log('🎨 Starting image generation with prompt:', prompt);
-        console.log('🎨 Using model:', model);
-
-        const response = await fetch(`${API_BASE_URL}/api/ai/images/generations`, {
+        // Use fetch with ReadableStream instead of EventSource
+        const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                model: model,
-                prompt: prompt,
-                n: 1,
-                size: '1024x1024',
-                quality: 'standard',
-                response_format: 'url'
+                model: activeChat.model || state.settings.model || 'gpt-4.1',
+                messages: messagesForAI,
+                chatId: activeChat.id,
+                proModelsEnabled: state.settings.proModelsEnabled,
+                betaModelsEnabled: state.settings.betaModelsEnabled
             })
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Image generation failed:', response.status, errorText);
-            throw new Error(`Image generation failed: ${response.status} ${response.statusText}`);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const data = await response.json();
-        console.log('✅ Image generated successfully:', data);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
 
-        if (data.data && data.data.length > 0) {
-            return {
-                url: data.data[0].url,
-                revised_prompt: data.data[0].revised_prompt
-            };
-        } else {
-            throw new Error('No image data received from API');
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const data = line.slice(6).trim();
+                    if (data === '[DONE]') {
+                        isStreaming = false;
+                        updateSendButtonState();
+                        elements.sendIcon.classList.remove('hidden');
+                        elements.stopIcon.classList.add('hidden');
+                        elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
+                        elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                        const assistantIndex = activeChat.messages.length - 1;
+                        const userIndex = assistantIndex - 1;
+                        activeChat.messages[assistantIndex].content = fullResponse;
+                        immediateSaveState(); // Critical state change - save immediately when streaming completes
+
+                        const userMessageForSave = activeChat.messages[userIndex];
+                        const assistantMessageForSave = activeChat.messages[assistantIndex];
+                        if (!isAnonymous && userMessageForSave && assistantMessageForSave) {
+                            await saveMessagesToServer(activeChat.id, userMessageForSave, assistantMessageForSave, token);
+                        }
+                        return;
+                    }
+
+                    try {
+                        const parsedData = JSON.parse(data);
+                        if (parsedData.error) {
+                            fullResponse = `Error: ${parsedData.error.message}`;
+                            assistantMsgDiv.innerHTML = renderContent(fullResponse);
+                            isStreaming = false;
+                            updateSendButtonState();
+                            return;
+                        }
+
+                        if (parsedData.choices && parsedData.choices[0] && parsedData.choices[0].delta && parsedData.choices[0].delta.content) {
+                            fullResponse += parsedData.choices[0].delta.content;
+                            assistantMsgDiv.innerHTML = renderContent(fullResponse);
+                            scrollToBottom();
+                        }
+
+                        // Handle function calls
+                        if (parsedData.choices && parsedData.choices[0] && parsedData.choices[0].finish_reason === 'function_call') {
+                            const functionCall = parsedData.choices[0].delta.function_call;
+                            if (functionCall) {
+                                console.log('🔧 Function call received:', functionCall.name);
+                                handleFunctionCall(functionCall, assistantMsgDiv);
+                            }
+                        }
+                    } catch (e) {
+                        // Skip malformed JSON lines
+                        continue;
+                    }
+                }
+            }
         }
+
+        isStreaming = false;
+        updateSendButtonState();
+
+// Handle function call responses from AI
+async function handleFunctionCall(functionCall, assistantMsgDiv) {
+    try {
+        // Show function call in progress
+        assistantMsgDiv.innerHTML = `
+            <div class="function-call-container bg-light-border dark:bg-dark-border rounded-lg p-4 mb-2">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-sm font-medium text-light-text dark:text-dark-text">Executing ${functionCall.name}...</span>
+                </div>
+                <div class="text-xs text-light-text-subtle dark:text-dark-text-subtle">
+                    ${functionCall.name === 'generate_image' ? '🎨 Generating image...' :
+                      functionCall.name === 'edit_image' ? '✏️ Editing image...' :
+                      functionCall.name === 'web_search' ? '🔍 Searching web...' : '⚙️ Processing...'}
+                </div>
+            </div>
+        `;
+
+        // The function execution is handled by the backend
+        // We just need to wait for the function result to be streamed back
 
     } catch (error) {
-        console.error('❌ Image generation error:', error);
-        throw error;
+        console.error('Error handling function call:', error);
+        assistantMsgDiv.innerHTML = `
+            <div class="function-call-container bg-red-50 dark:bg-red-900/20 rounded-lg p-4 mb-2">
+                <div class="text-sm font-medium text-red-600 dark:text-red-400">Function Error</div>
+                <div class="text-xs text-red-500 dark:text-red-300">${error.message}</div>
+            </div>
+        `;
     }
 }
 
-    function copyMessage(text, btn) { navigator.clipboard.writeText(text).then(() => { const originalIcon = btn.innerHTML; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`; setTimeout(() => btn.innerHTML = originalIcon, 1500); }); };
+// Enhanced message rendering for function results
+function renderFunctionResult(functionName, result) {
+    const container = document.createElement('div');
+    container.className = 'function-result-container bg-light-border dark:bg-dark-border rounded-lg p-4 mb-2';
+
+    switch (functionName) {
+        case 'generate_image':
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-lg">🎨</span>
+                    <span class="text-sm font-medium text-light-text dark:text-dark-text">Image Generated</span>
+                </div>
+                <div class="relative" style="max-width: 400px; max-height: 600px; overflow: hidden; border-radius: 0.5rem;">
+                    <img src="${result.image_url}" alt="${result.prompt_used}" style="width: 100%; height: auto; display: block; border-radius: 0.5rem;"/>
+                    <div class="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                        ${result.model_used} • ${result.quality}
+                    </div>
+                </div>
+                <div class="text-xs text-light-text-subtle dark:text-dark-text-subtle mt-2">
+                    Model: ${result.model_used} | Quality: ${result.quality}
+                </div>
+            `;
+            break;
+
+        case 'edit_image':
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-lg">✏️</span>
+                    <span class="text-sm font-medium text-light-text dark:text-dark-text">Image Edited</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <div class="text-xs text-light-text-subtle dark:text-dark-text-subtle mb-1">Original</div>
+                        <img src="${result.original_image_url}" alt="Original" class="w-full h-32 object-cover rounded border cursor-pointer" onclick="window.open('${result.original_image_url}', '_blank')"/>
+                    </div>
+                    <div>
+                        <div class="text-xs text-light-text-subtle dark:text-dark-text-subtle mb-1">Edited</div>
+                        <img src="${result.edited_image_url}" alt="Edited" class="w-full h-32 object-cover rounded border cursor-pointer" onclick="window.open('${result.edited_image_url}', '_blank')"/>
+                    </div>
+                </div>
+                <div class="text-xs text-light-text-subtle dark:text-dark-text-subtle mt-2">
+                    Model: ${result.model_used}
+                </div>
+            `;
+            break;
+
+        case 'web_search':
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-lg">🔍</span>
+                    <span class="text-sm font-medium text-light-text dark:text-dark-text">Web Search Results</span>
+                </div>
+                <div class="text-xs text-light-text-subtle dark:text-dark-text-subtle mb-3">
+                    Query: "${result.query}" | Depth: ${result.search_depth} | Results: ${result.results.length}
+                </div>
+                ${result.answer ? `
+                    <div class="mb-4 p-3 bg-accent/10 rounded">
+                        <div class="text-xs font-medium text-accent mb-1">AI Answer</div>
+                        <div class="text-sm text-light-text dark:text-dark-text">${result.answer}</div>
+                    </div>
+                ` : ''}
+                <div class="space-y-3">
+                    ${result.results.map(item => `
+                        <div class="border border-light-border dark:border-dark-border rounded p-3">
+                            <div class="font-medium text-sm text-light-text dark:text-dark-text mb-1">
+                                <a href="${item.url}" target="_blank" class="text-accent hover:underline">${item.title}</a>
+                            </div>
+                            <div class="text-xs text-light-text-subtle dark:text-dark-text-subtle line-clamp-2">${item.content}</div>
+                            <div class="text-xs text-accent mt-1">${item.url}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            break;
+
+        default:
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-lg">⚙️</span>
+                    <span class="text-sm font-medium text-light-text dark:text-dark-text">Function Result</span>
+                </div>
+                <pre class="text-xs bg-black/10 dark:bg-white/10 p-2 rounded overflow-auto">${JSON.stringify(result, null, 2)}</pre>
+            `;
+    }
+
+    return container;
+}
+
+// --- Image Generation Functions ---
+async function handleImageGeneration(prompt, model) {
+    const token = await validateAndRefreshToken();
+    if (!token) {
+        showAlert('Authentication required for image generation.', 'warning');
+        return;
+    }
+
+    // Check if we need to upload an image first (for image-to-image models)
+    let imageUrl = null;
+    const imageDataToUpload = attachedImageData?.dataUrl || null;
+    const modelsSupportingImageInput = new Set(['pollinations-kontext', 'nanobanana', 'seedream']);
+
+    if (attachmentDownloadPromise && modelsSupportingImageInput.has(model)) {
+        try {
+            await attachmentDownloadPromise;
+        } catch (error) {
+            console.error('Failed to finish preparing image attachment for generation:', error);
+            showAlert('Image attachment could not be prepared. Please reattach and try again.', 'error', 4000);
+            clearAttachedImage();
+            return;
+        }
+    }
+
+    if (modelsSupportingImageInput.has(model) && imageDataToUpload) {
+        try {
+            const uploadResponse = await fetch(`${API_BASE_URL}/api/ai/images/upload`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ image: imageDataToUpload })
+            });
+
+            if (uploadResponse.ok) {
+                const uploadData = await uploadResponse.json();
+                imageUrl = uploadData.url;
+                console.log('✅ Image uploaded successfully:', imageUrl);
+            } else {
+                throw new Error('Failed to upload image');
+            }
+        } catch (error) {
+            console.error('❌ Error uploading image:', error);
+            alert('Failed to upload image. Please try again.');
+            return;
+        }
+    }
+
+    // Clear the input field immediately after sending
+    elements.userInput.value = '';
+    elements.userInput.style.height = 'auto'; // Reset height
+
+    const previewImageDataUrl = getAttachmentDataUrl();
+    const previewImageUrl = getAttachmentPreviewUrl();
+    const displayImageUrl = imageUrl || previewImageUrl || previewImageDataUrl;
+    const userMessageContent = previewImageUrl
+        ? [
+            { type: 'text', text: prompt },
+            { type: 'image_url', image_url: { url: displayImageUrl } }
+        ]
+        : prompt;
+
+    addMessage('user', userMessageContent);
+    const assistantMessageObj = { role: 'assistant', content: '...', id: 'assistant-msg-' + Date.now() };
+    const activeChat = state.chats.find(c => c.id === state.activeId);
+    activeChat.messages.push(assistantMessageObj);
+    renderChat();
+    scrollToBottom();
+
+    const assistantMsgDiv = document.getElementById(assistantMessageObj.id);
+    // New box-shaped loader
+    assistantMsgDiv.innerHTML = `
+        <div class="w-64 h-64 bg-light-border dark:bg-dark-border rounded-lg flex items-center justify-center">
+            <div class="loading-spinner"></div>
+        </div>
+    `;
+
+    try {
+        const result = await generateImage(prompt, model, imageUrl);
+        if (result && result.url) {
+            const finalImageUrl = result.url;
+            const revisedPrompt = result.revised_prompt || prompt;
+
+            const renderImageMessage = (html, metadata = {}) => {
+                activeChat.messages[activeChat.messages.length - 1].content = {
+                    type: 'html',
+                    html,
+                    metadata: {
+                        imageUrl: finalImageUrl,
+                        prompt: revisedPrompt,
+                        model,
+                        ...metadata
+                    }
+                };
+                renderChat();
+                scrollToBottom();
+                immediateSaveState(); // Critical state change - save immediately when image generation completes
+            };
+
+            const assistantMsgDiv = document.getElementById(assistantMessageObj.id);
+
+            const attemptImageLoad = (attempt = 0) => {
+                const tempImg = new Image();
+                tempImg.crossOrigin = 'anonymous';
+                tempImg.onload = async () => {
+                    const imageContent = `
+                        <p>Here is the generated image:</p>
+                        <div class="mt-2 relative" style="max-width: 400px; max-height: 600px; overflow: hidden; border-radius: 0.5rem;">
+                            <img src="${finalImageUrl}" alt="${revisedPrompt}" style="width: 100%; height: auto; display: block; border-radius: 0.5rem;"/>
+                            <button type="button" class="edit-generated-image-btn absolute bottom-4 left-4 flex items-center justify-center w-10 h-10 rounded-full bg-light-sidebar dark:bg-dark-sidebar text-light-text dark:text-dark-text border border-light-border dark:border-dark-border shadow-md hover:bg-light-border-hover dark:hover:bg-dark-border-hover transition-colors" data-image-url="${finalImageUrl}" title="Edit this image">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                    renderImageMessage(imageContent);
+                    clearAttachedImage();
+
+                    const userMessageForSave = activeChat.messages[activeChat.messages.length - 2];
+                    const assistantMessageForSave = activeChat.messages[activeChat.messages.length - 1];
+                    if (userMessageForSave && assistantMessageForSave) {
+                        await saveMessagesToServer(activeChat.id, userMessageForSave, assistantMessageForSave, token);
+                    }
+                };
+                tempImg.onerror = () => {
+                    const delay = Math.min(5000, 1000 + attempt * 500);
+                    console.warn(`Image preview not ready yet (retry in ${delay}ms)`);
+                    if (assistantMsgDiv) {
+                        assistantMsgDiv.innerHTML = `
+                            <div class="w-64 h-64 bg-light-border dark:bg-dark-border rounded-lg flex flex-col items-center justify-center text-center gap-3 p-4">
+                                <div class="loading-spinner"></div>
+                                <p class="text-sm text-light-text-subtle dark:text-dark-text-subtle">Preparing your image...</p>
+                            </div>
+                        `;
+                    }
+                    setTimeout(() => attemptImageLoad(attempt + 1), delay);
+                };
+
+                const cacheBustingUrl = finalImageUrl + (finalImageUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+                tempImg.src = cacheBustingUrl;
+            };
+
+            attemptImageLoad();
+        } else {
+            throw new Error('Image generation failed to return a valid URL.');
+        }
+    } catch (error) {
+        const errorContent = `<p class="text-red-500">Error generating image: ${error.message}</p>`;
+        activeChat.messages[activeChat.messages.length - 1].content = {
+            type: 'html',
+            html: errorContent,
+            metadata: {
+                model,
+                prompt
+            }
+        };
+
+        renderChat();
+        scrollToBottom();
+        immediateSaveState(); // Critical state change - save immediately when image generation fails
+        clearAttachedImage();
+
+        const userMessageForSave = activeChat.messages[activeChat.messages.length - 2];
+        const assistantMessageForSave = activeChat.messages[activeChat.messages.length - 1];
+        if (userMessageForSave && assistantMessageForSave) {
+            await saveMessagesToServer(activeChat.id, userMessageForSave, assistantMessageForSave, token);
+        }
+    }
+}
+
+async function generateImage(prompt, model = 'imagen-4', imageUrl = null) {
+    const token = await validateAndRefreshToken();
+    if (!token) {
+        throw new Error('Authentication required for image generation.');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/ai/images/generations`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            model: model,
+            prompt: prompt,
+            n: 1,
+            size: '1024x1024',
+            response_format: 'url',
+            ...(imageUrl && { image: imageUrl })
+        })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Image generation failed.');
+    }
+
+    const data = await response.json();
+    if (data.data && data.data[0] && data.data[0].url) {
+        return data.data[0];
+    } else {
+        throw new Error('Invalid response from image generation API.');
+    }
+}
+
+function getBase64FromImage(imgElement) {
+    return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = imgElement.naturalWidth;
+        canvas.height = imgElement.naturalHeight;
+
+        ctx.drawImage(imgElement, 0, 0);
+
+        canvas.toBlob((blob) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const base64String = reader.result;
+                resolve(base64String);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        }, 'image/png');
+    });
+}
+
+    function copyMessage(content, btn) {
+    let textToCopy = '';
+
+    if (typeof content === 'string') {
+        const trimmed = content.trim();
+        if ((trimmed.startsWith('{') || trimmed.startsWith('['))) {
+            try {
+                const parsed = JSON.parse(trimmed);
+                return copyMessage(parsed, btn);
+            } catch (e) {
+                textToCopy = content;
+            }
+        } else {
+            textToCopy = content;
+        }
+    } else if (Array.isArray(content)) {
+        textToCopy = content
+            .map(part => {
+                if (part.type === 'text') {
+                    return part.text;
+                }
+                if (part.type === 'image_url' && part.image_url?.url) {
+                    return part.image_url.url;
+                }
+                return '';
+            })
+            .filter(Boolean)
+            .join('\n');
+    } else if (content && typeof content === 'object') {
+        if (content.type === 'html' && content.html) {
+            const temp = document.createElement('div');
+            temp.innerHTML = content.html;
+            textToCopy = temp.textContent || temp.innerText || '';
+        } else if (content.type === 'text' && content.text) {
+            textToCopy = content.text;
+        } else {
+            textToCopy = JSON.stringify(content);
+        }
+    }
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalIcon = btn.innerHTML;
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+        setTimeout(() => btn.innerHTML = originalIcon, 1500);
+    });
+};
     function enterEditMode(chatId, messageIndex) {
     const chat = state.chats.find(c => c.id === chatId);
     if (!chat) return;
@@ -2415,7 +3922,8 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
     imagePreviewContainer.innerHTML = '';
     imagePreviewContainer.classList.add('hidden');
     attachedImageData = null;
-    document.getElementById('image-upload').value = null;
+    const imageUploadEl = document.getElementById('image-upload');
+    if (imageUploadEl) imageUploadEl.value = null;
 
     // Check if the message content is an array (multimodal) or a string
     if (Array.isArray(message.content)) {
@@ -2441,10 +3949,7 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
             imagePreviewContainer.classList.remove('hidden');
 
             document.getElementById('remove-image-btn').onclick = () => {
-                attachedImageData = null;
-                document.getElementById('image-upload').value = null;
-                imagePreviewContainer.innerHTML = '';
-                imagePreviewContainer.classList.add('hidden');
+                clearAttachedImage();
             };
         }
     } else {
@@ -2532,8 +4037,8 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
     }
     
     // --- Font Settings ---
-    function applyFont(font) { Object.keys(FONTS).forEach(f => elements.body.classList.remove(`font-${f}`)); elements.body.classList.add(`font-${font}`); state.settings.font = font; saveState(); renderFontOptions(); }
-    function applyFontWeight(weight) { elements.body.style.fontWeight = weight; state.settings.fontWeight = weight; saveState(); renderFontWeightOptions(); }
+    function applyFont(font) { Object.keys(FONTS).forEach(f => elements.body.classList.remove(`font-${f}`)); elements.body.classList.add(`font-${font}`); state.settings.font = font; debouncedSaveState(); renderFontOptions(); }
+    function applyFontWeight(weight) { elements.body.style.fontWeight = weight; state.settings.fontWeight = weight; debouncedSaveState(); renderFontWeightOptions(); }
     function renderFontOptions() { const currentFont = state.settings.font; elements.settingsModal.fontOptions.innerHTML = '<div><label class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">Font Family</label></div>'; Object.entries(FONTS).forEach(([key, name]) => { const btn = document.createElement('button'); btn.className = `w-full text-left px-3 py-2 rounded-md transition-colors text-sm ${currentFont === key ? 'bg-accent text-white font-semibold' : 'hover:bg-light-border-hover dark:hover:bg-dark-border-hover'}`; btn.textContent = name; btn.onclick = () => { applyFont(key); }; elements.settingsModal.fontOptions.appendChild(btn); }); }
     function renderFontWeightOptions() { const currentWeight = state.settings.fontWeight; elements.settingsModal.fontWeightOptions.innerHTML = `<div class="flex justify-between items-center"><label class="text-sm font-medium text-light-text-subtle dark:text-dark-text-subtle">Font Weight</label><span id="font-weight-label" class="text-sm text-light-text-subtle dark:text-dark-text-subtle">${FONT_WEIGHTS[currentWeight]}</span></div><input type="range" id="font-weight-slider" class="w-full h-2 bg-light-border dark:bg-dark-border rounded-lg appearance-none cursor-pointer accent-accent" min="0" max="${Object.keys(FONT_WEIGHTS).length - 1}" step="1" value="${Object.keys(FONT_WEIGHTS).indexOf(currentWeight)}">`; document.getElementById('font-weight-slider').addEventListener('input', (e) => { const weight = Object.keys(FONT_WEIGHTS)[e.target.value]; applyFontWeight(weight); document.getElementById('font-weight-label').textContent = FONT_WEIGHTS[weight]; }); }
     
@@ -2764,40 +4269,144 @@ async function generateImage(prompt, model = 'provider-4/imagen-4') {
       }
     }
 
-    // --- Theme & Initialization ---
+    // Enhanced theme application with validation and smooth transitions
     function applyTheme(theme) {
-        const isDark = theme === 'dark';
+        // Validate theme input
+        const validThemes = ['light', 'dark'];
+        const sanitizedTheme = validThemes.includes(theme) ? theme : 'light';
+
+        // Add transition class for smooth animations
+        document.documentElement.classList.add('theme-transitioning');
+
+        const isDark = sanitizedTheme === 'dark';
         document.documentElement.classList.toggle('dark', isDark);
-        document.getElementById('theme-icon-light').classList.toggle('hidden', isDark);
-        document.getElementById('theme-icon-dark').classList.toggle('hidden', !isDark);
-        localStorage.setItem('theme', theme);
+
+        // Update theme icons with smooth transitions
+        const lightIcon = document.getElementById('theme-icon-light');
+        const darkIcon = document.getElementById('theme-icon-dark');
+
+        if (lightIcon && darkIcon) {
+            // Use opacity transitions for smooth icon changes
+            lightIcon.style.transition = 'opacity 0.2s ease';
+            darkIcon.style.transition = 'opacity 0.2s ease';
+
+            lightIcon.style.opacity = isDark ? '0' : '1';
+            darkIcon.style.opacity = isDark ? '1' : '0';
+
+            // Update visibility after transition
+            setTimeout(() => {
+                lightIcon.classList.toggle('hidden', isDark);
+                darkIcon.classList.toggle('hidden', !isDark);
+                lightIcon.style.opacity = '';
+                darkIcon.style.opacity = '';
+            }, 200);
+        }
+
+        // Save theme preference with error handling
+        try {
+            localStorage.setItem('theme', sanitizedTheme);
+        } catch (error) {
+            console.warn('[Theme] Failed to save theme preference:', error);
+        }
+
+        // Remove transition class after animation completes
+        setTimeout(() => {
+            document.documentElement.classList.remove('theme-transitioning');
+        }, 300);
+
+        console.log(`[Theme] Applied theme: ${sanitizedTheme}`);
     }
 
+    // Enhanced theme toggle with comprehensive browser compatibility
     function toggleTheme(event) {
-        const isDark = document.documentElement.classList.contains('dark');
-        const newTheme = isDark ? 'light' : 'dark';
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
-        if (!document.startViewTransition) {
-            applyTheme(newTheme);
-            return;
+        // Check for reduced motion preference
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Try View Transitions API first (modern browsers)
+        if (document.startViewTransition && !prefersReducedMotion) {
+            try {
+                // Calculate transition origin if click event provided
+                let cx = '50%';
+                let cy = '50%';
+
+                if (event && event.target) {
+                    const btn = event.target.closest('button');
+                    if (btn) {
+                        const rect = btn.getBoundingClientRect();
+                        cx = `${rect.left + rect.width / 2}px`;
+                        cy = `${rect.top + rect.height / 2}px`;
+                    }
+                }
+
+                // Set transition coordinates
+                document.documentElement.style.setProperty('--cx', cx);
+                document.documentElement.style.setProperty('--cy', cy);
+
+                const transition = document.startViewTransition(() => {
+                    applyTheme(newTheme);
+                });
+
+                // Handle transition failure gracefully
+                transition.ready.catch((error) => {
+                    console.warn('[Theme] View transition failed, falling back to standard transition:', error);
+                    applyTheme(newTheme);
+                });
+
+                return;
+            } catch (error) {
+                console.warn('[Theme] View transition error, falling back to standard transition:', error);
+            }
         }
-        
-        const btn = elements.themeToggleBtn;
-        const rect = btn.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
 
-        document.documentElement.style.setProperty('--cx', cx + 'px');
-        document.documentElement.style.setProperty('--cy', cy + 'px');
+        // Fallback for browsers without View Transitions support or reduced motion preference
+        applyTheme(newTheme);
+    }
 
-        document.startViewTransition(() => {
-            applyTheme(newTheme);
-        });
+    // Initialize theme system with proper CSS setup
+    function initializeThemeSystem() {
+        // Add CSS for smooth theme transitions
+        const themeStyles = document.createElement('style');
+        themeStyles.textContent = `
+            .theme-transitioning * {
+                transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .theme-transitioning * {
+                    transition: none !important;
+                }
+            }
+
+            /* View Transitions support */
+            @view-transition {
+                navigation: auto;
+            }
+
+            ::view-transition-old(root),
+            ::view-transition-new(root) {
+                animation-duration: 0.2s;
+            }
+
+            /* Enhanced focus styles for accessibility */
+            .theme-toggle:focus {
+                outline: 2px solid var(--accent-color);
+                outline-offset: 2px;
+            }
+        `;
+        document.head.appendChild(themeStyles);
+
+        console.log('[Theme] Theme system initialized with enhanced transitions');
     }
 
     // --- REPLACE your entire old init() function with this ---
 function init() {
-    // 1. Apply the user's preferred theme on startup.
+    // 1. Initialize theme system with enhanced transitions
+    initializeThemeSystem();
+
+    // 2. Apply the user's preferred theme on startup.
     const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     applyTheme(savedTheme);
     
@@ -2961,7 +4570,10 @@ function init() {
     
     // Fetch model availability on startup
     fetchModelAvailability();
-    
+
+    // Fetch optimization statistics and show benefits
+    fetchOptimizationStats();
+
     // Set up periodic model availability checks (every 10 minutes)
     setInterval(() => {
         fetchModelAvailability();
@@ -3008,16 +4620,12 @@ function init() {
             imagePreviewContainer.classList.remove('hidden');
 
             document.getElementById('remove-image-btn').onclick = () => {
-                attachedImageData = null;
-                imageUpload.value = null;
-                imagePreviewContainer.innerHTML = '';
-                imagePreviewContainer.classList.add('hidden');
+                clearAttachedImage();
             };
         };
         reader.readAsDataURL(file);
     });
-}
-    
+
     // --- Event Listeners ---
     document.addEventListener('DOMContentLoaded', init);
     elements.themeToggleBtn.onclick = toggleTheme;
@@ -3060,7 +4668,7 @@ elements.newChatBtn.onclick = handleNewChat;
       window.location.reload();
     };
     elements.settingsModal.checkModelStatusBtn.onclick = () => showModelAvailability();
-    elements.modelAvailabilityModal.closeBtn.onclick = () => animateModalClose(elements.modelAvailabilityModal.container);
+    elements.modelAvailabilityModal.closeBtn.onclick = () => closeModelAvailabilityModal();
     elements.renameModal.saveBtn.onclick = async () => {
         const { chatId } = state.modalContext;
         const newName = elements.renameModal.input.value.trim();
@@ -3310,7 +4918,76 @@ elements.newChatBtn.onclick = handleNewChat;
     // Initialize Lucide icons on startup
     setTimeout(initLucide, 100);
 
+    // Initialize virtual scrolling for better performance
+    initVirtualScrolling();
 
+    // Initialize image lazy loading
+    initImageLazyLoading();
+
+    // Initialize event delegation for message actions
+    initMessageActionDelegation();
+}
+
+// Initialize virtual scrolling for better performance
+function initVirtualScrolling() {
+    console.log('[initVirtualScrolling] Virtual scrolling initialized');
+    // Virtual scrolling is handled by renderChatVirtualized() function
+}
+
+// Initialize image lazy loading
+function initImageLazyLoading() {
+    console.log('[initImageLazyLoading] Image lazy loading initialized');
+    // Image lazy loading is handled by the ImageObserver and related functions
+}
+
+// Initialize event delegation for message actions
+function initMessageActionDelegation() {
+    console.log('[initMessageActionDelegation] Event delegation initialized');
+
+    // Event delegation for copy buttons
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.copy-btn')) {
+            const btn = e.target.closest('.copy-btn');
+            const messageContent = btn.dataset.messageContent;
+            if (messageContent) {
+                copyMessage(JSON.parse(messageContent), btn);
+            }
+        }
+
+        // Event delegation for edit buttons
+        if (e.target.closest('.edit-btn')) {
+            const btn = e.target.closest('.edit-btn');
+            const chatId = btn.dataset.chatId;
+            const messageIndex = btn.dataset.messageIndex;
+            if (chatId && messageIndex !== undefined) {
+                enterEditMode(chatId, parseInt(messageIndex));
+            }
+        }
+    });
+}
+
+// Initialize Lucide icons after rendering the dropdown
+const initLucide = () => {
+  if (window.lucide && window.lucide.createIcons) {
+    window.lucide.createIcons();
+  } else {
+    console.warn('Lucide not loaded yet, retrying...');
+    setTimeout(initLucide, 100); // Retry if not loaded
+  }
+};
+
+// Ensure icons are updated whenever dropdown is rendered
+const _renderModelDropdown = renderModelDropdown;
+renderModelDropdown = function() {
+  _renderModelDropdown.apply(this, arguments);
+  setTimeout(initLucide, 10); // Small delay to ensure DOM is updated
+};
+
+// Initialize Lucide icons on startup
+setTimeout(initLucide, 100);
+
+// --- Event Listeners ---
+document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
