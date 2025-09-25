@@ -1437,3 +1437,5 @@ module.exports = {
     router,
     startModelAvailabilityChecker
 };
+
+console.log('✅ ai.js module loaded successfully');
