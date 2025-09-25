@@ -3517,6 +3517,29 @@ async function sendMessage() {
         isStreaming = false;
         updateSendButtonState();
 
+    } catch (error) { // <--- ADDED: The missing catch block
+        console.error("Error during message stream:", error);
+        const activeChat = state.chats.find(c => c.id === state.activeId);
+        if (activeChat) {
+            const lastMessageIndex = activeChat.messages.length - 1;
+            // Update the placeholder message with an error
+            if (activeChat.messages[lastMessageIndex] && activeChat.messages[lastMessageIndex].role === 'assistant') {
+                activeChat.messages[lastMessageIndex].content = `An error occurred: ${error.message}`;
+                renderChat();
+            }
+        }
+    } finally { // <--- ADDED: A finally block to clean up UI state
+        isStreaming = false;
+        currentController = null;
+        elements.sendIcon.classList.remove('hidden');
+        elements.stopIcon.classList.add('hidden');
+        elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+        elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
+        updateSendButtonState();
+        console.log('[sendMessage] End: Stream finished or aborted.');
+    }
+} // <--- ADDED: The missing closing brace for the sendMessage function
+
 // Handle function call responses from AI
 async function handleFunctionCall(functionCall, assistantMsgDiv) {
     try {
@@ -4627,11 +4650,9 @@ function init() {
     });
 
     // --- Event Listeners ---
-    document.addEventListener('DOMContentLoaded', init);
     elements.themeToggleBtn.onclick = toggleTheme;
-    // This was the instruction
-elements.newChatBtn.onclick = handleNewChat;
-    elements.toggleSidebarBtn.onclick = toggleSidebar; 
+    elements.newChatBtn.onclick = handleNewChat;
+    elements.toggleSidebarBtn.onclick = toggleSidebar;
     elements.sidebarOverlay.onclick = toggleSidebar;
     elements.userInput.addEventListener('input', () => {
         elements.userInput.style.height = 'auto';
@@ -4917,6 +4938,41 @@ elements.newChatBtn.onclick = handleNewChat;
 
     // Initialize Lucide icons on startup
     setTimeout(initLucide, 100);
+}
+
+
+
+
+
+
+// Function to get available models
+function getAvailableModels() {
+    const models = [
+        { id: 'gpt-4.1', name: 'GPT-4.1', provider: 'pollinations' },
+        { id: 'gpt-5-nano', name: 'GPT-5 Nano', provider: 'pollinations' },
+        { id: 'gemini', name: 'Gemini', provider: 'pollinations' },
+        { id: 'deepseek-reasoning', name: 'DeepSeek Reasoning', provider: 'pollinations' },
+        { id: 'openai-reasoning', name: 'OpenAI Reasoning', provider: 'pollinations' },
+        { id: 'o4-mini-medium', name: 'O4 Mini Medium', provider: 'pollinations' },
+        { id: 'o4-mini-high', name: 'O4 Mini High', provider: 'pollinations' }
+    ];
+
+    // Filter models based on user authentication and plan
+    if (!state.currentUser) {
+        return models.filter(m => m.provider === 'pollinations');
+    }
+
+    if (state.currentUser.plan === 'pro') {
+        return [
+            ...models,
+            { id: 'gpt-5', name: 'GPT-5', provider: 'airforce' },
+            { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'airforce' },
+            { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'airforce' },
+            { id: 'grok-4', name: 'Grok-4', provider: 'navy' }
+        ];
+    }
+
+    return models;
 }
 
 // --- Event Listeners ---
