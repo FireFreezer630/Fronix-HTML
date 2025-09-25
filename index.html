@@ -4928,64 +4928,6 @@ elements.newChatBtn.onclick = handleNewChat;
     initMessageActionDelegation();
 }
 
-// Initialize virtual scrolling for better performance
-function initVirtualScrolling() {
-    console.log('[initVirtualScrolling] Virtual scrolling initialized');
-    // Virtual scrolling is handled by renderChatVirtualized() function
-}
-
-// Initialize image lazy loading
-function initImageLazyLoading() {
-    console.log('[initImageLazyLoading] Image lazy loading initialized');
-    // Image lazy loading is handled by the ImageObserver and related functions
-}
-
-// Initialize event delegation for message actions
-function initMessageActionDelegation() {
-    console.log('[initMessageActionDelegation] Event delegation initialized');
-
-    // Event delegation for copy buttons
-    document.addEventListener('click', (e) => {
-        if (e.target.closest('.copy-btn')) {
-            const btn = e.target.closest('.copy-btn');
-            const messageContent = btn.dataset.messageContent;
-            if (messageContent) {
-                copyMessage(JSON.parse(messageContent), btn);
-            }
-        }
-
-        // Event delegation for edit buttons
-        if (e.target.closest('.edit-btn')) {
-            const btn = e.target.closest('.edit-btn');
-            const chatId = btn.dataset.chatId;
-            const messageIndex = btn.dataset.messageIndex;
-            if (chatId && messageIndex !== undefined) {
-                enterEditMode(chatId, parseInt(messageIndex));
-            }
-        }
-    });
-}
-
-// Initialize Lucide icons after rendering the dropdown
-const initLucide = () => {
-  if (window.lucide && window.lucide.createIcons) {
-    window.lucide.createIcons();
-  } else {
-    console.warn('Lucide not loaded yet, retrying...');
-    setTimeout(initLucide, 100); // Retry if not loaded
-  }
-};
-
-// Ensure icons are updated whenever dropdown is rendered
-const _renderModelDropdown = renderModelDropdown;
-renderModelDropdown = function() {
-  _renderModelDropdown.apply(this, arguments);
-  setTimeout(initLucide, 10); // Small delay to ensure DOM is updated
-};
-
-// Initialize Lucide icons on startup
-setTimeout(initLucide, 100);
-
 // --- Event Listeners ---
 document.addEventListener('DOMContentLoaded', init);
   </script>
