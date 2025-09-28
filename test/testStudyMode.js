@@ -1,5 +1,5 @@
 // testStudyMode.js - Unit tests for Study Mode functionality
-const { describe, it, expect, beforeEach, afterEach, jest } = require('@jest/globals');
+const { describe, it, expect, beforeEach, afterEach } = require('@jest/globals');
 
 // Mock DOM elements and API responses
 global.localStorage = {
