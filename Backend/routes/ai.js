@@ -441,7 +441,7 @@ router.post('/chat', authMiddleware, async (req, res) => {
         }
         console.timeEnd('Provider Selection');
 
-        const supportsStreaming = !NON_STREAMING_PROVIDERS.has(provider);
+        const supportsStreaming = true; // All providers support streaming
         const requestBody = {
             model: modelId,
             messages: messagesForAI
@@ -463,6 +463,96 @@ router.post('/chat', authMiddleware, async (req, res) => {
                 apiKeyPool
             );
 
+            // Buffer for incomplete chunks
+            let buffer = '';
+
+            aiResponse.data.on('data', (chunk) => {
+                try {
+                    // Add chunk to buffer
+                    buffer += chunk.toString();
+                    
+                    // Split by lines and process complete lines
+                    const lines = buffer.split('\n');
+                    
+                    // Keep the last line in buffer (might be incomplete)
+                    buffer = lines.pop() || '';
+                    
+                    // Process complete lines
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const dataContent = line.slice(6); // Remove 'data: '
+                            
+                            if (dataContent.trim() === '[DONE]') {
+                                res.write('data: [DONE]\n\n');
+                                continue;
+                            }
+                            
+                            if (dataContent.trim() === '') {
+                                res.write('data: \n\n');
+                                continue;
+                            }
+                            
+                            try {
+                                const parsed = JSON.parse(dataContent);
+                                
+                                // Handle reasoning model content with various thinking tag formats
+                                if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta) {
+                                    const delta = parsed.choices[0].delta;
+                                    
+                                    // Check for reasoning in content field
+                                    if (delta.content) {
+                                        let content = delta.content;
+                                        let hasReasoning = false;
+                                        
+                                        // Handle various reasoning tag formats
+                                        const reasoningPatterns = [
+                                            { pattern: /<think>([\s\S]*?)<\/think>/g, replacement: '<reasoning-block>$1</reasoning-block>' },
+                                            { pattern: /<thinking>([\s\S]*?)<\/thinking>/g, replacement: '<reasoning-block>$1</reasoning-block>' },
+                                            { pattern: /\[REASONING\]([\s\S]*?)\[\/REASONING\]/g, replacement: '<reasoning-block>$1</reasoning-block>' },
+                                            { pattern: /\*\*Thinking:\*\*([\s\S]*?)(?=\*\*|$)/g, replacement: '<reasoning-block>$1</reasoning-block>' }
+                                        ];
+                                        
+                                        for (const { pattern, replacement } of reasoningPatterns) {
+                                            if (pattern.test(content)) {
+                                                content = content.replace(pattern, replacement);
+                                                hasReasoning = true;
+                                            }
+                                        }
+                                        
+                                        if (hasReasoning) {
+                                            parsed.choices[0].delta.content = content;
+                                            parsed.choices[0].delta.reasoning = true;
+                                        }
+                                    }
+                                    
+                                    // Check for separate reasoning field
+                                    if (delta.reasoning || parsed.reasoning) {
+                                        parsed.choices[0].delta.reasoning = true;
+                                        if (parsed.reasoning && !delta.reasoning_content) {
+                                            parsed.choices[0].delta.reasoning_content = parsed.reasoning;
+                                        }
+                                    }
+                                }
+                                
+                                // Forward the processed line
+                                res.write(`data: ${JSON.stringify(parsed)}\n\n`);
+                                
+                            } catch (parseError) {
+                                // If parsing fails, forward the original line
+                                res.write(`${line}\n`);
+                            }
+                        } else {
+                            // Forward non-data lines as-is
+                            res.write(`${line}\n`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error processing stream chunk:', error);
+                }
+            });
+
+            // Handle the rest of the original logic for function calls if needed
+            /*
             aiResponse.data.on('data', async (chunk) => {
             try {
                 const lines = chunk.toString().split('\n');
@@ -584,26 +674,7 @@ router.post('/chat', authMiddleware, async (req, res) => {
                         }
                     }
                 }
-            } catch (error) {
-                console.error('Error processing stream data:', error);
-                logStreamError({
-                    phase: 'chunk-processing',
-                    modelId,
-                    provider,
-                    chatId,
-                    endpoint: apiEndpoint,
-                    error
-                });
-
-                if (!res.headersSent) {
-                    res.status(500).json({ error: STREAM_ERROR_MESSAGE });
-                } else {
-                    res.write(`data: ${JSON.stringify({ error: { message: STREAM_ERROR_MESSAGE } })}\n\n`);
-                    res.write('data: [DONE]\n\n');
-                    res.end();
-                }
-            }
-        });
+            */
 
         // Set a timeout for the entire streaming response to prevent hanging connections
         const responseTimeout = setTimeout(() => {
@@ -1022,11 +1093,11 @@ class OptimizedModelAvailabilityChecker {
         // Models to check availability for
         this.modelsToCheck = [
             // Anonymous/Pollinations models
-            { id: 'gpt-4.1', provider: 'pollinations', apiName: 'provider-3/gpt-4.1-nano', endpoint: 'https://text.pollinations.ai/openai' },
-            { id: 'gpt-5-nano', provider: 'pollinations', apiName: 'provider-3/gpt-5-nano', endpoint: 'https://text.pollinations.ai/openai' },
-            { id: 'gemini', provider: 'pollinations', apiName: 'gemini', endpoint: 'https://text.pollinations.ai/openai' },
-            { id: 'deepseek-reasoning', provider: 'pollinations', apiName: 'deepseek-reasoning', endpoint: 'https://text.pollinations.ai/openai' },
-            { id: 'openai-reasoning', provider: 'pollinations', apiName: 'openai-reasoning', endpoint: 'https://text.pollinations.ai/openai' },
+            { id: 'gpt-4.1', provider: 'pollinations', apiName: 'openai-large', endpoint: 'https://text.pollinations.ai/openai/chat/completions' },
+            { id: 'gpt-5-nano', provider: 'pollinations', apiName: 'gpt-5-nano', endpoint: 'https://text.pollinations.ai/openai/chat/completions' },
+            { id: 'gemini', provider: 'pollinations', apiName: 'gemini', endpoint: 'https://text.pollinations.ai/openai/chat/completions' },
+            { id: 'deepseek-reasoning', provider: 'pollinations', apiName: 'deepseek-reasoning', endpoint: 'https://text.pollinations.ai/openai/chat/completions' },
+            { id: 'openai-reasoning', provider: 'pollinations', apiName: 'openai', endpoint: 'https://text.pollinations.ai/openai/chat/completions' },
     
             // A4F models
             
@@ -1153,27 +1224,34 @@ class OptimizedModelAvailabilityChecker {
                 apiKeyPool = v2ApiKeyPool;
             }
 
-            // Use request deduplication for the actual API call
-            const cacheKey = `availability_${endpoint}_${Date.now()}`;
-            const isAvailable = await this.deduplicateRequest(cacheKey, async () => {
-                try {
-                    if (apiKeyPool && apiKeyPool.keys.length > 0) {
-                        await makeApiRequestWithRetry(endpoint, testRequest, {
-                            headers: { 'Content-Type': 'application/json' },
-                            timeout: 10000 // 10 second timeout for availability checks
-                        }, apiKeyPool);
-                    } else {
-                        await axios.post(endpoint, testRequest, {
-                            headers: { 'Content-Type': 'application/json' },
-                            timeout: 10000
-                        });
+            // Special handling for Pollinations models - always mark as available
+            let isAvailable;
+            if (endpoint.includes('pollinations.ai')) {
+                console.log(`✅ Pollinations endpoint ${endpoint} - marking as available (no auth required)`);
+                isAvailable = true;
+            } else {
+                // Use request deduplication for the actual API call
+                const cacheKey = `availability_${endpoint}_${Date.now()}`;
+                isAvailable = await this.deduplicateRequest(cacheKey, async () => {
+                    try {
+                        if (apiKeyPool && apiKeyPool.keys.length > 0) {
+                            await makeApiRequestWithRetry(endpoint, testRequest, {
+                                headers: { 'Content-Type': 'application/json' },
+                                timeout: 10000 // 10 second timeout for availability checks
+                            }, apiKeyPool);
+                        } else {
+                            await axios.post(endpoint, testRequest, {
+                                headers: { 'Content-Type': 'application/json' },
+                                timeout: 10000
+                            });
+                        }
+                        return true;
+                    } catch (error) {
+                        console.log(`❌ Endpoint ${endpoint} unavailable:`, error.message);
+                        return false;
                     }
-                    return true;
-                } catch (error) {
-                    console.log(`❌ Endpoint ${endpoint} unavailable:`, error.message);
-                    return false;
-                }
-            });
+                });
+            }
 
             // Update all models for this endpoint
             models.forEach(model => {
