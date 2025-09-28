@@ -1471,9 +1471,7 @@ router.get('/optimization-stats', (req, res) => {
     }
 });
 
-module.exports = {
-    router,
-    startModelAvailabilityChecker
-};
+module.exports = router;
+module.exports.startModelAvailabilityChecker = startModelAvailabilityChecker;
 
 console.log('✅ ai.js module loaded successfully');
