@@ -43,32 +43,55 @@
     body { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; line-height: 1.5; }
     :not(.vt-enabled) * { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
     @media (max-width: 767px) { #sidebar { position: fixed; z-index: 40; height: 100%; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); } #sidebar.open { transform: translateX(0); } #sidebar-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 30; opacity: 0; transition: opacity 0.3s ease-in-out; pointer-events: none; } #sidebar-overlay.open { opacity: 1; pointer-events: auto; } }
-    @media (min-width: 768px) { #sidebar { width: 260px; transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); } #sidebar.closed { margin-left: -260px; } }
     .sidebar-item-actions { opacity: 0; transition: opacity 0.15s ease-in-out; }
     .group:hover .sidebar-item-actions { opacity: 1; }
     .modal-container { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; background-color: rgba(0,0,0,0.4); padding: 1rem; padding-bottom: 5rem; } /* Added padding for mobile */
     .modal-content { transform: scale(0.95); opacity: 0; max-height: 90vh; overflow-y: auto; } /* Added max-height and overflow for scrolling */
     #model-dropdown, #chat-actions-dropdown { display: none; position: absolute; z-index: 50; }
-    .loader-dot { animation: pendulum 1.2s infinite ease-in-out; }
+    .loader-dot {
+        animation: loaderBounce 1.4s infinite ease-in-out both;
+    }
+
+    .image-generation-spinner {
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 9999px;
+        border-width: 2px;
+        border-style: solid;
+        border-color: rgba(255,255,255,0.15);
+        border-top-color: rgba(255,255,255,0.6);
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .image-generation-spinner.active {
+        animation: spin 1s linear infinite;
+    }
+
     .loader-dot:nth-child(2) { animation-delay: 0.15s; }
-.loader-dot:nth-child(3) { animation-delay: 0.3s; }
+    .loader-dot:nth-child(3) { animation-delay: 0.3s; }
 
-@keyframes reveal {
-  from {
-    clip-path: circle(0 at var(--cx) var(--cy));
-  }
-  to {
-    clip-path: circle(150% at var(--cx) var(--cy));
-  }
-}
+    @keyframes reveal {
+      from {
+        clip-path: circle(0 at var(--cx) var(--cy));
+      }
+      to {
+        clip-path: circle(150% at var(--cx) var(--cy));
+      }
+    }
 
-::view-transition-old(root) {
-  animation: none;
-}
+    ::view-transition-old(root) {
+      animation: none;
+    }
 
-::view-transition-new(root) {
-  animation: reveal 0.6s ease-in-out both;
-}
+    ::view-transition-new(root) {
+      animation: reveal 0.6s ease-in-out both;
+    }
     .blinking-cursor { display: inline-block; width: 8px; height: 8px; background-color: currentColor; border-radius: 50%; animation: blink 1s infinite; }
     
     /* --- ADDED: CUSTOM PROSE STYLING --- */
@@ -630,6 +653,86 @@
         }
     }
 
+    function cloneStructured(value) {
+        if (value == null) return value;
+        if (typeof structuredClone === 'function') {
+            try {
+                return structuredClone(value);
+            } catch (error) {
+                console.warn('structuredClone failed, falling back to JSON clone.', error);
+            }
+        }
+        try {
+            return JSON.parse(JSON.stringify(value));
+        } catch (error) {
+            console.warn('JSON clone failed, returning original reference.', error);
+            return value;
+        }
+    }
+
+    function parseMessageContentForAI(content) {
+        if (content == null) {
+            return '';
+        }
+
+        if (typeof content === 'string') {
+            const trimmed = content.trim();
+            const looksJson = (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+                (trimmed.startsWith('[') && trimmed.endsWith(']'));
+
+            if (looksJson) {
+                try {
+                    return JSON.parse(trimmed);
+                } catch (error) {
+                    console.warn('Failed to parse message content JSON, sending raw string.', error);
+                    return content;
+                }
+            }
+
+            return content;
+        }
+
+        if (typeof content === 'object') {
+            return cloneStructured(content);
+        }
+
+        return String(content);
+    }
+
+    function prepareMessagesForAI(chat, { excludeMessageId = null, includeSystemPrompt = true } = {}) {
+        const preparedMessages = [];
+        const sourceMessages = Array.isArray(chat?.messages) ? chat.messages : [];
+
+        const hasSystemMessage = sourceMessages.some(message => message?.role === 'system');
+
+        if (includeSystemPrompt && !hasSystemMessage) {
+            preparedMessages.push(cloneStructured(SYSTEM_PROMPT));
+        }
+
+        if (chat?.study_mode && STUDY_MODE_PROMPT) {
+            preparedMessages.push(cloneStructured(STUDY_MODE_PROMPT));
+        }
+
+        sourceMessages.forEach((message) => {
+            if (!message || !message.role) return;
+            if (message.id && message.id === excludeMessageId) return;
+            if (!['user', 'assistant', 'system'].includes(message.role)) return;
+
+            const normalizedContent = parseMessageContentForAI(message.content);
+
+            if (message.role === 'assistant' && typeof normalizedContent === 'string' && normalizedContent === '...') {
+                return;
+            }
+
+            preparedMessages.push({
+                role: message.role,
+                content: normalizedContent
+            });
+        });
+
+        return preparedMessages;
+    }
+
     async function saveMessagesToServer(chatId, userMessage, assistantMessage, token) {
         if (!chatId || !token || !userMessage || !assistantMessage) {
             return;
@@ -798,7 +901,7 @@ async function handleSignIn(email, password, retryCount = 0) {
         // Reset loading state
         setButtonLoading(signinBtn, false, originalText);
     }
-}
+};
 
     // --- CORRECTED Sign Up Function ---
 async function handleSignUp(email, password) {
@@ -1183,6 +1286,11 @@ Image input capabilities: Enabled
 Personality: v2
 Over the course of the conversation, you adapt to the user's tone and preference. Try to match the user's vibe, tone, and generally how they are speaking. You want the conversation to feel natural. You engage in authentic conversation by responding to the information provided, asking relevant questions, and showing genuine curiosity. If natural, continue the conversation with casual conversation.
 `};
+    const STUDY_MODE_PROMPT = {
+        role: 'system',
+        content: `Let's discuss a topic or concept that I'm curious about, and you'll ask me questions to help me explore it further. We'll work together to build a deep understanding of the topic, and you'll provide feedback to help me identify any misconceptions or gaps in my understanding, sort of like the Feynman technique. We'll approach this with an open mind, and we'll be curious and inquisitive as we explore the topic.
+I want you to keep in mind that you do also ask specific questions that will push my understanding of said topic, it doesn't matter if I'm not capable of answering cause my goal is to learn more and more. Let's begin.`
+    };
     const MODELS = {
       // Text Models - Anonymous (Pollinations.ai)
       'gpt-4.1': { name: 'OpenAI GPT-4.1', type: 'text', anonymous: true },
@@ -1191,15 +1299,12 @@ Over the course of the conversation, you adapt to the user's tone and preference
 
       // Text Models - Pollinations.ai direct models
       'deepseek-reasoning': { name: 'DeepSeek R1 0528 (Bedrock)', type: 'text' },
-      'openai-reasoning': { name: 'OpenAI o3 (api.navy)', type: 'text' },
-      'o4-mini-medium': { name: 'O4 Mini Medium', type: 'text' },
-      'o4-mini-high': { name: 'O4 Mini High', type: 'text' },
+      'openai-reasoning': { name: 'OpenAI o4', type: 'text' },
 
       // A4F.co models (provider-prefixed)
-      'kimi-k2-instruct': { name: 'Kimi K2 Instruct', type: 'text' },
-      'glm-4.5': { name: 'GLM 4.5', type: 'text' },
-      'glm-4.5-air': { name: 'GLM 4.5 Air', type: 'text' },
-      'gpt-4o-mini': { name: 'GPT-4o Mini', type: 'text' },
+      
+      'provider-1/glm-4.5-fp8': { name: 'GLM 4.5', type: 'text' },
+      'provider-1/glm-4.5-air-fp8': { name: 'GLM 4.5 Air', type: 'text' },
 
       // Pro Models
       'grok-4': { name: 'Grok 4', type: 'text', pro: true },
@@ -1208,7 +1313,7 @@ Over the course of the conversation, you adapt to the user's tone and preference
       'gemini-2.5-flash': { name: 'Gemini 2.5 Flash', type: 'text', pro: true },
 
       // Image Generation Models
-      'imagen-4': { name: 'Imagen 4', type: 'image', provider: 'airforce', pro: true },
+ 
       'pollinations-flux': { name: 'Flux', type: 'image', provider: 'pollinations' },
       'pollinations-kontext': { name: 'Flux Kontext (Image-to-Image)', type: 'image', provider: 'pollinations' },
       'nanobanana': { name: 'NanoBanana', type: 'image', provider: 'pollinations' },
@@ -1254,6 +1359,38 @@ Over the course of the conversation, you adapt to the user's tone and preference
     let isScrolledUp = false; // Flag to indicate if the user has scrolled up
     let isGeneratingTitle = false; // Flag to indicate if title generation is in progress
     let attachedImageData = null; // To store { file?, dataUrl, previewUrl }
+
+    const STREAM_ERROR_TARGET_MESSAGE = 'An error occurred while streaming the response from the model provider.';
+    const STREAM_ERROR_MAX_RETRIES = 2; // Total attempts = initial try + 2 retries
+    const STREAM_ERROR_RETRY_DELAY_MS = 800;
+
+    function isRetryableStreamError(message) {
+        return typeof message === 'string' && message.includes(STREAM_ERROR_TARGET_MESSAGE);
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function setStreamingUIState(isActive) {
+        if (!elements.sendIcon || !elements.stopIcon || !elements.sendBtn) {
+            updateSendButtonState();
+            return;
+        }
+
+        if (isActive) {
+            elements.sendIcon.classList.add('hidden');
+            elements.stopIcon.classList.remove('hidden');
+            elements.sendBtn.classList.remove('bg-accent', 'hover:bg-accent-hover');
+            elements.sendBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+        } else {
+            elements.sendIcon.classList.remove('hidden');
+            elements.stopIcon.classList.add('hidden');
+            elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
+        }
+        updateSendButtonState();
+    }
     let attachmentDownloadPromise = null;
     let isAttachmentLoading = false;
     let tokenRefreshTimeout = null;
@@ -1917,7 +2054,14 @@ Over the course of the conversation, you adapt to the user's tone and preference
     
     // Check if model is available (not down)
     function isModelAvailable(modelKey) {
-        // Always return true - never show models as unavailable
+        if (!modelKey) return false;
+
+        const status = modelAvailability?.[modelKey];
+        if (status && typeof status.available === 'boolean') {
+            return status.available;
+        }
+
+        // Default to available if no status has been fetched yet
         return true;
     }
     
@@ -2173,6 +2317,13 @@ Over the course of the conversation, you adapt to the user's tone and preference
         },
         langPrefix: 'hljs language-'
     });
+
+    const KATEX_DELIMITERS = [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\(', right: '\\)', display: false },
+        { left: '\\[', right: '\\]', display: true }
+    ];
 
     function renderContent(text) { if (!text) return ''; let html = marked.parse(text, { breaks: true, gfm: true }); return html; }
     function renderStreamingContent(text) { if (!text) return ''; let html = marked.parseInline(text, { breaks: true, gfm: true }); return html; }
@@ -2587,18 +2738,18 @@ function renderChatVirtualized() {
                 } else if (assistantContent.type === 'text' && assistantContent.text) {
                     msgDiv.innerHTML = renderContent(assistantContent.text);
                     renderMathInElement(msgDiv, {
-                        delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+                        delimiters: KATEX_DELIMITERS
                     });
                 } else {
                     msgDiv.innerHTML = renderContent(JSON.stringify(assistantContent));
                     renderMathInElement(msgDiv, {
-                        delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+                        delimiters: KATEX_DELIMITERS
                     });
                 }
             } else {
                 msgDiv.innerHTML = renderContent(assistantContent || '');
                 renderMathInElement(msgDiv, {
-                    delimiters: [{ left: "[", right: "]", display: true }, { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }]
+                    delimiters: KATEX_DELIMITERS
                 });
             }
         }
@@ -3177,10 +3328,10 @@ async function sendMessage() {
     
     // Handle message editing
     const wasEditing = !!state.editingMessage; // Store editing state
+    let attachmentPreviewUrl = getAttachmentPreviewUrl();
+    let attachmentDataUrl = getAttachmentDataUrl();
     if (state.editingMessage) {
         let newContent;
-        let attachmentPreviewUrl = getAttachmentPreviewUrl();
-        let attachmentDataUrl = getAttachmentDataUrl();
 
         // Only wait for attachmentDownloadPromise if we don't already have the image data
         // This prevents the 1-second delay when editing messages with existing images
@@ -3221,6 +3372,9 @@ async function sendMessage() {
         // Continue to send the edited message to get a new response
         // Don't return here - let the function continue to send the message
     }
+
+    attachmentPreviewUrl = getAttachmentPreviewUrl();
+    attachmentDataUrl = getAttachmentDataUrl();
 
     // Check authentication - handle both logged-in and anonymous users
     const isAnonymous = isAnonymousUser();
@@ -3379,14 +3533,7 @@ async function sendMessage() {
         }
         return; // Exit sendMessage function after handling /study command
     } // Call updateSendButtonState at the start of sendMessage (after /study handling)
-    updateSendButtonState();
-
-    elements.sendIcon.classList.add('hidden');
-    elements.stopIcon.classList.remove('hidden');
-    elements.sendBtn.classList.remove('bg-accent', 'hover:bg-accent-hover');
-    elements.sendBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-    // elements.sendBtn.disabled = true; // No longer disable here, managed by updateSendButtonState
-    // elements.userInput.disabled = true; // User input should not be disabled
+    setStreamingUIState(true);
 
     const requestAttachment = attachedImageData ? { previewUrl: attachmentPreviewUrl, dataUrl: attachmentDataUrl } : null;
     const userMessagePayload = requestAttachment
@@ -3424,121 +3571,160 @@ async function sendMessage() {
     }
 
     const assistantMsgDiv = document.getElementById(assistantMessageObj.id); // Get the placeholder div
-    
-    currentController = new AbortController();
-    let fullResponse = "";
 
-    try {
-        // Use fetch with ReadableStream instead of EventSource
-        const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                model: activeChat.model || state.settings.model || 'gpt-4.1',
-                messages: messagesForAI,
-                chatId: activeChat.id,
-                proModelsEnabled: state.settings.proModelsEnabled,
-                betaModelsEnabled: state.settings.betaModelsEnabled
-            })
-        });
+    const outboundMessages = prepareMessagesForAI(activeChat, {
+        excludeMessageId: assistantMessageObj.id,
+        includeSystemPrompt: true
+    });
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const requestHeaders = {
+        'Content-Type': 'application/json'
+    };
+
+    if (!isAnonymous && token) {
+        requestHeaders['Authorization'] = `Bearer ${token}`;
+    }
+
+    const requestUrl = isAnonymous
+        ? `${API_BASE_URL}/api/ai/chat-public`
+        : `${API_BASE_URL}/api/ai/chat`;
+
+    const requestBodyBase = isAnonymous
+        ? {
+            model: activeChat.model || state.settings.model || 'gpt-4.1',
+            messages: outboundMessages
         }
+        : {
+            model: activeChat.model || state.settings.model || 'gpt-4.1',
+            messages: outboundMessages,
+            chatId: activeChat.id,
+            proModelsEnabled: state.settings.proModelsEnabled,
+            betaModelsEnabled: state.settings.betaModelsEnabled
+        };
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
+    let attempt = 0;
+    let lastError = null;
+    const maxAttempts = STREAM_ERROR_MAX_RETRIES + 1;
 
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+    while (attempt < maxAttempts) {
+        currentController = new AbortController();
+        let fullResponse = "";
 
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
+        try {
+            isStreaming = true;
+            setStreamingUIState(true);
 
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
+            const requestBody = { ...requestBodyBase };
+
+            const response = await fetch(requestUrl, {
+                method: 'POST',
+                headers: requestHeaders,
+                body: JSON.stringify(requestBody),
+                signal: currentController.signal
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+
                     const data = line.slice(6).trim();
                     if (data === '[DONE]') {
-                        isStreaming = false;
-                        updateSendButtonState();
-                        elements.sendIcon.classList.remove('hidden');
-                        elements.stopIcon.classList.add('hidden');
-                        elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
-                        elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
                         const assistantIndex = activeChat.messages.length - 1;
                         const userIndex = assistantIndex - 1;
                         activeChat.messages[assistantIndex].content = fullResponse;
-                        immediateSaveState(); // Critical state change - save immediately when streaming completes
+                        immediateSaveState();
 
                         const userMessageForSave = activeChat.messages[userIndex];
                         const assistantMessageForSave = activeChat.messages[assistantIndex];
                         if (!isAnonymous && userMessageForSave && assistantMessageForSave) {
                             await saveMessagesToServer(activeChat.id, userMessageForSave, assistantMessageForSave, token);
                         }
+
+                        console.log(`[sendMessage] Stream completed on attempt ${attempt + 1}`);
                         return;
                     }
 
                     try {
                         const parsedData = JSON.parse(data);
                         if (parsedData.error) {
-                            fullResponse = `Error: ${parsedData.error.message}`;
-                            assistantMsgDiv.innerHTML = renderContent(fullResponse);
-                            isStreaming = false;
-                            updateSendButtonState();
-                            return;
+                            throw new Error(parsedData.error.message || 'Unknown streaming error');
                         }
 
-                        if (parsedData.choices && parsedData.choices[0] && parsedData.choices[0].delta && parsedData.choices[0].delta.content) {
-                            fullResponse += parsedData.choices[0].delta.content;
-                            assistantMsgDiv.innerHTML = renderContent(fullResponse);
-                            scrollToBottom();
-                        }
+                        if (parsedData.choices && parsedData.choices[0]) {
+                            const { delta, finish_reason } = parsedData.choices[0];
 
-                        // Handle function calls
-                        if (parsedData.choices && parsedData.choices[0] && parsedData.choices[0].finish_reason === 'function_call') {
-                            const functionCall = parsedData.choices[0].delta.function_call;
-                            if (functionCall) {
-                                console.log('🔧 Function call received:', functionCall.name);
-                                handleFunctionCall(functionCall, assistantMsgDiv);
+                            if (delta && delta.content) {
+                                fullResponse += delta.content;
+                                assistantMsgDiv.innerHTML = renderContent(fullResponse);
+                                scrollToBottom();
+                            }
+
+                            if (finish_reason === 'function_call' && delta && delta.function_call) {
+                                console.log('🔧 Function call received:', delta.function_call.name);
+                                handleFunctionCall(delta.function_call, assistantMsgDiv);
                             }
                         }
                     } catch (e) {
-                        // Skip malformed JSON lines
                         continue;
                     }
                 }
             }
-        }
 
-        isStreaming = false;
-        updateSendButtonState();
+            console.warn('[sendMessage] Stream ended unexpectedly without [DONE] marker.');
+            break;
 
-    } catch (error) { // <--- ADDED: The missing catch block
-        console.error("Error during message stream:", error);
-        const activeChat = state.chats.find(c => c.id === state.activeId);
-        if (activeChat) {
+        } catch (error) {
+            lastError = error;
+            const message = error?.message || '';
+            const shouldRetry = isRetryableStreamError(message) && attempt < STREAM_ERROR_MAX_RETRIES;
+
+            if (shouldRetry) {
+                console.warn(`[sendMessage] Stream attempt ${attempt + 1} failed: ${message}. Retrying...`);
+                const assistantIndex = activeChat.messages.length - 1;
+                if (activeChat.messages[assistantIndex]) {
+                    activeChat.messages[assistantIndex].content = '...';
+                }
+                if (assistantMsgDiv) {
+                    assistantMsgDiv.innerHTML = renderContent('...');
+                }
+                await sleep(STREAM_ERROR_RETRY_DELAY_MS);
+                attempt++;
+                continue;
+            }
+
+            console.error('[sendMessage] Stream failed without retry:', error);
             const lastMessageIndex = activeChat.messages.length - 1;
-            // Update the placeholder message with an error
             if (activeChat.messages[lastMessageIndex] && activeChat.messages[lastMessageIndex].role === 'assistant') {
-                activeChat.messages[lastMessageIndex].content = `An error occurred: ${error.message}`;
+                activeChat.messages[lastMessageIndex].content = `An error occurred: ${message}`;
                 renderChat();
             }
+            break;
+
+        } finally {
+            isStreaming = false;
+            setStreamingUIState(false);
+            currentController = null;
         }
-    } finally { // <--- ADDED: A finally block to clean up UI state
-        isStreaming = false;
-        currentController = null;
-        elements.sendIcon.classList.remove('hidden');
-        elements.stopIcon.classList.add('hidden');
-        elements.sendBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-        elements.sendBtn.classList.add('bg-accent', 'hover:bg-accent-hover');
-        updateSendButtonState();
-        console.log('[sendMessage] End: Stream finished or aborted.');
     }
-} // <--- ADDED: The missing closing brace for the sendMessage function
+
+    if (lastError) {
+        showAlert('Streaming failed. Please try again.', 'error', 5000);
+    }
+    console.log('[sendMessage] End: Stream finished or aborted.');
+}
 
 // Handle function call responses from AI
 async function handleFunctionCall(functionCall, assistantMsgDiv) {

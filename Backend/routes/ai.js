@@ -9,6 +9,7 @@ const cache = require('../utils/cache');
 const stream = require('stream');
 const imgbbUploader = require('imgbb-uploader');
 const fastJson = require('fast-json-stringify');
+const { logStreamError } = require('../utils/streamErrorLogger');
 const errorSchema = {
     type: 'object',
     properties: {
@@ -25,6 +26,8 @@ const errorSchema = {
 };
 
 const stringifyError = fastJson(errorSchema);
+
+const STREAM_ERROR_MESSAGE = 'An error occurred while streaming the response from the model provider.';
 
 // Safe JSON stringification to handle circular references
 function safeStringify(obj, space = 2) {
@@ -332,12 +335,13 @@ router.post('/chat', authMiddleware, async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
+    let provider = 'default';
+    let apiEndpoint;
+    let apiKeyPool;
+    let modelId = model;
+
     try {
         console.time('Provider Selection');
-        let provider = 'default';
-        let apiEndpoint;
-        let apiKeyPool;
-        let modelId = model;
 
         const V2_MODELS = ['kimi-k2-instruct', 'glm-4.5', 'glm-4.5-air'];
         const POLLINATIONS_MODELS = [
@@ -579,10 +583,19 @@ router.post('/chat', authMiddleware, async (req, res) => {
                 }
             } catch (error) {
                 console.error('Error processing stream data:', error);
+                logStreamError({
+                    phase: 'chunk-processing',
+                    modelId,
+                    provider,
+                    chatId,
+                    endpoint: apiEndpoint,
+                    error
+                });
+
                 if (!res.headersSent) {
-                    res.status(500).json({ error: 'Stream processing error' });
+                    res.status(500).json({ error: STREAM_ERROR_MESSAGE });
                 } else {
-                    res.write(`data: ${JSON.stringify({ error: { message: 'Stream processing error' } })}\n\n`);
+                    res.write(`data: ${JSON.stringify({ error: { message: STREAM_ERROR_MESSAGE } })}\n\n`);
                     res.write('data: [DONE]\n\n');
                     res.end();
                 }
@@ -592,10 +605,19 @@ router.post('/chat', authMiddleware, async (req, res) => {
         // Set a timeout for the entire streaming response to prevent hanging connections
         const responseTimeout = setTimeout(() => {
             console.error('Response timeout - ending stream');
+            logStreamError({
+                phase: 'timeout',
+                modelId,
+                provider,
+                chatId,
+                endpoint: apiEndpoint,
+                error: new Error('Response timeout')
+            });
+
             if (!res.headersSent) {
-                res.status(504).json({ error: 'Gateway timeout' });
+                res.status(504).json({ error: STREAM_ERROR_MESSAGE });
             } else {
-                res.write(`data: ${JSON.stringify({ error: { message: 'Response timeout' } })}\n\n`);
+                res.write(`data: ${JSON.stringify({ error: { message: STREAM_ERROR_MESSAGE } })}\n\n`);
                 res.write('data: [DONE]\n\n');
                 res.end();
             }
@@ -625,10 +647,19 @@ router.post('/chat', authMiddleware, async (req, res) => {
         aiResponse.data.on('error', (error) => {
             clearTimeout(responseTimeout);
             console.error('Stream error:', error);
+            logStreamError({
+                phase: 'provider-stream',
+                modelId,
+                provider,
+                chatId,
+                endpoint: apiEndpoint,
+                error
+            });
+
             if (!res.headersSent) {
-                res.status(500).json({ error: 'Stream connection error' });
+                res.status(500).json({ error: STREAM_ERROR_MESSAGE });
             } else {
-                res.write(`data: ${JSON.stringify({ error: { message: 'Stream connection error' } })}\n\n`);
+                res.write(`data: ${JSON.stringify({ error: { message: STREAM_ERROR_MESSAGE } })}\n\n`);
                 res.write('data: [DONE]\n\n');
                 res.end();
             }
@@ -637,16 +668,23 @@ router.post('/chat', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error('❌ Error calling AI service:', error.message);
         console.error('Full error details:', error.response ? safeStringify(error.response.data) : error.stack);
-        
+
+        logStreamError({
+            phase: 'provider-request',
+            modelId,
+            provider,
+            chatId,
+            endpoint: apiEndpoint,
+            error
+        });
+
         if (!res.headersSent) {
             res.status(500).json({
-                error: 'AI service temporarily unavailable',
-                details: 'All AI endpoints are currently down. Please try again later.',
+                error: STREAM_ERROR_MESSAGE,
                 model: modelId
             });
         } else {
-            // Connection already established, send error in stream format
-            res.write(`data: ${JSON.stringify({ error: { message: 'AI service interrupted' } })}\n\n`);
+            res.write(`data: ${JSON.stringify({ error: { message: STREAM_ERROR_MESSAGE } })}\n\n`);
             res.write('data: [DONE]\n\n');
             res.end();
         }
@@ -954,22 +992,22 @@ class OptimizedModelAvailabilityChecker {
         // Models to check availability for
         this.modelsToCheck = [
             // Anonymous/Pollinations models
-            { id: 'gpt-4.1', provider: 'pollinations', apiName: 'provider-3/gpt-4.1-nano', endpoint: 'https://text.pollinations.ai/openai/chat/completions' },
-            { id: 'gpt-5-nano', provider: 'pollinations', apiName: 'provider-3/gpt-5-nano', endpoint: 'https://text.pollinations.ai/openai/chat/completions' },
-            { id: 'gemini', provider: 'pollinations', apiName: 'gemini', endpoint: 'https://text.pollinations.ai/openai/chat/completions' },
-            { id: 'deepseek-reasoning', provider: 'pollinations', apiName: 'deepseek-reasoning', endpoint: 'https://text.pollinations.ai/openai/chat/completions' },
-            { id: 'openai-reasoning', provider: 'pollinations', apiName: 'openai', endpoint: 'https://text.pollinations.ai/openai/chat/completions' },
-            { id: 'o4-mini-medium', provider: 'pollinations', apiName: 'openai-reasoning', endpoint: 'https://text.pollinations.ai/openai/chat/completions' },
-            { id: 'o4-mini-high', provider: 'pollinations', apiName: 'openai-reasoning', endpoint: 'https://text.pollinations.ai/openai/chat/completions' },
+            { id: 'gpt-4.1', provider: 'pollinations', apiName: 'provider-3/gpt-4.1-nano', endpoint: 'https://text.pollinations.ai/openai' },
+            { id: 'gpt-5-nano', provider: 'pollinations', apiName: 'provider-3/gpt-5-nano', endpoint: 'https://text.pollinations.ai/openai' },
+            { id: 'gemini', provider: 'pollinations', apiName: 'gemini', endpoint: 'https://text.pollinations.ai/openai' },
+            { id: 'deepseek-reasoning', provider: 'pollinations', apiName: 'deepseek-reasoning', endpoint: 'https://text.pollinations.ai/openai' },
+            { id: 'openai-reasoning', provider: 'pollinations', apiName: 'openai-reasoning', endpoint: 'https://text.pollinations.ai/openai' },
+    
             // A4F models
-            { id: 'kimi-k2-instruct', provider: 'A4F', apiName: 'provider-5/kimi-k2-instruct', endpoint: `${process.env.AI_API_ENDPOINT_V2}/chat/completions` },
+            
             { id: 'glm-4.5', provider: 'A4F', apiName: 'provider-1/glm-4.5-fp8', endpoint: `${process.env.AI_API_ENDPOINT_V2}/chat/completions` },
             { id: 'glm-4.5-air', provider: 'A4F', apiName: 'provider-1/glm-4.5-air-fp8', endpoint: `${process.env.AI_API_ENDPOINT_V2}/chat/completions` },
+            
             // Pro models
-            { id: 'gpt-5', provider: 'airforce', apiName: 'gpt-5', endpoint: 'https://api.airforce/v1/chat/completions' },
+            { id: 'gpt-5-chat', provider: 'airforce', apiName: 'gpt-5-chat', endpoint: 'https://api.airforce/v1/chat/completions' },
             { id: 'gemini-2.5-pro', provider: 'airforce', apiName: 'gemini-2.5-pro', endpoint: 'https://api.airforce/v1/chat/completions' },
             { id: 'gemini-2.5-flash', provider: 'airforce', apiName: 'gemini-2.5-flash', endpoint: 'https://api.airforce/v1/chat/completions' },
-            { id: 'grok-4', provider: 'navy', apiName: 'grok-4', endpoint: 'https://api.navy/v1/chat/completions' },
+            { id: 'grok-4-fast-reasoning', provider: 'navy', apiName: 'grok-4-fast-reasoning', endpoint: 'https://api.navy/v1/chat/completions' },
             // Image models
             { id: 'imagen-4', provider: 'airforce', apiName: 'imagen-4', endpoint: 'https://api.airforce/v1/images/generations', type: 'image' }
         ];
