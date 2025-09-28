@@ -441,26 +441,29 @@ router.post('/chat', authMiddleware, async (req, res) => {
         }
         console.timeEnd('Provider Selection');
 
+        const supportsStreaming = !NON_STREAMING_PROVIDERS.has(provider);
         const requestBody = {
             model: modelId,
-            messages: messagesForAI,
-            stream: true,
-            functions: FUNCTION_SCHEMAS,
-            function_call: 'auto' // Let the AI decide when to call functions
+            messages: messagesForAI
         };
 
-        const aiResponse = await makeApiRequestWithRetry(
-            apiEndpoint,
-            requestBody,
-            {
-                headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
-                responseType: 'stream',
-                timeout: 30000 // 30 second timeout to prevent hanging connections
-            },
-            apiKeyPool
-        );
+        if (supportsStreaming) {
+            requestBody.stream = true;
+            requestBody.functions = FUNCTION_SCHEMAS;
+            requestBody.function_call = 'auto';
 
-        aiResponse.data.on('data', async (chunk) => {
+            const aiResponse = await makeApiRequestWithRetry(
+                apiEndpoint,
+                requestBody,
+                {
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+                    responseType: 'stream',
+                    timeout: 30000 // 30 second timeout to prevent hanging connections
+                },
+                apiKeyPool
+            );
+
+            aiResponse.data.on('data', async (chunk) => {
             try {
                 const lines = chunk.toString().split('\n');
                 const parsedLines = lines
@@ -664,6 +667,33 @@ router.post('/chat', authMiddleware, async (req, res) => {
                 res.end();
             }
         });
+
+        return;
+    }
+
+    // Handle non-streaming providers
+    const aiResponse = await makeApiRequestWithRetry(
+        apiEndpoint,
+        requestBody,
+        {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 30000
+        },
+        apiKeyPool
+    );
+
+    const message = aiResponse.data?.choices?.[0]?.message;
+    if (message?.content) {
+        res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: message.content } }] })}\n\n`);
+    } else if (message?.tool_calls?.length) {
+        res.write(`data: ${JSON.stringify({ error: { message: 'Function calls are not supported for this provider.' } })}\n\n`);
+    } else {
+        res.write(`data: ${JSON.stringify({ error: { message: 'No content returned from provider.' } })}\n\n`);
+    }
+
+    res.write('data: [DONE]\n\n');
+    res.end();
+    return;
 
     } catch (error) {
         console.error('❌ Error calling AI service:', error.message);
